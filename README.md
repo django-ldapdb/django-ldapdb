@@ -1,9 +1,8 @@
 django-ldapdb - support for django models over LDAP
 Copyright (C) 2009-2011 Bolloré Telecom
-See AUTHORS file for a full list of contributors.
 
 About
-=====
+-----
 
 _django-ldapdb_ is an LDAP database backend for Django. It allows you to
 manipulate LDAP entries using Django's models. Declaring models using the
@@ -14,10 +13,10 @@ models. You can even edit the LDAP entries using Django's admin interface.
 _django-ldapdb_ requires Django version 1.2.x, 1.3.x or 1.4.x.
 
 _django-ldapdb_ is distributed under the BSD license, see the LICENSE
-file for details.
+file for details. See AUTHORS file for a full list of contributors.
 
 Using django-ldapdb
-===================
+-------------------
 
 Add the following to your _settings.py_:
 
