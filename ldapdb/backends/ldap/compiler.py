@@ -173,6 +173,7 @@ class SQLCompiler(object):
 
         # process results
         pos = 0
+        results=[]
         for dn, attrs in vals:
             # FIXME : This is not optimal, we retrieve more results than we need
             # but there is probably no other options as we can't perform ordering
@@ -189,6 +190,11 @@ class SQLCompiler(object):
                     row.append(field.from_ldap(attrs.get(field.db_column, []), connection=self.connection))
                 else:
                     row.append(None)
+            if self.query.distinct:
+                if row in results:
+                    continue
+                else:
+                    results.append(row)
             yield row
             pos += 1
 
