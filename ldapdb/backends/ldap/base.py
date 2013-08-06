@@ -60,6 +60,7 @@ class DatabaseCursor(object):
 class DatabaseFeatures(BaseDatabaseFeatures):
     def __init__(self, connection):
         self.connection = connection
+        self.supports_transactions = False
 
 class DatabaseOperations(BaseDatabaseOperations):
     compiler_module = "ldapdb.backends.ldap.compiler"
