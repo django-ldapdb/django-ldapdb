@@ -109,12 +109,18 @@ class Model(django.db.models.base.Model):
         return "%s,%s" % (self.build_rdn(**kwargs), self.base_dn)
         raise Exception("Could not build Distinguished Name")
 
+    def _get_connection(self, using=None):
+        """
+        Get the proper LDAP connection.
+        """
+        using = using or router.db_for_write(self.__class__, instance=self)
+        return connections[using]
+
     def delete(self, using=None):
         """
         Delete this entry.
         """
-        using = using or router.db_for_write(self.__class__, instance=self)
-        connection = connections[using]
+        connection = self._get_connection(using)
         logger.debug("Deleting LDAP entry %s" % self.dn)
         connection.delete_s(self.dn)
         signals.post_delete.send(sender=self.__class__, instance=self)
@@ -123,8 +129,7 @@ class Model(django.db.models.base.Model):
         """
         Saves the current instance.
         """
-        using = using or router.db_for_write(self.__class__, instance=self)
-        connection = connections[using]
+        connection = self._get_connection(using)
         if not self.dn:
             # create a new entry
             record_exists = False
