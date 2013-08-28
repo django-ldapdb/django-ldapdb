@@ -6,8 +6,8 @@
 #
 # See AUTHORS file for a full list of contributors.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
 #     1. Redistributions of source code must retain the above copyright notice,
 #        this list of conditions and the following disclaimer.
@@ -20,16 +20,17 @@
 #        may be used to endorse or promote products derived from this software
 #        without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
 
 from django.db import connections, router
@@ -40,6 +41,7 @@ import ldap
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
 from examples.models import LdapUser, LdapGroup
+
 
 class BaseTestCase(TestCase):
     def _add_base_dn(self, model):
@@ -72,6 +74,7 @@ class BaseTestCase(TestCase):
     def tearDown(self):
         for model in [LdapGroup, LdapUser]:
             self._remove_base_dn(model)
+
 
 class GroupTestCase(BaseTestCase):
     def setUp(self):
@@ -113,35 +116,49 @@ class GroupTestCase(BaseTestCase):
     def test_ldap_filter(self):
         # single filter
         qs = LdapGroup.objects.filter(name='foogroup')
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(cn=foogroup))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(cn=foogroup))')
 
         qs = LdapGroup.objects.filter(Q(name='foogroup'))
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(cn=foogroup))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(cn=foogroup))')
 
         # AND filter
         qs = LdapGroup.objects.filter(gid=1000, name='foogroup')
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(gidNumber=1000)(cn=foogroup)))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(&(gidNumber=1000)'
+                          '(cn=foogroup)))')
 
         qs = LdapGroup.objects.filter(Q(gid=1000) & Q(name='foogroup'))
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(gidNumber=1000)(cn=foogroup)))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(&(gidNumber=1000)'
+                          '(cn=foogroup)))')
 
         # OR filter
         qs = LdapGroup.objects.filter(Q(gid=1000) | Q(name='foogroup'))
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(|(gidNumber=1000)(cn=foogroup)))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(|(gidNumber=1000)'
+                          '(cn=foogroup)))')
 
         # single exclusion
         qs = LdapGroup.objects.exclude(name='foogroup')
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
-        
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(!(cn=foogroup)))')
+
         qs = LdapGroup.objects.filter(~Q(name='foogroup'))
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(!(cn=foogroup)))')
 
         # multiple exclusion
         qs = LdapGroup.objects.exclude(name='foogroup', gid=1000)
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(&(gidNumber=1000)(cn=foogroup))))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(!(&(gidNumber=1000)'
+                          '(cn=foogroup))))')
 
         qs = LdapGroup.objects.filter(name='foogroup').exclude(gid=1000)
-        self.assertEquals(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(cn=foogroup)(!(gidNumber=1000))))')
+        self.assertEquals(query_as_ldap(qs.query),
+                          '(&(objectClass=posixGroup)(&(cn=foogroup)'
+                          '(!(gidNumber=1000))))')
 
     def test_filter(self):
         qs = LdapGroup.objects.filter(name='foogroup')
@@ -171,17 +188,18 @@ class GroupTestCase(BaseTestCase):
         self.assertEquals(g.usernames, ['foouser', 'baruser'])
 
         # try to get a non-existent entry
-        self.assertRaises(LdapGroup.DoesNotExist, LdapGroup.objects.get, name='does_not_exist')
+        self.assertRaises(LdapGroup.DoesNotExist, LdapGroup.objects.get,
+                          name='does_not_exist')
 
     def test_order_by(self):
-        # ascending name 
+        # ascending name
         qs = LdapGroup.objects.order_by('name')
         self.assertEquals(len(qs), 3)
         self.assertEquals(qs[0].name, 'bargroup')
         self.assertEquals(qs[1].name, 'foogroup')
         self.assertEquals(qs[2].name, 'wizgroup')
 
-        # descending name 
+        # descending name
         qs = LdapGroup.objects.order_by('-name')
         self.assertEquals(len(qs), 3)
         self.assertEquals(qs[0].name, 'wizgroup')
@@ -292,6 +310,7 @@ class GroupTestCase(BaseTestCase):
         qs = LdapGroup.objects.all()
         self.assertEquals(len(qs), 2)
 
+
 class UserTestCase(BaseTestCase):
     def setUp(self):
         super(UserTestCase, self).setUp()
@@ -305,7 +324,24 @@ class UserTestCase(BaseTestCase):
         u.home_directory = "/home/foouser"
         u.uid = 2000
         u.username = "foouser"
-        u.photo = '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00\x01\xff\xd9'
+        u.photo = '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00'
+        '\x00\xff\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05'
+        '\x03\x04\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07'
+        '\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13'
+        '\x16\x1c\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f'
+        '\x13\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06'
+        '\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08'
+        '\x03\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00'
+        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4'
+        '\x00\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        '\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00'
+        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
+        '\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        '\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q'
+        '\xd6\xfd\x00\x01\xff\xd9'
         u.save()
 
     def test_get(self):
@@ -318,25 +354,52 @@ class UserTestCase(BaseTestCase):
         self.assertEquals(u.home_directory, '/home/foouser')
         self.assertEquals(u.uid, 2000)
         self.assertEquals(u.username, 'foouser')
-        self.assertEquals(u.photo, '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00\x01\xff\xd9')
+        self.assertEquals(u.photo, '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01'
+                          '\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with '
+                          'GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04'
+                          '\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08'
+                          '\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12'
+                          '\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15'
+                          '\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17'
+                          '"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05'
+                          '\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
+                          '\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15'
+                          '\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10'
+                          '\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00'
+                          '\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
+                          '\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00'
+                          '\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00'
+                          '\x01\xff\xd9')
 
-        self.assertRaises(LdapUser.DoesNotExist, LdapUser.objects.get, username='does_not_exist')
+        self.assertRaises(LdapUser.DoesNotExist, LdapUser.objects.get,
+                          username='does_not_exist')
 
     def test_update(self):
         u = LdapUser.objects.get(username='foouser')
         u.first_name = u'Fôo2'
         u.save()
-        
+
         # make sure DN gets updated if we change the pk
         u.username = 'foouser2'
         u.save()
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
 
+
 class ScopedTestCase(BaseTestCase):
     def setUp(self):
         super(ScopedTestCase, self).setUp()
 
-        self.scoped_model = LdapGroup.scoped("ou=contacts,%s" % LdapGroup.base_dn)
+        self.scoped_model = LdapGroup.scoped("ou=contacts,%s" %
+                                             LdapGroup.base_dn)
         self._add_base_dn(self.scoped_model)
 
     def tearDown(self):
@@ -373,6 +436,7 @@ class ScopedTestCase(BaseTestCase):
         g2 = ScopedGroup.objects.get(name="scopedgroup")
         self.assertEquals(g2.name, u'scopedgroup')
         self.assertEquals(g2.gid, 5000)
+
 
 class AdminTestCase(BaseTestCase):
     fixtures = ['test_users.json']
@@ -443,13 +507,15 @@ class AdminTestCase(BaseTestCase):
         self.assertContains(response, "1000")
 
     def test_group_add(self):
-        response = self.client.post('/admin/examples/ldapgroup/add/', {'gid': '1002', 'name': 'wizgroup'})
+        response = self.client.post('/admin/examples/ldapgroup/add/',
+                                    {'gid': '1002', 'name': 'wizgroup'})
         self.assertRedirects(response, '/admin/examples/ldapgroup/')
         qs = LdapGroup.objects.all()
         self.assertEquals(qs.count(), 3)
 
     def test_group_delete(self):
-        response = self.client.post('/admin/examples/ldapgroup/foogroup/delete/', {'yes': 'post'})
+        response = self.client.post(
+            '/admin/examples/ldapgroup/foogroup/delete/', {'yes': 'post'})
         self.assertRedirects(response, '/admin/examples/ldapgroup/')
         qs = LdapGroup.objects.all()
         self.assertEquals(qs.count(), 1)
@@ -484,6 +550,6 @@ class AdminTestCase(BaseTestCase):
         self.assertContains(response, "2000")
 
     def test_user_delete(self):
-        response = self.client.post('/admin/examples/ldapuser/foouser/delete/', {'yes': 'post'})
+        response = self.client.post('/admin/examples/ldapuser/foouser/delete/',
+                                    {'yes': 'post'})
         self.assertRedirects(response, '/admin/examples/ldapuser/')
-

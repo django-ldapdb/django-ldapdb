@@ -6,8 +6,8 @@
 #
 # See AUTHORS file for a full list of contributors.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
 #     1. Redistributions of source code must retain the above copyright notice,
 #        this list of conditions and the following disclaimer.
@@ -20,21 +20,23 @@
 #        may be used to endorse or promote products derived from this software
 #        without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
 
 from django.db.models import fields, SubfieldBase
 
 from ldapdb import escape_ldap_filter
+
 
 class CharField(fields.CharField):
     def __init__(self, *args, **kwargs):
@@ -47,7 +49,8 @@ class CharField(fields.CharField):
         else:
             return value[0].decode(connection.charset)
 
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
         "Returns field's value prepared for database lookup."
         if lookup_type == 'endswith':
             return ["*%s" % escape_ldap_filter(value)]
@@ -80,6 +83,7 @@ class CharField(fields.CharField):
 
         raise TypeError("CharField has invalid lookup: %s" % lookup_type)
 
+
 class ImageField(fields.Field):
     def from_ldap(self, value, connection):
         if len(value) == 0:
@@ -87,7 +91,8 @@ class ImageField(fields.Field):
         else:
             return value[0]
 
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
         "Returns field's value prepared for database lookup."
         return [self.get_prep_lookup(lookup_type, value)]
 
@@ -98,14 +103,16 @@ class ImageField(fields.Field):
         "Perform preliminary non-db specific lookup checks and conversions"
         raise TypeError("ImageField has invalid lookup: %s" % lookup_type)
 
+
 class IntegerField(fields.IntegerField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return 0
         else:
             return int(value[0])
-        
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
         "Returns field's value prepared for database lookup."
         return [self.get_prep_lookup(lookup_type, value)]
 
@@ -118,13 +125,15 @@ class IntegerField(fields.IntegerField):
             return value
         raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
 
+
 class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
         return value
 
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
         "Returns field's value prepared for database lookup."
         return [self.get_prep_lookup(lookup_type, value)]
 
@@ -141,4 +150,3 @@ class ListField(fields.Field):
         if not value:
             return []
         return value
-
