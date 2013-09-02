@@ -34,6 +34,29 @@
 
 from django.conf import settings
 
+import logging
+
+
+class _LDAPDBConfig(object):
+    logger = None
+
+    def get_logger(cls):
+        if cls.logger is None:
+            class NullHandler(logging.Handler):
+                def emit(self, record):
+                    pass
+
+            cls.logger = logging.getLogger('ldapdb')
+            cls.logger.addHandler(NullHandler())
+
+        return cls.logger
+    get_logger = classmethod(get_logger)
+
+
+# Our global logger
+logger = _LDAPDBConfig.get_logger()
+
+
 def escape_ldap_filter(value):
     value = unicode(value)
     return value.replace('\\', '\\5c') \

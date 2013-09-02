@@ -33,13 +33,16 @@
 #
 
 import ldap
-import logging
 
 import django.db.models
 from django.db import connections, router
 from django.db.models import signals
 
-import ldapdb
+from ldapdb import _LDAPDBConfig
+
+
+logger = _LDAPDBConfig.get_logger()
+
 
 class Model(django.db.models.base.Model):
     """
@@ -81,7 +84,7 @@ class Model(django.db.models.base.Model):
         """
         using = using or router.db_for_write(self.__class__, instance=self)
         connection = connections[using]
-        logging.debug("Deleting LDAP entry %s" % self.dn)
+        logger.debug("Deleting LDAP entry %s" % self.dn)
         connection.delete_s(self.dn)
         signals.post_delete.send(sender=self.__class__, instance=self)
 
@@ -104,7 +107,7 @@ class Model(django.db.models.base.Model):
                 if value:
                     entry.append((field.db_column, field.get_db_prep_save(value, connection=connection)))
 
-            logging.debug("Creating new LDAP entry %s" % new_dn)
+            logger.debug("Creating new LDAP entry %s" % new_dn)
             connection.add_s(new_dn, entry)
 
             # update object
@@ -130,14 +133,14 @@ class Model(django.db.models.base.Model):
                 # handle renaming
                 new_dn = self.build_dn()
                 if new_dn != self.dn:
-                    logging.debug("Renaming LDAP entry %s to %s" % (self.dn, new_dn))
+                    logger.debug("Renaming LDAP entry %s to %s" % (self.dn, new_dn))
                     connection.rename_s(self.dn, self.build_rdn())
                     self.dn = new_dn
             
-                logging.debug("Modifying existing LDAP entry %s" % self.dn)
+                logger.debug("Modifying existing LDAP entry %s" % self.dn)
                 connection.modify_s(self.dn, modlist)
             else:
-                logging.debug("No changes to be saved to LDAP entry %s" % self.dn)
+                logger.debug("No changes to be saved to LDAP entry %s" % self.dn)
 
         # done
         self.saved_pk = self.pk
