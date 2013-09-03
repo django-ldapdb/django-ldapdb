@@ -123,10 +123,10 @@ class IntegerField(fields.IntegerField):
         raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
 
 
-class FloatField(fields.IntegerField):
+class FloatField(fields.FloatField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
-            return 0
+            return 0.0
         else:
             return float(value[0])
 
