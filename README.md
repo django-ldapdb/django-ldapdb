@@ -1,5 +1,5 @@
-django-ldapdb - support for django models over LDAP
-Copyright (c) 2009-2011, Bolloré Telecom
+django-ldapdb - support for django models over LDAP  
+Copyright (c) 2009-2011, Bolloré Telecom  
 Copyright (c) 2013, Jeremy Lainé
 
 About
