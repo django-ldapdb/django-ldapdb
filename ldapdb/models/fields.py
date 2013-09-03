@@ -212,3 +212,44 @@ class DateField(fields.Field):
         if lookup_type in ('exact', 'lte', 'gte'):
             return value
         raise TypeError("DateField has invalid lookup: %s" % lookup_type)
+
+
+class ACLField(fields.Field):
+    """
+    A special field, that reads the values of an ACL field and produces
+    a binary property. Example an LDAP ACL attribute that contains:
+    ['user.group', 'developer.group']
+
+    ...returns the following ACLField fields:
+
+    is_user = True
+    is_developer = True
+    is_trustee = False
+    """
+    def _group(self):
+        return self.name.split('_')[1] + '.group'
+
+    def from_ldap(self, value, connection):
+        if self._group() in value:
+            return True
+        else:
+            return False
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+
+    def get_db_prep_save(self, value, connection):
+        return [x.encode(connection.charset) for x in value]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if value is False:
+            raise TypeError('Not supported. Please use filter() instead of'
+                            'exclude() or the opposite')
+        if value is not True:
+            raise TypeError('Invalid value')
+        if lookup_type == 'exact':
+            return escape_ldap_filter(self._group())
+        raise TypeError("ACLField has invalid lookup: %s" % lookup_type)
