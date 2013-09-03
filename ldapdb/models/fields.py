@@ -32,7 +32,7 @@
 
 from django.db.models import fields, SubfieldBase
 
-from ldapdb import escape_ldap_filter
+from ldapdb import escape_ldap_filter, Negated
 
 import datetime
 
@@ -245,11 +245,11 @@ class ACLField(fields.Field):
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
-        if value is False:
-            raise TypeError('Not supported. Please use filter() instead of'
-                            'exclude() or the opposite')
-        if value is not True:
+        if value not in (False, True):
             raise TypeError('Invalid value')
         if lookup_type == 'exact':
-            return escape_ldap_filter(self._group())
+            if value:
+                return escape_ldap_filter(self._group())
+            else:
+                return Negated(escape_ldap_filter(self._group()))
         raise TypeError("ACLField has invalid lookup: %s" % lookup_type)
