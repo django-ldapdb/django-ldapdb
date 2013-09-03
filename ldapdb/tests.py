@@ -35,7 +35,8 @@ from django.db.models.sql.where import Constraint, AND, OR, WhereNode
 
 from ldapdb import escape_ldap_filter
 from ldapdb.backends.ldap.compiler import where_as_ldap
-from ldapdb.models.fields import CharField, IntegerField, FloatField, ListField
+from ldapdb.models.fields import (CharField, IntegerField, FloatField,
+                                  ListField, DateField)
 
 
 class WhereTestCase(TestCase):
@@ -140,6 +141,22 @@ class WhereTestCase(TestCase):
                    'contains', '(foouser)'), AND)
         self.assertEquals(where_as_ldap(where), ("(memberUid=\\28foouser\\29)",
                                                  []))
+
+    def test_date_field(self):
+        where = WhereNode()
+        where.add((Constraint("birthday", "birthday", DateField()), 'exact',
+                   '2013-09-03'), AND)
+        self.assertEquals(where_as_ldap(where), ("(birthday=2013-09-03)", []))
+
+        where = WhereNode()
+        where.add((Constraint("birthday", "birthday", DateField()), 'gte',
+                   '2013-09-03'), AND)
+        self.assertEquals(where_as_ldap(where), ("(birthday>=2013-09-03)", []))
+
+        where = WhereNode()
+        where.add((Constraint("birthday", "birthday", DateField()), 'lte',
+                   '2013-09-03'), AND)
+        self.assertEquals(where_as_ldap(where), ("(birthday<=2013-09-03)", []))
 
     def test_and(self):
         where = WhereNode()
