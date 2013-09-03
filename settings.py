@@ -1,5 +1,7 @@
 # Django settings for django-ldapdb project.
 
+import ldap
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -20,9 +22,13 @@ DATABASES = {
     },
     'ldap': {
         'ENGINE': 'ldapdb.backends.ldap',
-        'NAME': 'ldap://',
+        'NAME': 'ldap://localhost',
         'USER': 'cn=admin,dc=nodomain',
         'PASSWORD': 'test',
+        'TLS': False,
+        'CONNECTION_OPTIONS': {
+            ldap.OPT_X_TLS_DEMAND: False,
+        }
     }
 }
 DATABASE_ROUTERS = ['ldapdb.router.Router']
