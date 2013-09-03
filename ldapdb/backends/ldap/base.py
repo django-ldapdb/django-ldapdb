@@ -95,11 +95,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if self.connection is None:
             self.connection = ldap.initialize(self.settings_dict['NAME'])
 
-            try:
-                for opt, value in self.settings_dict['CONNECTION_OPTIONS'].items():
-                    self.connection.set_option(opt, value)
-            except KeyError:
-                pass
+            options = self.settings_dict.get('CONNECTION_OPTIONS', [])
+            for opt, value in options.items():
+                self.connection.set_option(opt, value)
 
             if self.settings_dict.get('TLS', False):
                 self.connection.start_tls_s()

@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+
 def is_ldap_model(model):
     # FIXME: there is probably a better check than testing 'base_dn'
     return hasattr(model, 'base_dn')
