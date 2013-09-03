@@ -123,6 +123,28 @@ class IntegerField(fields.IntegerField):
         raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
 
 
+class FloatField(fields.IntegerField):
+    def from_ldap(self, value, connection):
+        if len(value) == 0:
+            return 0
+        else:
+            return float(value[0])
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+
+    def get_db_prep_save(self, value, connection):
+        return [str(value)]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if lookup_type in ('exact', 'gte', 'lte'):
+            return value
+        raise TypeError("FloatField has invalid lookup: %s" % lookup_type)
+
+
 class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
