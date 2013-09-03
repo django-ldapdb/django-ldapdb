@@ -95,7 +95,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if self.connection is None:
             self.connection = ldap.initialize(self.settings_dict['NAME'])
 
-            options = self.settings_dict.get('CONNECTION_OPTIONS', [])
+            options = self.settings_dict.get('CONNECTION_OPTIONS', {})
             for opt, value in options.items():
                 self.connection.set_option(opt, value)
 
