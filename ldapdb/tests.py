@@ -35,7 +35,8 @@ from django.db.models.sql.where import Constraint, AND, OR, WhereNode
 
 from ldapdb import escape_ldap_filter
 from ldapdb.backends.ldap.compiler import where_as_ldap
-from ldapdb.models.fields import CharField, IntegerField, ListField
+from ldapdb.models.fields import (CharField, IntegerField, FloatField,
+                                  ListField, DateField)
 
 
 class WhereTestCase(TestCase):
@@ -116,6 +117,19 @@ class WhereTestCase(TestCase):
         where.add((Constraint("uid", "uid", IntegerField()), 'lte', 1), AND)
         self.assertEquals(where_as_ldap(where), ("(uid<=1)", []))
 
+    def test_float_field(self):
+        where = WhereNode()
+        where.add((Constraint("uid", "uid", FloatField()), 'exact', 1.2), AND)
+        self.assertEquals(where_as_ldap(where), ("(uid=1.2)", []))
+
+        where = WhereNode()
+        where.add((Constraint("uid", "uid", FloatField()), 'gte', 1.2), AND)
+        self.assertEquals(where_as_ldap(where), ("(uid>=1.2)", []))
+
+        where = WhereNode()
+        where.add((Constraint("uid", "uid", FloatField()), 'lte', 1.2), AND)
+        self.assertEquals(where_as_ldap(where), ("(uid<=1.2)", []))
+
     def test_list_field_contains(self):
         where = WhereNode()
         where.add((Constraint("memberUid", "memberUid", ListField()),
@@ -127,6 +141,22 @@ class WhereTestCase(TestCase):
                    'contains', '(foouser)'), AND)
         self.assertEquals(where_as_ldap(where), ("(memberUid=\\28foouser\\29)",
                                                  []))
+
+    def test_date_field(self):
+        where = WhereNode()
+        where.add((Constraint("birthday", "birthday", DateField()), 'exact',
+                   '2013-09-03'), AND)
+        self.assertEquals(where_as_ldap(where), ("(birthday=2013-09-03)", []))
+
+        where = WhereNode()
+        where.add((Constraint("birthday", "birthday", DateField()), 'gte',
+                   '2013-09-03'), AND)
+        self.assertEquals(where_as_ldap(where), ("(birthday>=2013-09-03)", []))
+
+        where = WhereNode()
+        where.add((Constraint("birthday", "birthday", DateField()), 'lte',
+                   '2013-09-03'), AND)
+        self.assertEquals(where_as_ldap(where), ("(birthday<=2013-09-03)", []))
 
     def test_and(self):
         where = WhereNode()

@@ -32,7 +32,9 @@
 
 from django.db.models import fields, SubfieldBase
 
-from ldapdb import escape_ldap_filter
+from ldapdb import escape_ldap_filter, Negated
+
+import datetime
 
 
 class CharField(fields.CharField):
@@ -123,6 +125,28 @@ class IntegerField(fields.IntegerField):
         raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
 
 
+class FloatField(fields.IntegerField):
+    def from_ldap(self, value, connection):
+        if len(value) == 0:
+            return 0
+        else:
+            return float(value[0])
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+
+    def get_db_prep_save(self, value, connection):
+        return [str(value)]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if lookup_type in ('exact', 'gte', 'lte'):
+            return value
+        raise TypeError("FloatField has invalid lookup: %s" % lookup_type)
+
+
 class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
@@ -147,3 +171,85 @@ class ListField(fields.Field):
         if not value:
             return []
         return value
+
+
+class DateField(fields.Field):
+    """
+    A text field containing date, in specified format.
+    The format can be specified as 'format' argument, as strptime()
+    format string. It defaults to ISO8601 (%Y-%m-%d).
+    """
+
+    def __init__(self, *args, **kwargs):
+        if 'format' in kwargs:
+            self._date_format = kwargs.pop('format')
+        else:
+            self._date_format = '%Y-%m-%d'
+        super(DateField, self).__init__(self, *args, **kwargs)
+
+    def from_ldap(self, value, connection):
+        if len(value) == 0:
+            return None
+        else:
+            return datetime.datetime.strptime(value[0],
+                                              self._date_format).date()
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+
+    def get_db_prep_save(self, value, connection):
+        if not isinstance(value, datetime.date) \
+                and not isinstance(value, datetime.datetime):
+            raise ValueError(
+                'DateField can be only set to a datetime.date instance')
+
+        return [value.strftime(self._date_format)]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if lookup_type in ('exact', 'lte', 'gte'):
+            return value
+        raise TypeError("DateField has invalid lookup: %s" % lookup_type)
+
+
+class ACLField(fields.Field):
+    """
+    A special field, that reads the values of an ACL field and produces
+    a binary property. Example an LDAP ACL attribute that contains:
+    ['user.group', 'developer.group']
+
+    ...returns the following ACLField fields:
+
+    is_user = True
+    is_developer = True
+    is_trustee = False
+    """
+    def _group(self):
+        return self.name.split('_')[1] + '.group'
+
+    def from_ldap(self, value, connection):
+        if self._group() in value:
+            return True
+        else:
+            return False
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+
+    def get_db_prep_save(self, value, connection):
+        return [x.encode(connection.charset) for x in value]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if value not in (False, True):
+            raise TypeError('Invalid value')
+        if lookup_type == 'exact':
+            if value:
+                return escape_ldap_filter(self._group())
+            else:
+                return Negated(escape_ldap_filter(self._group()))
+        raise TypeError("ACLField has invalid lookup: %s" % lookup_type)

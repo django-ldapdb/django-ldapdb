@@ -33,6 +33,10 @@
 from django.conf import settings
 
 
+class Negated(str):
+    pass
+
+
 def escape_ldap_filter(value):
     value = unicode(value)
     return value.replace('\\', '\\5c') \
