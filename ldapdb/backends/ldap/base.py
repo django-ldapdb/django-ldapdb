@@ -1,42 +1,45 @@
 # -*- coding: utf-8 -*-
-# 
+#
 # django-ldapdb
-# Copyright (c) 2009-2010, Bolloré telecom
+# Copyright (c) 2009-2011, Bolloré telecom
 # All rights reserved.
-# 
+#
 # See AUTHORS file for a full list of contributors.
-# 
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-# 
-#     1. Redistributions of source code must retain the above copyright notice, 
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     1. Redistributions of source code must retain the above copyright notice,
 #        this list of conditions and the following disclaimer.
-#     
-#     2. Redistributions in binary form must reproduce the above copyright 
+#
+#     2. Redistributions in binary form must reproduce the above copyright
 #        notice, this list of conditions and the following disclaimer in the
 #        documentation and/or other materials provided with the distribution.
-# 
+#
 #     3. Neither the name of Bolloré telecom nor the names of its contributors
 #        may be used to endorse or promote products derived from this software
 #        without specific prior written permission.
-# 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
 
 import ldap
 import django
 
-from django.db.backends import BaseDatabaseFeatures, BaseDatabaseOperations, BaseDatabaseWrapper
+from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
+                                BaseDatabaseWrapper)
 from django.db.backends.creation import BaseDatabaseCreation
+
 
 class DatabaseCreation(BaseDatabaseCreation):
     def create_test_db(self, verbosity=1, autoclobber=False):
@@ -53,20 +56,24 @@ class DatabaseCreation(BaseDatabaseCreation):
         """
         pass
 
+
 class DatabaseCursor(object):
     def __init__(self, ldap_connection):
         self.connection = ldap_connection
+
 
 class DatabaseFeatures(BaseDatabaseFeatures):
     def __init__(self, connection):
         self.connection = connection
         self.supports_transactions = False
 
+
 class DatabaseOperations(BaseDatabaseOperations):
     compiler_module = "ldapdb.backends.ldap.compiler"
 
     def quote_name(self, name):
         return name
+
 
 class DatabaseWrapper(BaseDatabaseWrapper):
     def __init__(self, *args, **kwargs):
@@ -112,13 +119,16 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def rename_s(self, dn, newrdn):
         cursor = self._cursor()
-        return cursor.connection.rename_s(dn.encode(self.charset), newrdn.encode(self.charset))
+        return cursor.connection.rename_s(dn.encode(self.charset),
+                                          newrdn.encode(self.charset))
 
-    def search_s(self, base, scope, filterstr='(objectClass=*)',attrlist=None):
+    def search_s(self, base, scope, filterstr='(objectClass=*)',
+                 attrlist=None):
         cursor = self._cursor()
-        results = cursor.connection.search_s(base, scope, filterstr.encode(self.charset), attrlist)
+        results = cursor.connection.search_s(base, scope,
+                                             filterstr.encode(self.charset),
+                                             attrlist)
         output = []
         for dn, attrs in results:
             output.append((dn.decode(self.charset), attrs))
         return output
-

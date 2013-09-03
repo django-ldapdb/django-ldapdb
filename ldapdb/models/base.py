@@ -6,8 +6,8 @@
 #
 # See AUTHORS file for a full list of contributors.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
 #     1. Redistributions of source code must retain the above copyright notice,
 #        this list of conditions and the following disclaimer.
@@ -20,16 +20,17 @@
 #        may be used to endorse or promote products derived from this software
 #        without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
 
 import ldap
@@ -39,7 +40,8 @@ import django.db.models
 from django.db import connections, router
 from django.db.models import signals
 
-import ldapdb
+import ldapdb  # noqa
+
 
 class Model(django.db.models.base.Model):
     """
@@ -63,7 +65,8 @@ class Model(django.db.models.base.Model):
         bits = []
         for field in self._meta.fields:
             if field.db_column and field.primary_key:
-                bits.append("%s=%s" % (field.db_column, getattr(self, field.name)))
+                bits.append("%s=%s" % (field.db_column,
+                                       getattr(self, field.name)))
         if not len(bits):
             raise Exception("Could not build Distinguished Name")
         return '+'.join(bits)
@@ -93,7 +96,7 @@ class Model(django.db.models.base.Model):
         connection = connections[using]
         if not self.dn:
             # create a new entry
-            record_exists = False 
+            record_exists = False
             entry = [('objectClass', self.object_classes)]
             new_dn = self.build_dn()
 
@@ -102,7 +105,9 @@ class Model(django.db.models.base.Model):
                     continue
                 value = getattr(self, field.name)
                 if value:
-                    entry.append((field.db_column, field.get_db_prep_save(value, connection=connection)))
+                    entry.append((field.db_column,
+                                  field.get_db_prep_save(
+                                      value, connection=connection)))
 
             logging.debug("Creating new LDAP entry %s" % new_dn)
             connection.add_s(new_dn, entry)
@@ -122,26 +127,33 @@ class Model(django.db.models.base.Model):
                 new_value = getattr(self, field.name, None)
                 if old_value != new_value:
                     if new_value:
-                        modlist.append((ldap.MOD_REPLACE, field.db_column, field.get_db_prep_save(new_value, connection=connection)))
+                        modlist.append(
+                            (ldap.MOD_REPLACE, field.db_column,
+                             field.get_db_prep_save(new_value,
+                                                    connection=connection)))
                     elif old_value:
-                        modlist.append((ldap.MOD_DELETE, field.db_column, None))
+                        modlist.append((ldap.MOD_DELETE, field.db_column,
+                                        None))
 
             if len(modlist):
                 # handle renaming
                 new_dn = self.build_dn()
                 if new_dn != self.dn:
-                    logging.debug("Renaming LDAP entry %s to %s" % (self.dn, new_dn))
+                    logging.debug("Renaming LDAP entry %s to %s" % (self.dn,
+                                                                    new_dn))
                     connection.rename_s(self.dn, self.build_rdn())
                     self.dn = new_dn
-            
+
                 logging.debug("Modifying existing LDAP entry %s" % self.dn)
                 connection.modify_s(self.dn, modlist)
             else:
-                logging.debug("No changes to be saved to LDAP entry %s" % self.dn)
+                logging.debug("No changes to be saved to LDAP entry %s" %
+                              self.dn)
 
         # done
         self.saved_pk = self.pk
-        signals.post_save.send(sender=self.__class__, instance=self, created=(not record_exists))
+        signals.post_save.send(sender=self.__class__, instance=self,
+                               created=(not record_exists))
 
     @classmethod
     def scoped(base_class, base_dn):
@@ -153,7 +165,9 @@ class Model(django.db.models.base.Model):
         import re
         suffix = re.sub('[=,]', '_', base_dn)
         name = "%s_%s" % (base_class.__name__, str(suffix))
-        new_class = type(name, (base_class,), {'base_dn': base_dn, '__module__': base_class.__module__, 'Meta': Meta})
+        new_class = type(name, (base_class,), {
+            'base_dn': base_dn, '__module__': base_class.__module__,
+            'Meta': Meta})
         return new_class
 
     class Meta:
