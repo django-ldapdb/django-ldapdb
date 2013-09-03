@@ -97,9 +97,20 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def _cursor(self):
         if self.connection is None:
             self.connection = ldap.initialize(self.settings_dict['NAME'])
+
+            try:
+                for opt, value in self.settings_dict['CONNECTION_OPTIONS'].items():
+                    self.connection.set_option(opt, value)
+            except KeyError:
+                pass
+
+            if self.settings_dict.get('TLS', False):
+                self.connection.start_tls_s()
+
             self.connection.simple_bind_s(
                 self.settings_dict['USER'],
                 self.settings_dict['PASSWORD'])
+
         return DatabaseCursor(self.connection)
 
     def _rollback(self):
