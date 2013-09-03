@@ -11,7 +11,7 @@ LDAP backend is very staightforward, you simply inherit from
 _ldapdb.models.Model_ and declare the fields in the same way as for regular
 models. You can even edit the LDAP entries using Django's admin interface.
 
-_django-ldapdb_ requires Django version 1.2.x, 1.3.x or 1.4.x.
+_django-ldapdb_ requires Django version 1.3.x, 1.4.x or 1.5.x.
 
 _django-ldapdb_ is distributed under the BSD license, see the LICENSE
 file for details. See AUTHORS file for a full list of contributors.
