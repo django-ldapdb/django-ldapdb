@@ -86,7 +86,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = False
 
     def close(self):
-        self.validate_thread_sharing()
+        if hasattr(self, 'validate_thread_sharing'):
+            # django >= 1.4
+            self.validate_thread_sharing()
         if self.connection is not None:
             self.connection.unbind_s()
             self.connection = None
