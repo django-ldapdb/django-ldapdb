@@ -3,4 +3,12 @@ python:
   - "2.5"
   - "2.6"
   - "2.7"
+env:
+  - DJANGO=1.2.7
+  - DJANGO=1.3.7
+  - DJANGO=1.4.6
+  - DJANGO=1.5.2
+install:
+  - pip install -q Django==$DJANGO --use-mirrors
+  - pip install -q ldap --use-mirrors
 script: python manage.py test ldapdb
