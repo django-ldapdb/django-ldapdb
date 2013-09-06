@@ -267,6 +267,20 @@ class Model(django.db.models.base.Model):
         # close the cached connection since data has changed
         connections[cls.bound_alias].close()
 
+    def __enter__(cls):
+        if not cls.bound_alias:
+            raise TypeError(
+                'Context manager interface is meaningful only on class '
+                'returned by bind_as()')
+        return cls
+
+    def __exit__(cls, exc_type, exc_value, traceback):
+        if not cls.bound_alias:
+            raise TypeError(
+                'Context manager interface is meaningful only on class '
+                'returned by bind_as()')
+        cls.restore_alias()
+
     @classmethod
     def scoped(base_class, base_dn):
         """
