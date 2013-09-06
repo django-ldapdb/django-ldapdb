@@ -30,6 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from functools import partial, wraps
 import ldap
 import logging
 
@@ -41,6 +42,18 @@ import ldapdb  # noqa
 
 
 logger = logging.getLogger('ldapdb')
+
+
+def classorinstancemethod(f):
+    """
+    Decorator that allows the method to be called both on classes
+    and object instances, passing the class or object appropriately.
+    """
+    class wrapper(object):
+        @wraps(f)
+        def __get__(self, instance, owner):
+            return partial(f, instance or owner)
+    return wrapper()
 
 
 class Model(django.db.models.base.Model):
@@ -58,24 +71,42 @@ class Model(django.db.models.base.Model):
         super(Model, self).__init__(*args, **kwargs)
         self.saved_pk = self.pk
 
-    def build_rdn(self):
+    @classorinstancemethod
+    def build_rdn(self, **kwargs):
         """
         Build the Relative Distinguished Name for this entry.
+
+        When called as a class method, values for all the key fields
+        need to be provided. When called as an instance method, values
+        for the remaining fields will be obtained from the instance.
         """
         bits = []
         for field in self._meta.fields:
-            if field.db_column and field.primary_key:
+            if not field.db_column:
+                continue
+            elif field.name in kwargs:
+                bits.append("%s=%s" % (field.db_column,
+                                       kwargs[field.name]))
+            elif field.primary_key:
+                if not isinstance(self, Model):
+                    raise TypeError(
+                        "All keys must be specified when used on a class")
                 bits.append("%s=%s" % (field.db_column,
                                        getattr(self, field.name)))
         if not len(bits):
             raise Exception("Could not build Distinguished Name")
         return '+'.join(bits)
 
-    def build_dn(self):
+    @classorinstancemethod
+    def build_dn(self, **kwargs):
         """
         Build the Distinguished Name for this entry.
+
+        When called as a class method, values for all the key fields
+        need to be provided. When called as an instance method, values
+        for the remaining fields will be obtained from the instance.
         """
-        return "%s,%s" % (self.build_rdn(), self.base_dn)
+        return "%s,%s" % (self.build_rdn(**kwargs), self.base_dn)
         raise Exception("Could not build Distinguished Name")
 
     def delete(self, using=None):
