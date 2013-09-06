@@ -30,11 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import copy
 from functools import partial, wraps
 import ldap
 import logging
 
 import django.db.models
+from django.conf import settings
 from django.db import connections, router
 from django.db.models import signals
 
@@ -64,6 +66,7 @@ class Model(django.db.models.base.Model):
 
     # meta-data
     base_dn = None
+    bound_alias = None
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
 
@@ -113,7 +116,8 @@ class Model(django.db.models.base.Model):
         """
         Get the proper LDAP connection.
         """
-        using = using or router.db_for_write(self.__class__, instance=self)
+        using = (using or self.bound_alias
+                 or router.db_for_write(self.__class__, instance=self))
         return connections[using]
 
     def delete(self, using=None):
@@ -190,6 +194,54 @@ class Model(django.db.models.base.Model):
         self.saved_pk = self.pk
         signals.post_save.send(sender=self.__class__, instance=self,
                                created=(not record_exists))
+
+    @classmethod
+    def bind_as(base_class, alias, dn=None, password=None, **kwargs):
+        """
+        Returns a copy of the current class that is bound to use
+        alternate LDAP connection alias.
+
+        If dn or kwargs are specified, settings for the alias will
+        be updated with proper DN and password. If kwargs are specified,
+        the DN is built from specified fields using build_dn(**kwargs).
+        """
+
+        if dn and kwargs:
+            raise TypeError('Either dn or kwargs must be specified')
+
+        if dn or kwargs:
+            # adding to/updating settings.DATABASES
+            if not dn:
+                dn = base_class.build_dn(**kwargs)
+
+            # copy remaining settings from the default alias
+            if alias not in settings.DATABASES:
+                base_alias = router.db_for_write(base_class)
+                new_db = copy.deepcopy(settings.DATABASES[base_alias])
+            else:
+                new_db = copy.deepcopy(settings.DATABASES[alias])
+
+            new_db['USER'] = dn
+            new_db['PASSWORD'] = password or ''
+            settings.DATABASES[alias] = new_db
+
+            # close the cached connection since data has changed
+            connections[alias].close()
+        else:
+            # reusing existing alias
+			if alias not in settings.DATABASES:
+                raise KeyError('Alias %s not in settings.DATABASES'
+                               % alias)
+
+        class Meta:
+            proxy = True
+        name = "%s_%s" % (base_class.__name__, str(alias))
+        new_class = type(name, (base_class,), {
+            'bound_alias': alias,
+            '__module__': base_class.__module__,
+            'Meta': Meta,
+        })
+        return new_class
 
     @classmethod
     def scoped(base_class, base_dn):
