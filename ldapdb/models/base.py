@@ -218,8 +218,10 @@ class Model(django.db.models.base.Model):
             if alias not in settings.DATABASES:
                 base_alias = router.db_for_write(base_class)
                 new_db = copy.deepcopy(settings.DATABASES[base_alias])
+                prev_db = None
             else:
-                new_db = copy.deepcopy(settings.DATABASES[alias])
+                prev_db = settings.DATABASES[alias]
+                new_db = copy.deepcopy(prev_db)
 
             new_db['USER'] = dn
             new_db['PASSWORD'] = password or ''
@@ -229,7 +231,10 @@ class Model(django.db.models.base.Model):
             connections[alias].close()
         else:
             # reusing existing alias
-			if alias not in settings.DATABASES:
+            try:
+                # disarm restore_alias()
+                prev_db = settings.DATABASES[alias]
+            except KeyError:
                 raise KeyError('Alias %s not in settings.DATABASES'
                                % alias)
 
@@ -240,8 +245,27 @@ class Model(django.db.models.base.Model):
             'bound_alias': alias,
             '__module__': base_class.__module__,
             'Meta': Meta,
+            '_prev_db': prev_db,
         })
         return new_class
+
+    @classmethod
+    def restore_alias(cls):
+        """
+        Restore settings.DATABASES to state before bind_as().
+        """
+        if not cls.bound_alias:
+            raise TypeError(
+                'restore_alias() is meaningful only on class returned '
+                'by bind_as()')
+
+        if cls._prev_db:
+            settings.DATABASES[cls.bound_alias] = cls._prev_db
+        else:
+            del settings.DATABASES[cls.bound_alias]
+
+        # close the cached connection since data has changed
+        connections[cls.bound_alias].close()
 
     @classmethod
     def scoped(base_class, base_dn):
