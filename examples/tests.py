@@ -238,7 +238,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEquals(len(qs), 0)
 
     def test_slice(self):
-        qs = LdapGroup.objects.all()
+        qs = LdapGroup.objects.order_by('gid')
         objs = list(qs)
         self.assertEquals(len(objs), 3)
         self.assertEquals(objs[0].gid, 1000)
@@ -246,7 +246,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEquals(objs[2].gid, 1002)
 
         # limit only
-        qs = LdapGroup.objects.all()
+        qs = LdapGroup.objects.order_by('gid')
         objs = qs[:2]
         self.assertEquals(objs.count(), 2)
 
@@ -256,7 +256,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEquals(objs[1].gid, 1001)
 
         # offset only
-        qs = LdapGroup.objects.all()
+        qs = LdapGroup.objects.order_by('gid')
         objs = qs[1:]
         self.assertEquals(objs.count(), 2)
 
@@ -266,7 +266,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEquals(objs[1].gid, 1002)
 
         # offset and limit
-        qs = LdapGroup.objects.all()
+        qs = LdapGroup.objects.order_by('gid')
         objs = qs[1:2]
         self.assertEquals(objs.count(), 1)
 
@@ -287,17 +287,17 @@ class GroupTestCase(BaseTestCase):
         self.assertEquals(g.dn, 'cn=foogroup2,%s' % LdapGroup.base_dn)
 
     def test_values(self):
-        qs = LdapGroup.objects.values('name')
+        qs = sorted(LdapGroup.objects.values('name'))
         self.assertEquals(len(qs), 3)
-        self.assertEquals(qs[0], {'name': 'foogroup'})
-        self.assertEquals(qs[1], {'name': 'bargroup'})
+        self.assertEquals(qs[0], {'name': 'bargroup'})
+        self.assertEquals(qs[1], {'name': 'foogroup'})
         self.assertEquals(qs[2], {'name': 'wizgroup'})
 
     def test_values_list(self):
-        qs = LdapGroup.objects.values_list('name')
+        qs = sorted(LdapGroup.objects.values_list('name'))
         self.assertEquals(len(qs), 3)
-        self.assertEquals(qs[0], ('foogroup',))
-        self.assertEquals(qs[1], ('bargroup',))
+        self.assertEquals(qs[0], ('bargroup',))
+        self.assertEquals(qs[1], ('foogroup',))
         self.assertEquals(qs[2], ('wizgroup',))
 
     def test_delete(self):
