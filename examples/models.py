@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from ldapdb.models.fields import CharField, ImageField, IntegerField, ListField
+from ldapdb.models.fields import CharField, DateField, ImageField, IntegerField, ListField
 import ldapdb.models
 
 
@@ -59,6 +59,9 @@ class LdapUser(ldapdb.models.Model):
     login_shell = CharField(db_column='loginShell', default='/bin/bash')
     username = CharField(db_column='uid', primary_key=True)
     password = CharField(db_column='userPassword')
+
+    # FIXME: we are hijacking the 'l' field to demonstrate a date
+    date_of_birth = DateField(db_column='l', blank=True)
 
     def __str__(self):
         return self.username

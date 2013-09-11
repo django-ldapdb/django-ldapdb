@@ -30,11 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
+import ldap
+
 from django.db import connections, router
 from django.db.models import Q
 from django.test import TestCase
-
-import ldap
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
 from examples.models import LdapUser, LdapGroup
@@ -339,6 +340,7 @@ class UserTestCase(BaseTestCase):
         '\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         '\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q'
         '\xd6\xfd\x00\x01\xff\xd9'
+        u.date_of_birth = datetime.date(1982, 6, 12)
         u.save()
 
     def test_get(self):
@@ -376,6 +378,7 @@ class UserTestCase(BaseTestCase):
 #                          '\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00'
 #                          '\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00'
 #                          '\x01\xff\xd9')
+        self.assertEquals(u.date_of_birth, datetime.date(1982, 6, 12))
 
         self.assertRaises(LdapUser.DoesNotExist, LdapUser.objects.get,
                           username='does_not_exist')
