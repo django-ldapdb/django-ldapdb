@@ -173,7 +173,7 @@ class ListField(fields.Field):
         return value
 
 
-class DateField(fields.Field):
+class DateField(fields.DateField):
     """
     A text field containing date, in specified format.
     The format can be specified as 'format' argument, as strptime()
@@ -189,7 +189,7 @@ class DateField(fields.Field):
             self._date_format = kwargs.pop('format')
         else:
             self._date_format = '%Y-%m-%d'
-        super(DateField, self).__init__(self, *args, **kwargs)
+        super(DateField, self).__init__(*args, **kwargs)
 
     def from_ldap(self, value, connection):
         if len(value) == 0:
