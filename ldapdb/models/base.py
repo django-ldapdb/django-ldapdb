@@ -219,13 +219,13 @@ class Model(django.db.models.base.Model):
                 base_alias = router.db_for_write(base_class)
                 new_db = copy.deepcopy(settings.DATABASES[base_alias])
                 prev_db = None
+                settings.DATABASES[alias] = new_db
             else:
-                prev_db = settings.DATABASES[alias]
-                new_db = copy.deepcopy(prev_db)
+                new_db = settings.DATABASES[alias]
+                prev_db = copy.deepcopy(new_db)
 
             new_db['USER'] = dn
             new_db['PASSWORD'] = password or ''
-            settings.DATABASES[alias] = new_db
 
             # close the cached connection since data has changed
             connections[alias].close()
@@ -259,10 +259,15 @@ class Model(django.db.models.base.Model):
                 'restore_alias() is meaningful only on class returned '
                 'by bind_as()')
 
+        db_alias = settings.DATABASES[cls.bound_alias]
         if cls._prev_db:
-            settings.DATABASES[cls.bound_alias] = cls._prev_db
+            # restore old alias
+            db_alias.clear()
+            db_alias.update(cls._prev_db)
         else:
-            del settings.DATABASES[cls.bound_alias]
+            # just clean up username & password
+            del db_alias['USER']
+            del db_alias['PASSWORD']
 
         # close the cached connection since data has changed
         connections[cls.bound_alias].close()

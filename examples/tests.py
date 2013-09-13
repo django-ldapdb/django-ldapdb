@@ -521,7 +521,8 @@ class BindAsTestCase(TestCase):
             username='foouser',
             password='foopassword')
         bound_user.restore_alias()
-        self.assertFalse('restore_alias' in settings.DATABASES)
+        self.assertFalse('USER' in settings.DATABASES['restore_alias'])
+        self.assertFalse('PASSWORD' in settings.DATABASES['restore_alias'])
 
     def test_bind_as_restore_alias_restores_db(self):
         initial_content = {
@@ -553,9 +554,10 @@ class BindAsTestCase(TestCase):
             alias='context_manager',
             username='foouser',
             password='foopassword')
-        with bound_user.objects.get(username='foouser') as u:
+        with bound_user.objects.get(username='foouser') as u:  # noqa
             pass
-        self.assertFalse('context_manager' in settings.DATABASES)
+        self.assertFalse('USER' in settings.DATABASES['context_manager'])
+        self.assertFalse('PASSWORD' in settings.DATABASES['context_manager'])
 
     def test_plain_alias_does_not_modify_settings(self):
         initial_content = {
