@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name = "django-ldapdb",
@@ -10,4 +10,5 @@ setup(
     author = "Jeremy Laine",
     author_email = "jeremy.laine@bolloretelecom.eu",
     packages = ['ldapdb', 'ldapdb.backends', 'ldapdb.backends.ldap', 'ldapdb.models'],
+    test_suite='tests.runtests.runtests',
     )

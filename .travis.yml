@@ -9,4 +9,4 @@ env:
 install:
   - pip install -q Django==$DJANGO --use-mirrors
   - pip install -q python-ldap mockldap --use-mirrors
-script: python manage.py test ldapdb examples
+script: python setup.py test
