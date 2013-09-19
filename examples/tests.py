@@ -31,70 +31,79 @@
 #
 
 import datetime
-import ldap
 
-from django.db import connections, router
+from django.conf import settings
 from django.db.models import Q
 from django.test import TestCase
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
 from examples.models import LdapUser, LdapGroup
 
+from mockldap import MockLdap
 
-class BaseTestCase(TestCase):
-    def _add_base_dn(self, model):
-        using = router.db_for_write(model)
-        connection = connections[using]
 
-        rdn = model.base_dn.split(',')[0]
-        key, val = rdn.split('=')
-        attrs = [('objectClass', ['top', 'organizationalUnit']), (key, [val])]
-        try:
-            connection.add_s(model.base_dn, attrs)
-        except ldap.ALREADY_EXISTS:
-            pass
+admin = ('cn=admin,dc=nodomain', {'userPassword': ['test']})
+groups = ('ou=groups,dc=nodomain', {
+    'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
+people = ('ou=people,dc=nodomain', {
+    'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
+contacts = ('ou=contacts,ou=groups,dc=nodomain', {
+    'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
+foogroup = ('cn=foogroup,ou=groups,dc=nodomain', {
+    'objectClass': ['posixGroup'], 'memberUid': ['foouser', 'baruser'],
+    'gidNumber': ['1000'], 'cn': ['foogroup']})
+bargroup = ('cn=bargroup,ou=groups,dc=nodomain', {
+    'objectClass': ['posixGroup'], 'memberUid': ['zoouser', 'baruser'],
+    'gidNumber': ['1001'], 'cn': ['bargroup']})
+wizgroup = ('cn=wizgroup,ou=groups,dc=nodomain', {
+    'objectClass': ['posixGroup'], 'memberUid': ['wizuser', 'baruser'],
+    'gidNumber': ['1002'], 'cn': ['wizgroup']})
+foouser = ('uid=foouser,ou=people,dc=nodomain', {
+    'cn': ['F\xc3\xb4o Us\xc3\xa9r'],
+    'objectClass': ['posixAccount', 'shadowAccount', 'inetOrgPerson'],
+    'loginShell': ['/bin/bash'],
+    'jpegPhoto': [
+        '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff'
+        '\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04'
+        '\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07\x07\x07'
+        '\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13\x16\x1c'
+        '\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13'
+        '\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06\x07'
+        '\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
+        '\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00\x00'
+        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00'
+        '\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        '\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00\x00'
+        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11\x01'
+        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff'
+        '\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6'
+        '\xfd\x00\x01\xff\xd9'],
+    'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': ['Us\xc3\xa9r'],
+    'homeDirectory': ['/home/foouser'], 'givenName': ['F\xc3\xb4o'],
+    'uid': ['foouser'], 'birthday': ['1982-06-12']})
 
-    def _remove_base_dn(self, model):
-        using = router.db_for_write(model)
-        connection = connections[using]
 
-        try:
-            results = connection.search_s(model.base_dn, ldap.SCOPE_SUBTREE)
-            for dn, attrs in reversed(results):
-                connection.delete_s(dn)
-        except ldap.NO_SUCH_OBJECT:
-            pass
+class GroupTestCase(TestCase):
+    directory = dict([admin, groups, foogroup, bargroup, wizgroup, foouser])
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mockldap = MockLdap(cls.directory)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.mockldap
 
     def setUp(self):
-        for model in [LdapGroup, LdapUser]:
-            self._add_base_dn(model)
+        self.mockldap.start()
+        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
 
     def tearDown(self):
-        for model in [LdapGroup, LdapUser]:
-            self._remove_base_dn(model)
-
-
-class GroupTestCase(BaseTestCase):
-    def setUp(self):
-        super(GroupTestCase, self).setUp()
-
-        g = LdapGroup()
-        g.name = "foogroup"
-        g.gid = 1000
-        g.usernames = ['foouser', 'baruser']
-        g.save()
-
-        g = LdapGroup()
-        g.name = "bargroup"
-        g.gid = 1001
-        g.usernames = ['zoouser', 'baruser']
-        g.save()
-
-        g = LdapGroup()
-        g.name = "wizgroup"
-        g.gid = 1002
-        g.usernames = ['wizuser', 'baruser']
-        g.save()
+        self.mockldap.stop()
+        del self.ldapobj
 
     def test_count(self):
         # empty query
@@ -308,40 +317,37 @@ class GroupTestCase(BaseTestCase):
         qs = LdapGroup.objects.all()
         self.assertEquals(len(qs), 2)
 
+    def test_save(self):
+        g = LdapGroup()
+        g.name = 'newgroup'
+        g.gid = 1010
+        g.usernames = ['someuser', 'foouser']
+        g.save()
 
-class UserTestCase(BaseTestCase):
+        new = LdapGroup.objects.get(name='newgroup')
+        self.assertEquals(new.name, 'newgroup')
+        self.assertEquals(new.gid, 1010)
+        self.assertEquals(new.usernames, ['someuser', 'foouser'])
+
+
+class UserTestCase(TestCase):
+    directory = dict([admin, groups, people, foouser])
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mockldap = MockLdap(cls.directory)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.mockldap
+
     def setUp(self):
-        super(UserTestCase, self).setUp()
+        self.mockldap.start()
+        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
 
-        u = LdapUser()
-        u.first_name = u"Fôo"
-        u.last_name = u"Usér"
-        u.full_name = u"Fôo Usér"
-
-        u.group = 1000
-        u.home_directory = "/home/foouser"
-        u.uid = 2000
-        u.username = "foouser"
-        u.photo = '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00'
-        '\x00\xff\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05'
-        '\x03\x04\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07'
-        '\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13'
-        '\x16\x1c\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f'
-        '\x13\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06'
-        '\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08'
-        '\x03\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00'
-        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4'
-        '\x00\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-        '\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00'
-        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
-        '\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-        '\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q'
-        '\xd6\xfd\x00\x01\xff\xd9'
-        u.date_of_birth = datetime.date(1982, 6, 12)
-        u.save()
+    def tearDown(self):
+        self.mockldap.stop()
+        del self.ldapobj
 
     def test_get(self):
         u = LdapUser.objects.get(username='foouser')
@@ -353,31 +359,31 @@ class UserTestCase(BaseTestCase):
         self.assertEquals(u.home_directory, '/home/foouser')
         self.assertEquals(u.uid, 2000)
         self.assertEquals(u.username, 'foouser')
-#        self.assertEquals(u.photo, '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01'
-#                          '\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with '
-#                          'GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04'
-#                          '\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08'
-#                          '\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12'
-#                          '\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15'
-#                          '\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17'
-#                          '"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05'
-#                          '\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14'
-#                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-#                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-#                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-#                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-#                          '\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
-#                          '\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15'
-#                          '\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-#                          '\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10'
-#                          '\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00'
-#                          '\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00'
-#                          '\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-#                          '\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
-#                          '\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-#                          '\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00'
-#                          '\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00'
-#                          '\x01\xff\xd9')
+        self.assertEquals(u.photo, '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01'
+                          '\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with '
+                          'GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04'
+                          '\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08'
+                          '\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12'
+                          '\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15'
+                          '\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17'
+                          '"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05'
+                          '\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+                          '\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
+                          '\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15'
+                          '\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10'
+                          '\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00'
+                          '\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
+                          '\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                          '\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00'
+                          '\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00'
+                          '\x01\xff\xd9')
         self.assertEquals(u.date_of_birth, datetime.date(1982, 6, 12))
 
         self.assertRaises(LdapUser.DoesNotExist, LdapUser.objects.get,
@@ -394,26 +400,29 @@ class UserTestCase(BaseTestCase):
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
 
 
-class ScopedTestCase(BaseTestCase):
-    def setUp(self):
-        super(ScopedTestCase, self).setUp()
+class ScopedTestCase(TestCase):
+    directory = dict([admin, groups, people, foogroup, contacts])
 
+    @classmethod
+    def setUpClass(cls):
+        cls.mockldap = MockLdap(cls.directory)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.mockldap
+
+    def setUp(self):
+        self.mockldap.start()
+        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
         self.scoped_model = LdapGroup.scoped("ou=contacts,%s" %
                                              LdapGroup.base_dn)
-        self._add_base_dn(self.scoped_model)
 
     def tearDown(self):
-        self._remove_base_dn(self.scoped_model)
-        super(ScopedTestCase, self).tearDown()
+        self.mockldap.stop()
+        del self.ldapobj
 
     def test_scope(self):
         ScopedGroup = self.scoped_model
-
-        # create group
-        g = LdapGroup()
-        g.name = "foogroup"
-        g.gid = 1000
-        g.save()
 
         qs = LdapGroup.objects.all()
         self.assertEquals(qs.count(), 1)
@@ -438,45 +447,26 @@ class ScopedTestCase(BaseTestCase):
         self.assertEquals(g2.gid, 5000)
 
 
-class AdminTestCase(BaseTestCase):
+class AdminTestCase(TestCase):
     fixtures = ['test_users.json']
+    directory = dict([admin, groups, people, foouser, foogroup, bargroup])
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mockldap = MockLdap(cls.directory)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.mockldap
 
     def setUp(self):
-        super(AdminTestCase, self).setUp()
-
-        g = LdapGroup()
-        g.name = "foogroup"
-        g.gid = 1000
-        g.usernames = ['foouser', 'baruser']
-        g.save()
-
-        g = LdapGroup()
-        g.name = "bargroup"
-        g.gid = 1001
-        g.usernames = ['zoouser', 'baruser']
-        g.save()
-
-        u = LdapUser()
-        u.first_name = "Foo"
-        u.last_name = "User"
-        u.full_name = "Foo User"
-        u.group = 1000
-        u.home_directory = "/home/foouser"
-        u.uid = 2000
-        u.username = "foouser"
-        u.save()
-
-        u = LdapUser()
-        u.first_name = "Bar"
-        u.last_name = "User"
-        u.full_name = "Bar User"
-        u.group = 1001
-        u.home_directory = "/home/baruser"
-        u.uid = 2001
-        u.username = "baruser"
-        u.save()
-
+        self.mockldap.start()
+        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
         self.client.login(username="test_user", password="password")
+
+    def tearDown(self):
+        self.mockldap.stop()
+        del self.ldapobj
 
     def test_index(self):
         response = self.client.get('/admin/examples/')
@@ -521,6 +511,14 @@ class AdminTestCase(BaseTestCase):
         self.assertEquals(qs.count(), 1)
 
     def test_group_search(self):
+        self.ldapobj.search_s.seed(
+            "ou=groups,dc=nodomain", 2,
+            "(&(objectClass=posixGroup)(cn=*foo*))",
+            ['dn'])([foogroup])
+        self.ldapobj.search_s.seed(
+            "ou=groups,dc=nodomain", 2,
+            "(&(objectClass=posixGroup)(cn=*foo*))",
+            ['gidNumber', 'cn', 'memberUid'])([foogroup])
         response = self.client.get('/admin/examples/ldapgroup/?q=foo')
         self.assertContains(response, "Ldap groups")
         self.assertContains(response, "foogroup")
