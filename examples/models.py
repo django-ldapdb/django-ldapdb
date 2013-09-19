@@ -60,8 +60,7 @@ class LdapUser(ldapdb.models.Model):
     username = CharField(db_column='uid', primary_key=True)
     password = CharField(db_column='userPassword')
 
-    # FIXME: we are hijacking the 'l' field to demonstrate a date
-    date_of_birth = DateField(db_column='l', blank=True)
+    date_of_birth = DateField(db_column='birthday', blank=True)
 
     def __str__(self):
         return self.username
