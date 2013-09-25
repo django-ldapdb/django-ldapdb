@@ -25,9 +25,9 @@ DATABASES = {
         'NAME': 'ldap://localhost',
         'USER': 'cn=admin,dc=nodomain',
         'PASSWORD': 'test',
-        'TLS': False,
+        'TLS': True,
         'CONNECTION_OPTIONS': {
-            ldap.OPT_X_TLS_DEMAND: False,
+            ldap.OPT_X_TLS_DEMAND: True,
         }
     }
 }
