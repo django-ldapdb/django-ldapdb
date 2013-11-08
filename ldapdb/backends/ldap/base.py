@@ -131,7 +131,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def search_s(self, base, scope, filterstr='(objectClass=*)',
                  attrlist=None):
-		logger.debug("base: %s; scope: %s; filter: %s, attrs: %s" % (base, scope, filterstr, attrlist))
+        logger.debug("base: %s; scope: %s; filter: %s, attrs: %s" % (base, scope, filterstr, attrlist))
         cursor = self._cursor()
         results = cursor.connection.search_s(base, scope,
                                              filterstr.encode(self.charset),
