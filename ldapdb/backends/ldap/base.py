@@ -32,11 +32,14 @@
 
 import ldap
 import django
+import logging
 
 from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
                                 BaseDatabaseWrapper)
 from django.db.backends.creation import BaseDatabaseCreation
+from ldap.ldapobject import ReconnectLDAPObject
 
+logger = logging.getLogger(__name__)
 
 class DatabaseCreation(BaseDatabaseCreation):
     def create_test_db(self, verbosity=1, autoclobber=False):
@@ -98,15 +101,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def _cursor(self):
         if self.connection is None:
-            self.connection = ldap.initialize(self.settings_dict['NAME'])
-
-            options = self.settings_dict.get('CONNECTION_OPTIONS', {})
-            for opt, value in options.items():
-                self.connection.set_option(opt, value)
-
-            if self.settings_dict.get('TLS', False):
-                self.connection.start_tls_s()
-
+#            self.connection = ldap.initialize(self.settings_dict['NAME'])
+            self.connection = ReconnectLDAPObject(self.settings_dict['NAME'])
             self.connection.simple_bind_s(
                 self.settings_dict['USER'],
                 self.settings_dict['PASSWORD'])
@@ -135,6 +131,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def search_s(self, base, scope, filterstr='(objectClass=*)',
                  attrlist=None):
+		logger.debug("base: %s; scope: %s; filter: %s, attrs: %s" % (base, scope, filterstr, attrlist))
         cursor = self._cursor()
         results = cursor.connection.search_s(base, scope,
                                              filterstr.encode(self.charset),
