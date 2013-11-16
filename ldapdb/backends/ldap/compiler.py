@@ -46,6 +46,10 @@ def get_lookup_operator(lookup_type):
 
 
 def query_as_ldap(query):
+    # starting with django 1.6 we can receive empty querysets
+    if hasattr(query, 'is_empty') and query.is_empty():
+        return
+
     filterstr = ''.join(['(objectClass=%s)' % cls for cls in
                          query.model.object_classes])
     sql, params = where_as_ldap(query.where)
@@ -104,11 +108,15 @@ class SQLCompiler(object):
             if not isinstance(aggregate, aggregates.Count):
                 raise Exception("Unsupported aggregate %s" % aggregate)
 
+        filterstr = query_as_ldap(self.query)
+        if not filterstr:
+            return
+
         try:
             vals = self.connection.search_s(
                 self.query.model.base_dn,
                 self.query.model.search_scope,
-                filterstr=query_as_ldap(self.query),
+                filterstr=filterstr,
                 attrlist=['dn'],
             )
         except ldap.NO_SUCH_OBJECT:
@@ -128,6 +136,10 @@ class SQLCompiler(object):
         return output
 
     def results_iter(self):
+        filterstr = query_as_ldap(self.query)
+        if not filterstr:
+            return
+
         if hasattr(self.query, 'select_fields') and len(self.query.select_fields):
             # django < 1.6
             fields = self.query.select_fields
@@ -143,7 +155,7 @@ class SQLCompiler(object):
             vals = self.connection.search_s(
                 self.query.model.base_dn,
                 self.query.model.search_scope,
-                filterstr=query_as_ldap(self.query),
+                filterstr=filterstr,
                 attrlist=attrlist,
             )
         except ldap.NO_SUCH_OBJECT:
@@ -218,11 +230,15 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
     def execute_sql(self, result_type=compiler.MULTI):
+        filterstr = query_as_ldap(self.query)
+        if not filterstr:
+            return
+
         try:
             vals = self.connection.search_s(
                 self.query.model.base_dn,
                 self.query.model.search_scope,
-                filterstr=query_as_ldap(self.query),
+                filterstr=filterstr,
                 attrlist=['dn'],
             )
         except ldap.NO_SUCH_OBJECT:
