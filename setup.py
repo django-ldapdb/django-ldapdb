@@ -4,10 +4,9 @@ from setuptools import setup
 
 setup(
     name="django-ldapdb",
-    version="0.1.0",
+    version="0.2.0",
     description=u"An LDAP database backend for Django",
     long_description=open('README.md').read(),
-    #license = ldapdb.__license__,
     url="https://github.com/jlaine/django-ldapdb",
     author="Jeremy Laine",
     author_email="jeremy.laine@m4x.org",
