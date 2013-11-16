@@ -30,7 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from ldapdb.models.fields import CharField, DateField, ImageField, IntegerField, ListField
+from ldapdb.models.fields import (CharField, DateField, ImageField, ListField,
+                                  IntegerField, FloatField)
 import ldapdb.models
 
 
@@ -61,6 +62,7 @@ class LdapUser(ldapdb.models.Model):
     password = CharField(db_column='userPassword')
 
     date_of_birth = DateField(db_column='birthday', blank=True)
+    latitude = FloatField(db_column='latitude', blank=True)
 
     def __str__(self):
         return self.username
