@@ -31,6 +31,7 @@
 #
 
 import datetime
+import ldap
 
 from django.conf import settings
 from django.db.models import Q
@@ -84,6 +85,46 @@ foouser = ('uid=foouser,ou=people,dc=nodomain', {
     'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': ['Us\xc3\xa9r'],
     'homeDirectory': ['/home/foouser'], 'givenName': ['F\xc3\xb4o'],
     'uid': ['foouser'], 'birthday': ['1982-06-12'], 'latitude': ['3.14']})
+
+
+class ConnectionTestCase(TestCase):
+    directory = dict([admin, people, foouser])
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mockldap = MockLdap(cls.directory)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.mockldap
+
+    def setUp(self):
+        self.mockldap.start()
+        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
+
+    def tearDown(self):
+        self.mockldap.stop()
+        del self.ldapobj
+
+    def test_connection_options(self):
+        LdapUser.objects.get(username='foouser')
+        self.assertEqual(self.ldapobj.get_option(ldap.OPT_X_TLS_DEMAND), True)
+
+    def test_start_tls(self):
+        self.assertFalse(self.ldapobj.tls_enabled)
+        LdapUser.objects.get(username='foouser')
+        self.assertTrue(self.ldapobj.tls_enabled)
+
+    def test_dont_start_tls(self):
+        settings.DATABASES['ldap']['TLS'] = False
+        self.assertFalse(self.ldapobj.tls_enabled)
+        LdapUser.objects.get(username='foouser')
+        self.assertFalse(self.ldapobj.tls_enabled)
+        settings.DATABASES['ldap']['TLS'] = True
+
+    def test_bound_as_admin(self):
+        LdapUser.objects.get(username='foouser')
+        self.assertEqual(self.ldapobj.bound_as, admin[0])
 
 
 class GroupTestCase(TestCase):
