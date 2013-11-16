@@ -93,10 +93,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection.unbind_s()
             self.connection = None
 
-    def _commit(self):
-        pass
-
-    def _cursor(self):
+    def ensure_connection(self):
         if self.connection is None:
             self.connection = ldap.initialize(self.settings_dict['NAME'])
 
@@ -111,6 +108,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 self.settings_dict['USER'],
                 self.settings_dict['PASSWORD'])
 
+    def _commit(self):
+        pass
+
+    def _cursor(self):
+        self.ensure_connection()
         return DatabaseCursor(self.connection)
 
     def _rollback(self):
