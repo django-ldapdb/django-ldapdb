@@ -247,6 +247,12 @@ class GroupTestCase(TestCase):
         qs = LdapGroup.objects.all()
         self.assertEquals(len(qs), 0)
 
+    def test_bulk_delete_none(self):
+        LdapGroup.objects.none().delete()
+
+        qs = LdapGroup.objects.all()
+        self.assertEquals(len(qs), 3)
+
     def test_slice(self):
         qs = LdapGroup.objects.order_by('gid')
         objs = list(qs)
