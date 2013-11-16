@@ -10,7 +10,7 @@ setup(
     #license = ldapdb.__license__,
     url="https://github.com/jlaine/django-ldapdb",
     author="Jeremy Laine",
-    author_email="jeremy.laine@bolloretelecom.eu",
+    author_email="jeremy.laine@m4x.org",
     packages=['ldapdb', 'ldapdb.backends', 'ldapdb.backends.ldap', 'ldapdb.models'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
