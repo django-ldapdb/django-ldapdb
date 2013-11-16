@@ -128,8 +128,12 @@ class SQLCompiler(object):
         return output
 
     def results_iter(self):
-        if self.query.select_fields:
+        if hasattr(self.query, 'select_fields') and len(self.query.select_fields):
+            # django < 1.6
             fields = self.query.select_fields
+        elif len(self.query.select):
+            # django >= 1.6
+            fields = [x.field for x in self.query.select]
         else:
             fields = self.query.model._meta.fields
 
