@@ -92,6 +92,8 @@ class Model(django.db.models.base.Model):
         """
         Saves the current instance.
         """
+        signals.pre_save.send(sender=self.__class__, instance=self)
+        
         using = using or router.db_for_write(self.__class__, instance=self)
         connection = connections[using]
         if not self.dn:
