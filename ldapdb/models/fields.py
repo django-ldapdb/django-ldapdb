@@ -164,7 +164,7 @@ class ListField(fields.Field):
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         if lookup_type == 'contains':
-            return escape_ldap_filter(value)
+            return "*%s*" % escape_ldap_filter(value)
         raise TypeError("ListField has invalid lookup: %s" % lookup_type)
 
     def to_python(self, value):
@@ -216,3 +216,29 @@ class DateField(fields.DateField):
         if lookup_type in ('exact',):
             return value
         raise TypeError("DateField has invalid lookup: %s" % lookup_type)
+
+
+class BooleanField(fields.NullBooleanField):
+    def from_ldap(self, value, connection):
+        if len(value) == 0:
+            return False
+        else:
+            return True if value[0].lower() == 'true' else False
+
+    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+
+    def get_db_prep_save(self, value, connection):
+        return [str(value).upper()]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if lookup_type == 'exact':
+            return escape_ldap_filter(value)
+        raise TypeError("BooleanField has invalid lookup: %s" % lookup_type)
+
+    def to_python(self, value):
+        if not value:
+            return False
+        return value
