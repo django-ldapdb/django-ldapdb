@@ -106,10 +106,9 @@ class Model(django.db.models.base.Model):
                 if not field.db_column:
                     continue
                 value = getattr(self, field.name)
+                value = field.get_db_prep_save(value, connection=connection)
                 if value:
-                    entry.append((field.db_column,
-                                  field.get_db_prep_save(
-                                      value, connection=connection)))
+                    entry.append((field.db_column, value))
 
             logger.debug("Creating new LDAP entry %s" % new_dn)
             connection.add_s(new_dn, entry)
