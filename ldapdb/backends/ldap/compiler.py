@@ -228,6 +228,17 @@ class SQLCompiler(object):
             yield row
             pos += 1
 
+    def has_results(self):
+        import inspect
+        iterator = self.results_iter()
+        if inspect.isgenerator(iterator):
+            try:
+                obj = iterator.next()
+                return True
+            except:
+                return False
+        else:
+            return False
 
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     pass
