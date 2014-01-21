@@ -73,6 +73,8 @@ class DatabaseOperations(BaseDatabaseOperations):
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
+    vendor = 'ldap'
+    
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
