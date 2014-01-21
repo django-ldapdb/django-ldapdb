@@ -252,6 +252,22 @@ class GroupTestCase(TestCase):
         self.assertRaises(LdapGroup.DoesNotExist, LdapGroup.objects.get,
                           name='does_not_exist')
 
+    def test_insert(self):
+        g = LdapGroup()
+        g.name = 'newgroup'
+        g.gid = 1010
+        g.usernames = ['someuser', 'foouser']
+        g.save()
+        self.assertEquals(self.ldapobj.methods_called(), [
+            'initialize',
+            'simple_bind_s',
+            'add_s'])
+
+        new = LdapGroup.objects.get(name='newgroup')
+        self.assertEquals(new.name, 'newgroup')
+        self.assertEquals(new.gid, 1010)
+        self.assertEquals(new.usernames, ['someuser', 'foouser'])
+
     def test_order_by(self):
         # ascending name
         qs = LdapGroup.objects.order_by('name')
@@ -346,15 +362,28 @@ class GroupTestCase(TestCase):
 
     def test_update(self):
         g = LdapGroup.objects.get(name='foogroup')
-
         g.gid = 1002
         g.usernames = ['foouser2', 'baruser2']
         g.save()
+        self.assertEquals(self.ldapobj.methods_called(), [
+            'initialize',
+            'simple_bind_s',
+            'search_s',
+            'search_s',
+            'modify_s'])
 
-        # make sure DN gets updated if we change the pk
+    def test_update_change_dn(self):
+        g = LdapGroup.objects.get(name='foogroup')
         g.name = 'foogroup2'
         g.save()
         self.assertEquals(g.dn, 'cn=foogroup2,%s' % LdapGroup.base_dn)
+        self.assertEquals(self.ldapobj.methods_called(), [
+            'initialize',
+            'simple_bind_s',
+            'search_s',
+            'search_s',
+            'rename_s',
+            'modify_s'])
 
     def test_values(self):
         qs = sorted(LdapGroup.objects.values('name'))
@@ -376,18 +405,6 @@ class GroupTestCase(TestCase):
 
         qs = LdapGroup.objects.all()
         self.assertEquals(len(qs), 2)
-
-    def test_save(self):
-        g = LdapGroup()
-        g.name = 'newgroup'
-        g.gid = 1010
-        g.usernames = ['someuser', 'foouser']
-        g.save()
-
-        new = LdapGroup.objects.get(name='newgroup')
-        self.assertEquals(new.name, 'newgroup')
-        self.assertEquals(new.gid, 1010)
-        self.assertEquals(new.usernames, ['someuser', 'foouser'])
 
 
 class UserTestCase(TestCase):
