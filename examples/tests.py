@@ -263,6 +263,7 @@ class GroupTestCase(TestCase):
             'simple_bind_s',
             'add_s'])
 
+        # check group was created
         new = LdapGroup.objects.get(name='newgroup')
         self.assertEquals(new.name, 'newgroup')
         self.assertEquals(new.gid, 1010)
@@ -372,6 +373,12 @@ class GroupTestCase(TestCase):
             'search_s',
             'modify_s'])
 
+        # check group was updated
+        new = LdapGroup.objects.get(name='foogroup')
+        self.assertEquals(new.name, 'foogroup')
+        self.assertEquals(new.gid, 1002)
+        self.assertEquals(new.usernames, ['foouser2', 'baruser2'])
+
     def test_update_change_dn(self):
         g = LdapGroup.objects.get(name='foogroup')
         g.name = 'foogroup2'
@@ -384,6 +391,12 @@ class GroupTestCase(TestCase):
             'search_s',
             'rename_s',
             'modify_s'])
+
+        # check group was updated
+        new = LdapGroup.objects.get(name='foogroup2')
+        self.assertEquals(new.name, 'foogroup2')
+        self.assertEquals(new.gid, 1000)
+        self.assertEquals(new.usernames, ['foouser', 'baruser'])
 
     def test_values(self):
         qs = sorted(LdapGroup.objects.values('name'))
