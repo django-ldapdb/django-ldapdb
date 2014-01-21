@@ -152,20 +152,27 @@ class GroupTestCase(TestCase):
         self.mockldap.stop()
         del self.ldapobj
 
-    def test_count(self):
-        # empty query
+    def test_count_none(self):
         qs = LdapGroup.objects.none()
         self.assertEquals(qs.count(), 0)
+        self.assertEquals(self.ldapobj.methods_called(), [])
 
-        qs = LdapGroup.objects.none()
-        self.assertEquals(len(qs), 0)
-
-        # all query
+    def test_count_all(self):
         qs = LdapGroup.objects.all()
         self.assertEquals(qs.count(), 3)
+        self.assertEquals(self.ldapobj.methods_called(),
+                          ['initialize', 'simple_bind_s', 'search_s'])
 
+    def test_length_all(self):
         qs = LdapGroup.objects.all()
         self.assertEquals(len(qs), 3)
+        self.assertEquals(self.ldapobj.methods_called(),
+                          ['initialize', 'simple_bind_s', 'search_s'])
+
+    def test_length_none(self):
+        qs = LdapGroup.objects.none()
+        self.assertEquals(len(qs), 0)
+        self.assertEquals(self.ldapobj.methods_called(), [])
 
     def test_ldap_filter(self):
         # single filter
