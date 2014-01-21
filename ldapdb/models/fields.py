@@ -65,6 +65,8 @@ class CharField(fields.CharField):
         raise TypeError("CharField has invalid lookup: %s" % lookup_type)
 
     def get_db_prep_save(self, value, connection):
+        if not value:
+            return None
         return [value.encode(connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
@@ -96,6 +98,8 @@ class ImageField(fields.Field):
         return [self.get_prep_lookup(lookup_type, value)]
 
     def get_db_prep_save(self, value, connection):
+        if not value:
+            return None
         return [value]
 
     def get_prep_lookup(self, lookup_type, value):
@@ -116,6 +120,8 @@ class IntegerField(fields.IntegerField):
         return [self.get_prep_lookup(lookup_type, value)]
 
     def get_db_prep_save(self, value, connection):
+        if value is None:
+            return None
         return [str(value)]
 
     def get_prep_lookup(self, lookup_type, value):
@@ -138,6 +144,8 @@ class FloatField(fields.FloatField):
         return [self.get_prep_lookup(lookup_type, value)]
 
     def get_db_prep_save(self, value, connection):
+        if value is None:
+            return None
         return [str(value)]
 
     def get_prep_lookup(self, lookup_type, value):
@@ -159,6 +167,8 @@ class ListField(fields.Field):
         return [self.get_prep_lookup(lookup_type, value)]
 
     def get_db_prep_save(self, value, connection):
+        if not value:
+            return None
         return [x.encode(connection.charset) for x in value]
 
     def get_prep_lookup(self, lookup_type, value):
@@ -204,6 +214,8 @@ class DateField(fields.DateField):
         return [self.get_prep_lookup(lookup_type, value)]
 
     def get_db_prep_save(self, value, connection):
+        if not value:
+            return None
         if not isinstance(value, datetime.date) \
                 and not isinstance(value, datetime.datetime):
             raise ValueError(
