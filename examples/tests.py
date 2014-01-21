@@ -92,11 +92,17 @@ class ConnectionTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        settings.DATABASES['ldap']['TLS'] = True
+        settings.DATABASES['ldap']['CONNECTION_OPTIONS'] = {
+            ldap.OPT_X_TLS_DEMAND: True,
+        }
         cls.mockldap = MockLdap(cls.directory)
 
     @classmethod
     def tearDownClass(cls):
         del cls.mockldap
+        del settings.DATABASES['ldap']['TLS']
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS']
 
     def setUp(self):
         self.mockldap.start()

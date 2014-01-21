@@ -25,10 +25,10 @@ DATABASES = {
         'NAME': 'ldap://localhost',
         'USER': 'cn=admin,dc=nodomain',
         'PASSWORD': 'test',
-        'TLS': True,
-        'CONNECTION_OPTIONS': {
-            ldap.OPT_X_TLS_DEMAND: True,
-        }
+        #'TLS': True,
+        #'CONNECTION_OPTIONS': {
+        #    ldap.OPT_X_TLS_DEMAND: True,
+        #}
     }
 }
 DATABASE_ROUTERS = ['ldapdb.router.Router']
