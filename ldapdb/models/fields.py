@@ -159,7 +159,7 @@ class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
-        return value
+        return [x.decode(connection.charset) for x in value]
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):

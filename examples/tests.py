@@ -364,7 +364,7 @@ class GroupTestCase(TestCase):
     def test_update(self):
         g = LdapGroup.objects.get(name='foogroup')
         g.gid = 1002
-        g.usernames = ['foouser2', 'baruser2']
+        g.usernames = ['foouser2', u'barusér2']
         g.save()
         self.assertEquals(self.ldapobj.methods_called(), [
             'initialize',
@@ -377,7 +377,7 @@ class GroupTestCase(TestCase):
         new = LdapGroup.objects.get(name='foogroup')
         self.assertEquals(new.name, 'foogroup')
         self.assertEquals(new.gid, 1002)
-        self.assertEquals(new.usernames, ['foouser2', 'baruser2'])
+        self.assertEquals(new.usernames, ['foouser2', u'barusér2'])
 
     def test_update_change_dn(self):
         g = LdapGroup.objects.get(name='foogroup')
