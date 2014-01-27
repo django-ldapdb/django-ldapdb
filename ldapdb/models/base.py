@@ -165,8 +165,10 @@ class Model(django.db.models.base.Model):
             proxy = True
         import re
         suffix = re.sub('[=,]', '_', base_dn)
+        # NOTE: we truncate the name, otherwise django bombs when trying to
+        # create permissions for the model.
         name = "%s_%s" % (base_class.__name__, str(suffix))
-        new_class = type(name, (base_class,), {
+        new_class = type(name[0:38], (base_class,), {
             'base_dn': base_dn, '__module__': base_class.__module__,
             'Meta': Meta})
         return new_class
