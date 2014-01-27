@@ -70,10 +70,6 @@ class LdapUser(ldapdb.models.Model):
     def __unicode__(self):
         return self.full_name
 
-    class Meta:
-        verbose_name = 'LDAP user'
-        verbose_name_plural = 'LDAP users'
-
 
 class LdapGroup(ldapdb.models.Model):
     """
@@ -93,7 +89,3 @@ class LdapGroup(ldapdb.models.Model):
 
     def __unicode__(self):
         return self.name
-
-    class Meta:
-        verbose_name = 'LDAP group'
-        verbose_name_plural = 'LDAP groups'
