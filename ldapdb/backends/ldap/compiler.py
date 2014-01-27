@@ -60,19 +60,24 @@ def query_as_ldap(query):
 def where_as_ldap(self):
     bits = []
     for item in self.children:
-        if hasattr(item, 'as_sql'):
+        if hasattr(item, 'lhs') and hasattr(item, 'rhs'):
+            # Django 1.7
+            item = item.lhs.target.column, item.lookup_name, None, item.rhs
+        elif hasattr(item, 'as_sql'):
             sql, params = where_as_ldap(item)
             bits.append(sql)
             continue
 
         constraint, lookup_type, y, values = item
+        if hasattr(constraint, 'col'):
+            constraint = constraint.col
         comp = get_lookup_operator(lookup_type)
         if lookup_type == 'in':
-            equal_bits = ["(%s%s%s)" % (constraint.col, comp, value) for value
+            equal_bits = ["(%s%s%s)" % (constraint, comp, value) for value
                           in values]
             clause = '(|%s)' % ''.join(equal_bits)
         else:
-            clause = "(%s%s%s)" % (constraint.col, comp, values)
+            clause = "(%s%s%s)" % (constraint, comp, values)
 
         bits.append(clause)
 
@@ -223,6 +228,17 @@ class SQLCompiler(object):
             yield row
             pos += 1
 
+    def has_results(self):
+        import inspect
+        iterator = self.results_iter()
+        if inspect.isgenerator(iterator):
+            try:
+                obj = iterator.next()
+                return True
+            except:
+                return False
+        else:
+            return False
 
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     pass

@@ -60,6 +60,11 @@ class Router(object):
             return db == self.ldap_alias
         return None
 
+    def allow_migrate(self, db, model):
+        if is_ldap_model(model):
+            return False
+        return None
+
     def db_for_read(self, model, **hints):
         "Point all operations on LDAP models to the LDAP database"
         if is_ldap_model(model):
