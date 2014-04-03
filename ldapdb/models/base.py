@@ -57,6 +57,10 @@ class Model(django.db.models.base.Model):
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
         self.saved_pk = self.pk
+        if "%s,%s" % (self.build_rdn(), self.base_dn) != self.dn:
+            new_scope = self.dn.replace('%s,' % self.build_rdn(), '')
+            c = self.__class__.scoped(new_scope)
+            return c(*args, **kwargs)
 
     def build_rdn(self):
         """
@@ -137,17 +141,19 @@ class Model(django.db.models.base.Model):
                                         None))
 
             if len(modlist):
-                # FIXME: needs rework
-#                 # handle renaming
-#                 new_dn = self.build_dn()
-#                 if new_dn != self.dn:
-#                     logger.debug("Renaming LDAP entry %s to %s" % (self.dn,
-#                                                                    new_dn))
-#                     connection.rename_s(self.dn, self.build_rdn())
-#                     self.dn = new_dn
+                # handle renaming
+                new_dn = self.build_dn()
+                if new_dn != self.dn:
+                    logger.debug("Renaming LDAP entry %s to %s" % (self.dn,
+                                                                   new_dn))
+                    print "Renaming LDAP entry %s to %s" % (self.dn,
+                                                                   new_dn)
+                    # connection.rename_s(self.dn, self.build_rdn())
+                    self.dn = new_dn
 
                 logger.debug("Modifying existing LDAP entry %s" % self.dn)
-                connection.modify_s(self.dn, modlist)
+                print "Modifying existing LDAP entry %s" % self.dn, modlist
+                # connection.modify_s(self.dn, modlist)
             else:
                 logger.debug("No changes to be saved to LDAP entry %s" %
                              self.dn)
