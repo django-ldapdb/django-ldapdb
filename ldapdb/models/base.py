@@ -93,7 +93,7 @@ class Model(django.db.models.base.Model):
         Saves the current instance.
         """
         signals.pre_save.send(sender=self.__class__, instance=self)
-        
+
         using = using or router.db_for_write(self.__class__, instance=self)
         connection = connections[using]
         if not self.dn:
@@ -127,23 +127,24 @@ class Model(django.db.models.base.Model):
                 old_value = getattr(orig, field.name, None)
                 new_value = getattr(self, field.name, None)
                 if old_value != new_value:
-                    new_value = field.get_db_prep_save(new_value, 
+                    new_value = field.get_db_prep_save(new_value,
                                         connection=connection)
                     if new_value:
-                        modlist.append((ldap.MOD_REPLACE, field.db_column, 
+                        modlist.append((ldap.MOD_REPLACE, field.db_column,
                                         new_value))
                     elif old_value:
                         modlist.append((ldap.MOD_DELETE, field.db_column,
                                         None))
 
             if len(modlist):
-                # handle renaming
-                new_dn = self.build_dn()
-                if new_dn != self.dn:
-                    logger.debug("Renaming LDAP entry %s to %s" % (self.dn,
-                                                                   new_dn))
-                    connection.rename_s(self.dn, self.build_rdn())
-                    self.dn = new_dn
+                # FIXME: needs rework
+#                 # handle renaming
+#                 new_dn = self.build_dn()
+#                 if new_dn != self.dn:
+#                     logger.debug("Renaming LDAP entry %s to %s" % (self.dn,
+#                                                                    new_dn))
+#                     connection.rename_s(self.dn, self.build_rdn())
+#                     self.dn = new_dn
 
                 logger.debug("Modifying existing LDAP entry %s" % self.dn)
                 connection.modify_s(self.dn, modlist)
