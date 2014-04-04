@@ -56,9 +56,12 @@ class Model(django.db.models.base.Model):
 
     @staticmethod  # necessary with django models
     def __new__(cls, *args, **kwargs):
-        scope = ldap.dn.dn2str(ldap.dn.str2dn(args[0])[1:])
-        c = cls.scoped(scope)
-        return object.__new__(c)
+        try:
+            scope = ldap.dn.dn2str(ldap.dn.str2dn(args[0])[1:])
+            c = cls.scoped(scope)
+            return object.__new__(c)
+        except IndexError:
+            return object.__new__(cls)
 
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
