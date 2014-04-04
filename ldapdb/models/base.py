@@ -150,12 +150,12 @@ class Model(django.db.models.base.Model):
                                                                    new_dn))
                     print "Renaming LDAP entry %s to %s" % (self.dn,
                                                                    new_dn)
-                    # connection.rename_s(self.dn, self.build_rdn())
+                    connection.rename_s(self.dn, self.build_rdn())
                     self.dn = new_dn
 
                 logger.debug("Modifying existing LDAP entry %s" % self.dn)
                 print "Modifying existing LDAP entry %s" % self.dn, modlist
-                # connection.modify_s(self.dn, modlist)
+                connection.modify_s(self.dn, modlist)
             else:
                 logger.debug("No changes to be saved to LDAP entry %s" %
                              self.dn)
