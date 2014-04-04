@@ -54,6 +54,12 @@ class Model(django.db.models.base.Model):
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
 
+    @staticmethod  # necessary with django models
+    def __new__(cls, *args, **kwargs):
+        scope = ldap.dn.dn2str(ldap.dn.str2dn(args[0])[1:])
+        c = cls.scoped(scope)
+        return object.__new__(c)
+
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
         self.saved_pk = self.pk
@@ -93,7 +99,7 @@ class Model(django.db.models.base.Model):
         Saves the current instance.
         """
         signals.pre_save.send(sender=self.__class__, instance=self)
-        
+
         using = using or router.db_for_write(self.__class__, instance=self)
         connection = connections[using]
         if not self.dn:
@@ -127,10 +133,10 @@ class Model(django.db.models.base.Model):
                 old_value = getattr(orig, field.name, None)
                 new_value = getattr(self, field.name, None)
                 if old_value != new_value:
-                    new_value = field.get_db_prep_save(new_value, 
+                    new_value = field.get_db_prep_save(new_value,
                                         connection=connection)
                     if new_value:
-                        modlist.append((ldap.MOD_REPLACE, field.db_column, 
+                        modlist.append((ldap.MOD_REPLACE, field.db_column,
                                         new_value))
                     elif old_value:
                         modlist.append((ldap.MOD_DELETE, field.db_column,
