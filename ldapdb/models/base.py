@@ -54,13 +54,15 @@ class Model(django.db.models.base.Model):
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
 
+    @staticmethod  # necessary with django models
+    def __new__(cls, *args, **kwargs):
+        scope = ldap.dn.dn2str(ldap.dn.str2dn(args[0])[1:])
+        c = cls.scoped(scope)
+        return object.__new__(c)
+
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
         self.saved_pk = self.pk
-        if "%s,%s" % (self.build_rdn(), self.base_dn) != self.dn:
-            new_scope = self.dn.replace('%s,' % self.build_rdn(), '')
-            c = self.__class__.scoped(new_scope)
-            return c(*args, **kwargs)
 
     def build_rdn(self):
         """
