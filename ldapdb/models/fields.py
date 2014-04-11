@@ -127,7 +127,7 @@ class BooleanField(fields.BooleanField):
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         if lookup_type in ('exact'):
-            return value
+            return 'TRUE' if value=='1' else 'FALSE'
         raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
 
 class IntegerField(fields.IntegerField):
