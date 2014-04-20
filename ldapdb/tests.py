@@ -41,119 +41,119 @@ from ldapdb.models.fields import (CharField, IntegerField, FloatField,
 
 class WhereTestCase(TestCase):
     def test_escape(self):
-        self.assertEquals(escape_ldap_filter(u'fôöbàr'), u'fôöbàr')
-        self.assertEquals(escape_ldap_filter('foo*bar'), 'foo\\2abar')
-        self.assertEquals(escape_ldap_filter('foo(bar'), 'foo\\28bar')
-        self.assertEquals(escape_ldap_filter('foo)bar'), 'foo\\29bar')
-        self.assertEquals(escape_ldap_filter('foo\\bar'), 'foo\\5cbar')
-        self.assertEquals(escape_ldap_filter('foo\\bar*wiz'),
+        self.assertEqual(escape_ldap_filter(u'fôöbàr'), u'fôöbàr')
+        self.assertEqual(escape_ldap_filter('foo*bar'), 'foo\\2abar')
+        self.assertEqual(escape_ldap_filter('foo(bar'), 'foo\\28bar')
+        self.assertEqual(escape_ldap_filter('foo)bar'), 'foo\\29bar')
+        self.assertEqual(escape_ldap_filter('foo\\bar'), 'foo\\5cbar')
+        self.assertEqual(escape_ldap_filter('foo\\bar*wiz'),
                           'foo\\5cbar\\2awiz')
 
     def test_char_field_exact(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'exact', "test"), AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=test)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=test)", []))
 
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'exact', "(test)"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=\\28test\\29)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=\\28test\\29)", []))
 
     def test_char_field_in(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'in', ["foo", "bar"]),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(|(cn=foo)(cn=bar))", []))
+        self.assertEqual(where_as_ldap(where), ("(|(cn=foo)(cn=bar))", []))
 
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'in',
                    ["(foo)", "(bar)"]), AND)
-        self.assertEquals(where_as_ldap(where),
+        self.assertEqual(where_as_ldap(where),
                           ("(|(cn=\\28foo\\29)(cn=\\28bar\\29))", []))
 
     def test_char_field_startswith(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'startswith', "test"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=test*)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=test*)", []))
 
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'startswith', "te*st"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=te\\2ast*)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=te\\2ast*)", []))
 
     def test_char_field_endswith(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'endswith', "test"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=*test)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=*test)", []))
 
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'endswith', "te*st"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=*te\\2ast)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=*te\\2ast)", []))
 
     def test_char_field_contains(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'contains', "test"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=*test*)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=*test*)", []))
 
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'contains', "te*st"),
                   AND)
-        self.assertEquals(where_as_ldap(where), ("(cn=*te\\2ast*)", []))
+        self.assertEqual(where_as_ldap(where), ("(cn=*te\\2ast*)", []))
 
     def test_integer_field(self):
         where = WhereNode()
         where.add((Constraint("uid", "uid", IntegerField()), 'exact', 1), AND)
-        self.assertEquals(where_as_ldap(where), ("(uid=1)", []))
+        self.assertEqual(where_as_ldap(where), ("(uid=1)", []))
 
         where = WhereNode()
         where.add((Constraint("uid", "uid", IntegerField()), 'gte', 1), AND)
-        self.assertEquals(where_as_ldap(where), ("(uid>=1)", []))
+        self.assertEqual(where_as_ldap(where), ("(uid>=1)", []))
 
         where = WhereNode()
         where.add((Constraint("uid", "uid", IntegerField()), 'lte', 1), AND)
-        self.assertEquals(where_as_ldap(where), ("(uid<=1)", []))
+        self.assertEqual(where_as_ldap(where), ("(uid<=1)", []))
 
     def test_float_field(self):
         where = WhereNode()
         where.add((Constraint("uid", "uid", FloatField()), 'exact', 1.2), AND)
-        self.assertEquals(where_as_ldap(where), ("(uid=1.2)", []))
+        self.assertEqual(where_as_ldap(where), ("(uid=1.2)", []))
 
         where = WhereNode()
         where.add((Constraint("uid", "uid", FloatField()), 'gte', 1.2), AND)
-        self.assertEquals(where_as_ldap(where), ("(uid>=1.2)", []))
+        self.assertEqual(where_as_ldap(where), ("(uid>=1.2)", []))
 
         where = WhereNode()
         where.add((Constraint("uid", "uid", FloatField()), 'lte', 1.2), AND)
-        self.assertEquals(where_as_ldap(where), ("(uid<=1.2)", []))
+        self.assertEqual(where_as_ldap(where), ("(uid<=1.2)", []))
 
     def test_list_field_contains(self):
         where = WhereNode()
         where.add((Constraint("memberUid", "memberUid", ListField()),
                    'contains', 'foouser'), AND)
-        self.assertEquals(where_as_ldap(where), ("(memberUid=foouser)", []))
+        self.assertEqual(where_as_ldap(where), ("(memberUid=foouser)", []))
 
         where = WhereNode()
         where.add((Constraint("memberUid", "memberUid", ListField()),
                    'contains', '(foouser)'), AND)
-        self.assertEquals(where_as_ldap(where), ("(memberUid=\\28foouser\\29)",
+        self.assertEqual(where_as_ldap(where), ("(memberUid=\\28foouser\\29)",
                                                  []))
 
     def test_date_field(self):
         where = WhereNode()
         where.add((Constraint("birthday", "birthday", DateField()), 'exact',
                    '2013-09-03'), AND)
-        self.assertEquals(where_as_ldap(where), ("(birthday=2013-09-03)", []))
+        self.assertEqual(where_as_ldap(where), ("(birthday=2013-09-03)", []))
 
     def test_and(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'exact', "foo"), AND)
         where.add((Constraint("givenName", "givenName", CharField()), 'exact',
                    "bar"), AND)
-        self.assertEquals(where_as_ldap(where), ("(&(cn=foo)(givenName=bar))",
+        self.assertEqual(where_as_ldap(where), ("(&(cn=foo)(givenName=bar))",
                                                  []))
 
     def test_or(self):
@@ -161,5 +161,5 @@ class WhereTestCase(TestCase):
         where.add((Constraint("cn", "cn", CharField()), 'exact', "foo"), AND)
         where.add((Constraint("givenName", "givenName", CharField()), 'exact',
                    "bar"), OR)
-        self.assertEquals(where_as_ldap(where), ("(|(cn=foo)(givenName=bar))",
+        self.assertEqual(where_as_ldap(where), ("(|(cn=foo)(givenName=bar))",
                                                  []))
