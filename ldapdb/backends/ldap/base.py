@@ -145,6 +145,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                                              attrlist)
         output = []
         for dn, attrs in results:
+            # skip referrals
             if dn is not None:
                 output.append((dn.decode(self.charset), attrs))
         return output
