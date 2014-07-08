@@ -31,7 +31,7 @@
 #
 
 from ldapdb.models.fields import (CharField, DateField, ImageField, ListField,
-                                  IntegerField, FloatField)
+                                  IntegerField, FloatField, PasswordField)
 import ldapdb.models
 
 
@@ -59,7 +59,7 @@ class LdapUser(ldapdb.models.Model):
     home_directory = CharField(db_column='homeDirectory')
     login_shell = CharField(db_column='loginShell', default='/bin/bash')
     username = CharField(db_column='uid', primary_key=True)
-    password = CharField(db_column='userPassword')
+    password = PasswordField()
 
     date_of_birth = DateField(db_column='birthday', blank=True)
     latitude = FloatField(db_column='latitude', blank=True)
