@@ -36,6 +36,7 @@ import logging
 import django.db.models
 from django.db import connections, router
 from django.db.models import signals
+from django.conf import settings
 
 import ldapdb  # noqa
 
@@ -43,10 +44,30 @@ import ldapdb  # noqa
 logger = logging.getLogger('ldapdb')
 
 
+class ModelBase(django.db.models.base.ModelBase):
+
+    def __new__(cls, name, bases, attrs):
+        model = super(ModelBase, cls).__new__(cls, name, bases, attrs)
+
+        try:
+            model.base_dn = settings.LDAPDB_BASES[model._meta.app_label][name]
+        except (AttributeError, KeyError):
+            db = connections.databases[router.db_for_read(model)]
+            try:
+                model.base_dn = db['OPTIONS']['base_dn']
+            except KeyError:
+                if not model.base_dn:
+                    # try to get highest available DN here?
+                    raise Exception("Could not build Distinguished Name")
+
+        return model
+
+
 class Model(django.db.models.base.Model):
     """
     Base class for all LDAP models.
     """
+    __metaclass__ = ModelBase
     dn = django.db.models.fields.CharField(max_length=200)
 
     # meta-data
