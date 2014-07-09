@@ -56,7 +56,7 @@ class ModelBase(django.db.models.base.ModelBase):
             try:
                 model.base_dn = db['OPTIONS']['base_dn']
             except KeyError:
-                if not model.base_dn:
+                if not model.base_dn and not model._meta.abstract:
                     # try to get highest available DN here?
                     raise Exception("Could not build Distinguished Name")
 
