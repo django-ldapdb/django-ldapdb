@@ -38,7 +38,7 @@ from django.db.models import Q
 from django.test import TestCase
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
-from examples.models import LdapUser, LdapGroup
+from examples.models import LdapUser, LdapGroup, RelatedObject
 
 from mockldap import MockLdap
 
@@ -489,6 +489,15 @@ class UserTestCase(TestCase):
         u.username = 'foouser2'
         u.save()
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
+
+    def test_gfk(self):
+        u = LdapUser.objects.get(username='foouser')
+        r = RelatedObject(name='test')
+        r.reference = u
+        try:
+            r.save()
+        except AttributeError:
+            self.fail('GFK is broken')
 
 
 class ScopedTestCase(TestCase):
