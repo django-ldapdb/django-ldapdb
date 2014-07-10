@@ -38,7 +38,7 @@ from django.db.models import Q
 from django.test import TestCase
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
-from examples.models import LdapUser, LdapGroup
+from examples.models import LdapUser, LdapGroup, LdapPerson
 
 from mockldap import MockLdap
 
@@ -536,6 +536,40 @@ class ScopedTestCase(TestCase):
         g2 = ScopedGroup.objects.get(name="scopedgroup")
         self.assertEquals(g2.name, u'scopedgroup')
         self.assertEquals(g2.gid, 5000)
+
+
+class DynamicBaseTestCase(TestCase):
+    directory = dict([admin, groups])
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mockldap = MockLdap(cls.directory)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.mockldap
+
+    def setUp(self):
+        self.mockldap.start()
+        settings.DATABASES['ldap']['OPTIONS'] = {'base_dn': 'dc=nodomain'}
+
+    def tearDown(self):
+        self.mockldap.stop()
+        del settings.DATABASES['ldap']['OPTIONS']
+
+    def test_options(self):
+        class LdapPersonCopy(LdapPerson):
+            pass
+        p = LdapPersonCopy()
+        self.assertEquals(p.base_dn, 'dc=nodomain')
+
+    def test_scoped(self):
+        p = LdapPerson.scoped('ou=people,dc=nodomain')
+        self.assertEquals(p.base_dn, 'ou=people,dc=nodomain')
+
+    def test_ldapdb_bases(self):
+        p = LdapPerson()
+        self.assertEquals(p.base_dn, 'ou=dynamic,dc=nodomain')
 
 
 class AdminTestCase(TestCase):

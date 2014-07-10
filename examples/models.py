@@ -89,3 +89,16 @@ class LdapGroup(ldapdb.models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+class LdapPerson(ldapdb.models.Model):
+    """
+    Class for representing LDAP person entry (a few required field number)
+    """
+    object_classes = ['person']
+
+    name = CharField(db_column='cn', primary_key=True)
+    surname = CharField(db_column='sn', primary_key=True)
+
+    def __unicode__(self):
+        return self.name
