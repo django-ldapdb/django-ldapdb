@@ -49,16 +49,18 @@ class ModelBase(django.db.models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
         model = super(ModelBase, cls).__new__(cls, name, bases, attrs)
 
-        try:
-            model.base_dn = settings.LDAPDB_BASES[model._meta.app_label][name]
-        except (AttributeError, KeyError):
-            db = connections.databases[router.db_for_read(model)]
+        if not model._meta.proxy:
             try:
-                model.base_dn = db['OPTIONS']['base_dn']
-            except KeyError:
-                if not model.base_dn and not model._meta.abstract:
-                    # try to get highest available DN here?
-                    raise Exception("Could not build Distinguished Name")
+                model.base_dn = \
+                    settings.LDAPDB_BASES[model._meta.app_label][name]
+            except (AttributeError, KeyError):
+                db = connections.databases[router.db_for_read(model)]
+                try:
+                    model.base_dn = db['OPTIONS']['base_dn']
+                except KeyError:
+                    if not model.base_dn and not model._meta.abstract:
+                        # try to get highest available DN here?
+                        raise Exception("Could not build Distinguished Name")
 
         return model
 
