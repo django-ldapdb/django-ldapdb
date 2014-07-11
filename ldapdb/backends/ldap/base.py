@@ -39,14 +39,14 @@ from django.db.backends.creation import BaseDatabaseCreation
 
 
 class DatabaseCreation(BaseDatabaseCreation):
-    def create_test_db(self, verbosity=1, autoclobber=False):
+    def create_test_db(self, **kwargs):
         """
         Creates a test database, prompting the user for confirmation if the
         database already exists. Returns the name of the test database created.
         """
         pass
 
-    def destroy_test_db(self, old_database_name, verbosity=1):
+    def destroy_test_db(self, **kwargs):
         """
         Destroy a test database, prompting the user for confirmation if the
         database already exists. Returns the name of the test database created.
