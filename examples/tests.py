@@ -9,6 +9,7 @@ import time
 import factory
 import factory.django
 import factory.fuzzy
+import ldap
 import volatildap
 from django.conf import settings
 from django.contrib.auth import hashers as auth_hashers
@@ -28,6 +29,8 @@ people = ('ou=people,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
 contacts = ('ou=contacts,ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
+users = ('ou=users,ou=people,dc=example,dc=org', {
+    'objectClass': ['top', 'organizationalUnit'], 'ou': ['users']})
 rooms = ('ou=rooms,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['rooms']})
 foogroup = ('cn=foogroup,ou=groups,dc=example,dc=org', {
@@ -65,6 +68,12 @@ foouser = ('uid=foouser,ou=people,dc=example,dc=org', {
     'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': [b'Us\xc3\xa9r'],
     'homeDirectory': ['/home/foouser'], 'givenName': [b'F\xc3\xb4o'],
     'uid': ['foouser']})
+baruser = ('uid=baruser,ou=users,ou=people,dc=example,dc=org', {
+    'objectClass': ['posixAccount', 'shadowAccount', 'inetOrgPerson'],
+    'cn': ['Bar Test'], 'givenName': ['Test'], 'sn': ['Bar'],
+    'uid': ['baruser'], 'uidNumber': ['2001'], 'gidNumber': ['1000'],
+    'homeDirectory': ['/home/baruser'], 'loginShell': ['/bin/bash'],
+    'jpegPhoto': []})
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -534,7 +543,7 @@ class GroupTestCase(BaseTestCase):
 
 
 class UserTestCase(BaseTestCase):
-    directory = dict([groups, people, foouser])
+    directory = dict([groups, people, users, foouser, baruser])
 
     def test_verbose_name(self):
         self.assertEqual("Prime name", LdapUser._meta.get_field('first_name').verbose_name)
@@ -648,6 +657,18 @@ class UserTestCase(BaseTestCase):
         lm = u.last_modified
         u = LdapUser.objects.get(last_modified__in=[before, lm])
         self.assertEqual(u.username, 'foouser')
+
+    def test_dn_consistency(self):
+        u = LdapUser.objects.get(username='baruser')
+        u.first_name = u"Barr"
+        try:
+            u.save()
+        except ldap.LDAPError:
+            self.fail("Cannot save object")
+        # DN shouldn't be changed
+        self.assertEqual(
+            LdapUser.objects.get(username='baruser').dn,
+            'uid=baruser,ou=users,ou=people,dc=example,dc=org')
 
 
 class ScopedTestCase(BaseTestCase):
