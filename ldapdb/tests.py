@@ -49,6 +49,9 @@ class WhereTestCase(TestCase):
         self.assertEqual(escape_ldap_filter('foo\\bar*wiz'),
                           'foo\\5cbar\\2awiz')
 
+    def test_char_field_max_length(self):
+        self.assertEqual(CharField(max_length=42).max_length, 42)
+
     def test_char_field_exact(self):
         where = WhereNode()
         where.add((Constraint("cn", "cn", CharField()), 'exact', "test"), AND)
