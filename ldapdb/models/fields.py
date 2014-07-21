@@ -32,7 +32,6 @@
 
 import hashlib
 import os
-from base64 import urlsafe_b64encode
 
 from django.db.models import fields, SubfieldBase
 
@@ -248,6 +247,6 @@ class PasswordField(CharField):
         h = hashlib.sha1(value)
         h.update(salt)
         return super(PasswordField, self).get_db_prep_save(
-            '{SSHA}' + urlsafe_b64encode(h.digest() + salt),
+            '{SSHA}' + (h.digest() + salt).encode('base64').strip(),
             connection
         )

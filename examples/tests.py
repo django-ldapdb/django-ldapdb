@@ -491,11 +491,11 @@ class UserTestCase(TestCase):
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
 
     # this fails because of https://bitbucket.org/psagers/mockldap/issue/12
-    # def test_login(self):
-    #     u = LdapUser.objects.get(username='foouser')
-    #     u.password = 'test'
-    #     u.save()
-    #     self.ldapobj.simple_bind_s(u.dn, u.password)
+    def test_login(self):
+        u = LdapUser.objects.get(username='foouser')
+        u.password = 'test'
+        u.save()
+        self.ldapobj.simple_bind_s(u.dn, u.password)
 
 
 class ScopedTestCase(TestCase):
