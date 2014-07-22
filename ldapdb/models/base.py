@@ -127,11 +127,33 @@ class Model(django.db.models.base.Model):
                 old_value = getattr(orig, field.name, None)
                 new_value = getattr(self, field.name, None)
                 if old_value != new_value:
-                    new_value = field.get_db_prep_save(new_value, 
-                                        connection=connection)
                     if new_value:
-                        modlist.append((ldap.MOD_REPLACE, field.db_column, 
-                                        new_value))
+                        if type(new_value) == list:
+                            if old_value:
+                                list_del = list(set(old_value) - set(new_value))
+                                list_add = list(set(new_value) - set(old_value))
+
+                                if len(list_add):
+                                    modlist.append(
+                                        (ldap.MOD_ADD, field.db_column,
+                                        field.get_db_prep_save(list_add,
+                                                                connection=connection)))
+
+                                if len(list_del):
+                                    modlist.append(
+                                        (ldap.MOD_DELETE, field.db_column,
+                                        field.get_db_prep_save(list_del,
+                                                                connection=connection)))
+                            else:
+                                modlist.append(
+                                    (ldap.MOD_ADD, field.db_column,
+                                    field.get_db_prep_save(new_value,
+                                                            connection=connection)))         
+                        else:
+                            modlist.append(
+                                (ldap.MOD_REPLACE, field.db_column,
+                                field.get_db_prep_save(new_value,
+                                                        connection=connection)))
                     elif old_value:
                         modlist.append((ldap.MOD_DELETE, field.db_column,
                                         None))
