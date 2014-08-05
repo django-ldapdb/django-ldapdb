@@ -31,15 +31,11 @@
 #
 
 from django.conf import settings
+import ldap.filter
 
 
 def escape_ldap_filter(value):
-    value = unicode(value)
-    return value.replace('\\', '\\5c') \
-                .replace('*', '\\2a') \
-                .replace('(', '\\28') \
-                .replace(')', '\\29') \
-                .replace('\0', '\\00')
+    return ldap.filter.escape_filter_chars(value)
 
 # Legacy single database support
 if hasattr(settings, 'LDAPDB_SERVER_URI'):

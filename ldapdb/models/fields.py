@@ -39,8 +39,9 @@ import datetime
 
 class CharField(fields.CharField):
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 200
-        super(CharField, self).__init__(*args, **kwargs)
+        defaults = {'max_length': 200}
+        defaults.update(kwargs)
+        super(CharField, self).__init__(*args, **defaults)
 
     def from_ldap(self, value, connection):
         if len(value) == 0:
