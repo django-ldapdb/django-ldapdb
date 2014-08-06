@@ -43,6 +43,34 @@ import ldapdb  # noqa
 logger = logging.getLogger('ldapdb')
 
 
+class HookableList(list):
+
+    ret = None
+
+    hooked_methods = ['append', '__setitem__', '__delitem__',
+                      'insert', 'pop', 'remove', '__iadd__']
+
+    def __init__(self, hooks, field, iterable):
+        self.hooks = hooks
+        self.field = field
+        super(HookableList, self).__init__(iterable)
+
+    def __getattribute__(self, attr):
+        if attr in super(HookableList, self).__getattribute__('hooked_methods'):
+            self.ret = super(HookableList, self).__getattribute__(attr)
+            attr = 'wrapper'
+        return super(HookableList, self).__getattribute__(attr)
+
+    def __iter__(self):
+        if self.hooks.__getattribute__(self.field):
+            return super(HookableList, self.hooks.__getattribute__(self.field)).__iter__()
+        return super(HookableList, self).__iter__()
+
+    def wrapper(self, *args, **kwargs):
+        if not self.hooks.__getattribute__(self.field):
+            self.hooks.__setattr__(self.field, list(self))
+        return self.ret(*args, **kwargs)
+
 class Model(django.db.models.base.Model):
     """
     Base class for all LDAP models.
@@ -53,6 +81,23 @@ class Model(django.db.models.base.Model):
     base_dn = None
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
+    original_object_classes = []
+
+    def __getattribute__(self, attr):
+        if attr in ['object_classes']:
+            self.object_classes = HookableList(self,
+                                               'original_%s' % attr,
+                                               super(Model, self).__getattribute__(attr))
+        return super(Model, self).__getattribute__(attr)
+
+    @staticmethod  # necessary with django models
+    def __new__(cls, *args, **kwargs):
+        try:
+            scope = ldap.dn.dn2str(ldap.dn.str2dn(args[0])[1:])
+            c = cls.scoped(scope)
+            return object.__new__(c)
+        except IndexError:
+            return object.__new__(cls)
 
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
@@ -93,7 +138,7 @@ class Model(django.db.models.base.Model):
         Saves the current instance.
         """
         signals.pre_save.send(sender=self.__class__, instance=self)
-        
+
         using = using or router.db_for_write(self.__class__, instance=self)
         connection = connections[using]
         if not self.dn:
@@ -127,10 +172,10 @@ class Model(django.db.models.base.Model):
                 old_value = getattr(orig, field.name, None)
                 new_value = getattr(self, field.name, None)
                 if old_value != new_value:
-                    new_value = field.get_db_prep_save(new_value, 
+                    new_value = field.get_db_prep_save(new_value,
                                         connection=connection)
                     if new_value:
-                        modlist.append((ldap.MOD_REPLACE, field.db_column, 
+                        modlist.append((ldap.MOD_REPLACE, field.db_column,
                                         new_value))
                     elif old_value:
                         modlist.append((ldap.MOD_DELETE, field.db_column,
@@ -153,6 +198,7 @@ class Model(django.db.models.base.Model):
 
         # done
         self.saved_pk = self.pk
+        self.original_object_classes = []
         signals.post_save.send(sender=self.__class__, instance=self,
                                created=(not record_exists))
 

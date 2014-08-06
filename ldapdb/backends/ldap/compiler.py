@@ -51,11 +51,10 @@ def query_as_ldap(query):
         return
 
     filterstr = ''.join(['(objectClass=%s)' % cls for cls in
-                         query.model.object_classes])
+                        query.model.object_classes])
     sql, params = where_as_ldap(query.where)
     filterstr += sql
     return '(&%s)' % filterstr
-
 
 def where_as_ldap(self):
     bits = []
