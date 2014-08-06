@@ -43,6 +43,29 @@ import ldapdb  # noqa
 logger = logging.getLogger('ldapdb')
 
 
+class HookableList(list):
+
+    ret = None
+
+    hooked_methods = ['append', '__setitem__', '__delitem__',
+                      'insert', 'pop', 'remove', '__iadd__']
+
+    def __init__(self, hooks, field, iterable):
+        self.hooks = hooks
+        self.field = field
+        super(HookableList, self).__init__(iterable)
+
+    def __getattribute__(self, attr):
+        if attr in super(HookableList, self).__getattribute__('hooked_methods'):
+            self.ret = super(HookableList, self).__getattribute__(attr)
+            return super(HookableList, self).__getattribute__('wrapper')
+        return super(HookableList, self).__getattribute__(attr)
+
+    def wrapper(self, *args, **kwargs):
+        if not self.hooks.__getattribute__(self.field):
+            self.hooks.__setattr__(self.field, list(self))
+        return self.ret(*args, **kwargs)
+
 class Model(django.db.models.base.Model):
     """
     Base class for all LDAP models.
@@ -55,10 +78,12 @@ class Model(django.db.models.base.Model):
     object_classes = ['top']
     original_object_classes = []
 
-    def __setattr__(self, k, v):
-        if k == 'object_classes':
-            super(Model, self).__setattr__('original_object_classes', self.object_classes)
-        return super(Model, self).__setattr__(k, v)
+    def __getattribute__(self, attr):
+        if attr in ['object_classes']:
+            self.object_classes = HookableList(self,
+                                               'original_%s' % attr,
+                                               super(Model, self).__getattribute__(attr))
+        return super(Model, self).__getattribute__(attr)
 
     @staticmethod  # necessary with django models
     def __new__(cls, *args, **kwargs):
