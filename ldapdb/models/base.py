@@ -58,8 +58,13 @@ class HookableList(list):
     def __getattribute__(self, attr):
         if attr in super(HookableList, self).__getattribute__('hooked_methods'):
             self.ret = super(HookableList, self).__getattribute__(attr)
-            return super(HookableList, self).__getattribute__('wrapper')
+            attr = 'wrapper'
         return super(HookableList, self).__getattribute__(attr)
+
+    def __iter__(self):
+        if self.hooks.__getattribute__(self.field):
+            return super(HookableList, self.hooks.__getattribute__(self.field)).__iter__()
+        return super(HookableList, self).__iter__()
 
     def wrapper(self, *args, **kwargs):
         if not self.hooks.__getattribute__(self.field):
