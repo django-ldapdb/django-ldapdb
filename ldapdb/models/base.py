@@ -53,6 +53,12 @@ class Model(django.db.models.base.Model):
     base_dn = None
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
+    original_object_classes = []
+
+    def __setattr__(self, k, v):
+        if k == 'object_classes':
+            super(Model, self).__setattr__('original_object_classes', self.object_classes)
+        return super(Model, self).__setattr__(k, v)
 
     @staticmethod  # necessary with django models
     def __new__(cls, *args, **kwargs):
@@ -162,6 +168,7 @@ class Model(django.db.models.base.Model):
 
         # done
         self.saved_pk = self.pk
+        self.original_object_classes = []
         signals.post_save.send(sender=self.__class__, instance=self,
                                created=(not record_exists))
 

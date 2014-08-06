@@ -50,12 +50,11 @@ def query_as_ldap(query):
     if hasattr(query, 'is_empty') and query.is_empty():
         return
 
-    filterstr = ''.join(['(objectClass=%s)' % cls for cls in ['top']])
-#                          query.model.object_classes])
+    filterstr = ''.join(['(objectClass=%s)' % cls for cls in
+                        query.model.original_object_classes or query.model.object_classes])
     sql, params = where_as_ldap(query.where)
     filterstr += sql
     return '(&%s)' % filterstr
-#     return sql
 
 def where_as_ldap(self):
     bits = []
