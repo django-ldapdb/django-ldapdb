@@ -490,6 +490,16 @@ class UserTestCase(TestCase):
         u.save()
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
 
+    def test_update_objectclass(self):
+        u = LdapUser.objects.get(username='foouser')
+        u.object_classes.append('person')
+        u.save()
+
+        # make sure DN gets updated if we change the pk
+        u.object_classes.remove('person')
+        u.save()
+        self.assertEquals(u.object_classes, ['posixAccount', 'shadowAccount', 'inetOrgPerson'])
+
 
 class ScopedTestCase(TestCase):
     directory = dict([admin, groups, people, foogroup, contacts])
