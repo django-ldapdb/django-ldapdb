@@ -31,6 +31,7 @@
 #
 
 from django.db.models import fields, SubfieldBase
+from django.utils.encoding import force_unicode
 
 from ldapdb import escape_ldap_filter
 
@@ -177,6 +178,13 @@ class ListField(fields.Field):
         if lookup_type == 'contains':
             return escape_ldap_filter(value)
         raise TypeError("ListField has invalid lookup: %s" % lookup_type)
+
+    def get_default(self):
+        "Encode every item and return the list if a default is defined."
+        if self.has_default():
+            return [force_unicode(i, strings_only=True) for i in self.default]
+        else:
+            return ""
 
     def to_python(self, value):
         if not value:
