@@ -97,6 +97,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def ensure_connection(self):
         if self.connection is None:
+
+            # Set global options
+
+            global_options = self.settings_dict.get('GLOBAL_OPTIONS', {})
+            for opt, value in global_options.items():
+                ldap.set_option(opt, value)
+
             self.connection = ldap.initialize(self.settings_dict['NAME'])
 
             options = self.settings_dict.get('CONNECTION_OPTIONS', {})
