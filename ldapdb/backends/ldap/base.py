@@ -33,9 +33,10 @@
 import ldap
 import django
 
-from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
-                                BaseDatabaseWrapper)
-from django.db.backends.creation import BaseDatabaseCreation
+from django.db.backends.base.features import (BaseDatabaseFeatures)                        
+from django.db.backends.base.operations import (BaseDatabaseOperations)
+from django.db.backends.base.base import (BaseDatabaseWrapper)
+from django.db.backends.base.creation import BaseDatabaseCreation
 
 
 class DatabaseCreation(BaseDatabaseCreation):
