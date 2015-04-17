@@ -32,11 +32,17 @@
 
 import ldap
 import django
+from pkg_resources import parse_version
 
-from django.db.backends.base.features import (BaseDatabaseFeatures)
-from django.db.backends.base.operations import (BaseDatabaseOperations)
-from django.db.backends.base.base import (BaseDatabaseWrapper)
-from django.db.backends.base.creation import BaseDatabaseCreation
+if parse_version(django.get_version()) < parse_version('1.8'):
+    from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
+                                BaseDatabaseWrapper)
+    from django.db.backends.creation import BaseDatabaseCreation
+else:
+    from django.db.backends.base.features import (BaseDatabaseFeatures)
+    from django.db.backends.base.operations import (BaseDatabaseOperations)
+    from django.db.backends.base.base import (BaseDatabaseWrapper)
+    from django.db.backends.base.creation import BaseDatabaseCreation
 
 
 class DatabaseCreation(BaseDatabaseCreation):
