@@ -31,9 +31,11 @@
 #
 
 import ldap
+import django
 
 from django.db.models.sql import aggregates, compiler
 from django.db.models.sql.where import AND, OR
+from pkg_resources import parse_version
 
 
 def get_lookup_operator(lookup_type):
@@ -272,6 +274,6 @@ class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
     pass
 
-
-class SQLDateCompiler(compiler.SQLDateCompiler, SQLCompiler):
-    pass
+if parse_version(django.get_version()) < parse_version('1.8'):
+    class SQLDateCompiler(compiler.SQLDateCompiler, SQLCompiler):
+        pass
