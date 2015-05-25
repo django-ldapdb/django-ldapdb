@@ -31,10 +31,20 @@
 #
 
 import ldap
+import re
+import sys
 
-from django.db.models.sql import aggregates, compiler
+import django
+if django.VERSION >= (1, 8):
+    from django.db.models import aggregates
+else:
+    from django.db.models.sql import aggregates
+from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR
 
+from ldapdb.models.fields import ListField
+
+_ORDER_BY_LIMIT_OFFSET_RE = re.compile(r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
 
 def get_lookup_operator(lookup_type):
     if lookup_type == 'gte':
@@ -99,19 +109,10 @@ def where_as_ldap(self):
     return sql_string, []
 
 
-class SQLCompiler(object):
-    def __init__(self, query, connection, using):
-        self.query = query
-        self.connection = connection
-        self.using = using
-
-    def execute_sql(self, result_type=compiler.MULTI):
+class SQLCompiler(compiler.SQLCompiler):
+    def execute_sql(self, result_type=compiler.SINGLE):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
-
-        for key, aggregate in self.query.aggregate_select.items():
-            if not isinstance(aggregate, aggregates.Count):
-                raise Exception("Unsupported aggregate %s" % aggregate)
 
         filterstr = query_as_ldap(self.query)
         if not filterstr:
@@ -131,16 +132,38 @@ class SQLCompiler(object):
             return None
 
         output = []
-        for alias, col in self.query.extra_select.iteritems():
-            output.append(col[0])
-        for key, aggregate in self.query.aggregate_select.items():
-            if isinstance(aggregate, aggregates.Count):
-                output.append(len(vals))
-            else:
-                output.append(None)
+        if django.VERSION >= (1, 8):
+            self.setup_query()
+            for e in self.select:
+                if isinstance(e[0], aggregates.Count):
+                    # Check if the SQL query has a limit value and append
+                    # that value, else append the length of the return values
+                    # from LDAP.
+                    sql = self.as_sql()[0]
+                    if hasattr(self.query, 'subquery'):
+                        sql = self.query.subquery
+                    m = _ORDER_BY_LIMIT_OFFSET_RE.search(sql)
+                    limit = m.group(2)
+                    offset = m.group(3)
+                    if limit and int(limit) >= 0:
+                        output.append(int(limit))
+                    elif offset:
+                        output.append(len(vals) - int(offset))
+                    else:
+                        output.append(len(vals))
+                else:
+                    output.append(e[0])
+        else:
+            for alias, col in self.query.extra_select.iteritems():
+                output.append(col[0])
+            for key, aggregate in self.query.aggregate_select.items():
+                if isinstance(aggregate, aggregates.Count):
+                    output.append(len(vals))
+                else:
+                    output.append(None)
         return output
 
-    def results_iter(self):
+    def results_iter(self, results=None):
         filterstr = query_as_ldap(self.query)
         if not filterstr:
             return
@@ -212,14 +235,56 @@ class SQLCompiler(object):
                 pos += 1
                 continue
             row = []
-            for field in iter(fields):
-                if field.attname == 'dn':
-                    row.append(dn)
-                elif hasattr(field, 'from_ldap'):
-                    row.append(field.from_ldap(attrs.get(field.db_column, []),
-                                               connection=self.connection))
-                else:
-                    row.append(None)
+            if django.VERSION >= (1, 8):
+                self.setup_query()
+                for e in self.select:
+                    if isinstance(e[0], aggregates.Count):
+                        value = 0
+                        if e[0].input_field.field.attname == 'dn':
+                            value = 1
+                        elif hasattr(e[0].input_field.field, 'from_ldap'):
+                            result = e[0].input_field.field.from_ldap(
+                                attrs.get(e[0].input_field.field.db_column, []),
+                                connection=self.connection)
+                            if result:
+                                value = 1
+                                if isinstance(e[0].input_field.field, ListField):
+                                    value = len(result)
+                        row.append(value)
+                    else:
+                        if e[0].field.attname == 'dn':
+                            row.append(dn)
+                        elif hasattr(e[0].field, 'from_ldap'):
+                            row.append(e[0].field.from_ldap(
+                                attrs.get(e[0].field.db_column, []),
+                                connection=self.connection))
+                        else:
+                            row.append(None)
+            else:
+                for field in iter(fields):
+                    if field.attname == 'dn':
+                        row.append(dn)
+                    elif hasattr(field, 'from_ldap'):
+                        row.append(field.from_ldap(attrs.get(field.db_column, []),
+                                                connection=self.connection))
+                    else:
+                        row.append(None)
+                for key, aggregate in self.query.aggregate_select.items():
+                    if isinstance(aggregate, aggregates.Count):
+                        value = 0
+                        if aggregate.source.attname == 'dn':
+                            value = 1
+                        elif hasattr(aggregate.source, 'from_ldap'):
+                            result = aggregate.source.from_ldap(
+                                attrs.get(aggregate.source.db_column, []),
+                                connection=self.connection)
+                            if result:
+                                value = 1
+                                if isinstance(aggregate.source, ListField):
+                                    value = len(result)
+                        row.append(value)
+                    else:
+                        row.append(None)
             if self.query.distinct:
                 if row in results:
                     continue
@@ -270,8 +335,14 @@ class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
 
 
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
-    pass
+    def execute_sql(self, result_type=compiler.SINGLE):
+        # Return only number values through the aggregate compiler
+        output = super(SQLAggregateCompiler, self).execute_sql(result_type)
+        if sys.version_info < (3,):
+            return filter(lambda a: isinstance(a, int), output)
+        return filter(lambda a: isinstance(a, (int, long)), output)
 
 
-class SQLDateCompiler(compiler.SQLDateCompiler, SQLCompiler):
-    pass
+if django.VERSION < (1, 8):
+    class SQLDateCompiler(compiler.SQLDateCompiler, SQLCompiler):
+        pass

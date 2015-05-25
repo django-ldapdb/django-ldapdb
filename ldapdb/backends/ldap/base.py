@@ -33,10 +33,15 @@
 import ldap
 import django
 
-from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
-                                BaseDatabaseWrapper)
-from django.db.backends.creation import BaseDatabaseCreation
-
+if django.VERSION < (1, 8):
+    from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
+                                    BaseDatabaseWrapper)
+    from django.db.backends.creation import BaseDatabaseCreation
+else:
+    from django.db.backends.base.features import BaseDatabaseFeatures
+    from django.db.backends.base.operations import BaseDatabaseOperations
+    from django.db.backends.base.base import BaseDatabaseWrapper
+    from django.db.backends.base.creation import BaseDatabaseCreation
 
 class DatabaseCreation(BaseDatabaseCreation):
     def create_test_db(self, *args, **kwargs):
@@ -71,9 +76,30 @@ class DatabaseOperations(BaseDatabaseOperations):
     def quote_name(self, name):
         return name
 
+    def no_limit_value(self):
+        return -1
+
 
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'ldap'
+
+    # NOTE: These are copied from the mysql DatabaseWrapper
+    operators = {
+        'exact': '= %s',
+        'iexact': 'LIKE %s',
+        'contains': 'LIKE BINARY %s',
+        'icontains': 'LIKE %s',
+        'regex': 'REGEXP BINARY %s',
+        'iregex': 'REGEXP %s',
+        'gt': '> %s',
+        'gte': '>= %s',
+        'lt': '< %s',
+        'lte': '<= %s',
+        'startswith': 'LIKE BINARY %s',
+        'endswith': 'LIKE BINARY %s',
+        'istartswith': 'LIKE %s',
+        'iendswith': 'LIKE %s',
+    }
 
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
@@ -85,7 +111,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.ops = DatabaseOperations(self)
         else:
             self.ops = DatabaseOperations()
-        self.settings_dict['SUPPORTS_TRANSACTIONS'] = False
+        self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
+        self.autocommit = True
 
     def close(self):
         if hasattr(self, 'validate_thread_sharing'):
@@ -118,6 +145,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         return DatabaseCursor(self.connection)
 
     def _rollback(self):
+        pass
+
+    def _set_autocommit(self, autocommit):
         pass
 
     def add_s(self, dn, modlist):
