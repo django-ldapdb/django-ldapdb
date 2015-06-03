@@ -120,7 +120,7 @@ class Model(django.db.models.base.Model):
             # update an existing entry
             record_exists = True
             modlist = []
-            orig = self.__class__.objects.get(pk=self.saved_pk)
+            orig = self.__class__.objects.using(using).get(pk=self.saved_pk)
             for field in self._meta.fields:
                 if not field.db_column:
                     continue
