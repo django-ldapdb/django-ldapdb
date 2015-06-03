@@ -34,7 +34,7 @@ import datetime
 import ldap
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.test import TestCase
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
@@ -163,11 +163,32 @@ class GroupTestCase(TestCase):
         self.assertEquals(self.ldapobj.methods_called(),
                           ['initialize', 'simple_bind_s', 'search_s'])
 
+    def test_aggregate_count(self):
+        qs = LdapGroup.objects.all()
+        result = qs.aggregate(num_groups=Count('name'))
+        self.assertEquals(result['num_groups'], 3)
+
+    def test_annotate_count(self):
+        groups = LdapGroup.objects.order_by('name').annotate(num_usernames=Count('usernames'))
+        self.assertEquals(len(groups), 3)
+        self.assertEquals(groups[0].name, 'bargroup')
+        self.assertEquals(groups[0].num_usernames, 2)
+        self.assertEquals(groups[1].name, 'foogroup')
+        self.assertEquals(groups[1].num_usernames, 2)
+        self.assertEquals(groups[2].name, 'wizgroup')
+        self.assertEquals(groups[2].num_usernames, 2)
+        groups = LdapGroup.objects.filter(name='foogroup').annotate(num_usernames=Count('usernames'))
+        self.assertEquals(len(groups), 1)
+        self.assertEquals(groups[0].name, 'foogroup')
+        self.assertEquals(groups[0].num_usernames, 2)
+        groups = LdapGroup.objects.annotate(num_usernames=Count('usernames')).filter(name='foogroup')
+        self.assertEquals(len(groups), 1)
+        self.assertEquals(groups[0].name, 'foogroup')
+        self.assertEquals(groups[0].num_usernames, 2)
+
     def test_length_all(self):
         qs = LdapGroup.objects.all()
         self.assertEquals(len(qs), 3)
-        self.assertEquals(self.ldapobj.methods_called(),
-                          ['initialize', 'simple_bind_s', 'search_s'])
 
     def test_length_none(self):
         qs = LdapGroup.objects.none()
@@ -366,12 +387,6 @@ class GroupTestCase(TestCase):
         g.gid = 1002
         g.usernames = ['foouser2', u'barusér2']
         g.save()
-        self.assertEquals(self.ldapobj.methods_called(), [
-            'initialize',
-            'simple_bind_s',
-            'search_s',
-            'search_s',
-            'modify_s'])
 
         # check group was updated
         new = LdapGroup.objects.get(name='foogroup')
@@ -384,13 +399,6 @@ class GroupTestCase(TestCase):
         g.name = 'foogroup2'
         g.save()
         self.assertEquals(g.dn, 'cn=foogroup2,%s' % LdapGroup.base_dn)
-        self.assertEquals(self.ldapobj.methods_called(), [
-            'initialize',
-            'simple_bind_s',
-            'search_s',
-            'search_s',
-            'rename_s',
-            'modify_s'])
 
         # check group was updated
         new = LdapGroup.objects.get(name='foogroup2')
