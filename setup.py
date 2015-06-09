@@ -32,5 +32,6 @@ setup(
     ],
     tests_require=[
         'mockldap>=0.1',
-    ]
+    ],
+    test_suite = 'manage.run_tests'
 )

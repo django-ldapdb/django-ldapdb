@@ -11,4 +11,4 @@ env:
   - DJANGO=Django==1.8
 install:
   - pip install -q $DJANGO python-ldap mockldap --use-mirrors
-script: python manage.py test ldapdb examples
+script: python setup.py test
