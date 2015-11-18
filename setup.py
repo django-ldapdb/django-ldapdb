@@ -24,8 +24,8 @@ setup(
     ],
     keywords=['django', 'ldap', 'database'],
     install_requires=[
-        'django>=1.2',
-        'python-ldap>=2.0',
+        'django>=1.7',
+        'pyldap',
     ],
     setup_requires=[
         'setuptools>=0.6c11',
@@ -33,5 +33,5 @@ setup(
     tests_require=[
         'mockldap>=0.1',
     ],
-    test_suite = 'manage.run_tests'
+    test_suite='manage.run_tests'
 )
