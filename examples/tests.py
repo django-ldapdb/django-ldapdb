@@ -493,7 +493,7 @@ class UserTestCase(TestCase):
         u.first_name = u'Fôo2'
         u.save()
 
-        # make sure DN gets updated if we change the pk
+        # make sure DN gets updated if we change the pk
         u.username = 'foouser2'
         u.save()
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
