@@ -38,10 +38,12 @@ if django.VERSION < (1, 8):
                                     BaseDatabaseWrapper)
     from django.db.backends.creation import BaseDatabaseCreation
 else:
+    # Django >= 1.8
     from django.db.backends.base.features import BaseDatabaseFeatures
     from django.db.backends.base.operations import BaseDatabaseOperations
     from django.db.backends.base.base import BaseDatabaseWrapper
     from django.db.backends.base.creation import BaseDatabaseCreation
+
 
 class DatabaseCreation(BaseDatabaseCreation):
     def create_test_db(self, *args, **kwargs):
@@ -110,6 +112,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if django.VERSION > (1, 4):
             self.ops = DatabaseOperations(self)
         else:
+            # Django <= 1.4
+            # TODO: Unsupported Django version, can remove.
             self.ops = DatabaseOperations()
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
@@ -117,6 +121,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def close(self):
         if hasattr(self, 'validate_thread_sharing'):
             # django >= 1.4
+            # TODO: Can remove hasattr check, all supported django versions >= 1.4
             self.validate_thread_sharing()
         if self.connection is not None:
             self.connection.unbind_s()

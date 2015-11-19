@@ -33,11 +33,14 @@
 import ldap
 import re
 import sys
+from functools import cmp_to_key
 
 import django
+from django.utils import six
 if django.VERSION >= (1, 8):
     from django.db.models import aggregates
 else:
+    # Django < 1.8
     from django.db.models.sql import aggregates
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR
@@ -45,6 +48,11 @@ from django.db.models.sql.where import AND, OR
 from ldapdb.models.fields import ListField
 
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
+
+
+def _cmp(a, b):
+    return (a > b) - (a < b)
+
 
 def get_lookup_operator(lookup_type):
     if lookup_type == 'gte':
@@ -71,9 +79,11 @@ def where_as_ldap(self):
     bits = []
     for item in self.children:
         if hasattr(item, 'lhs') and hasattr(item, 'rhs'):
-            # Django 1.7
+            # Django >= 1.7
             item = item.lhs.target.column, item.lookup_name, None, item.rhs
         elif hasattr(item, 'as_sql'):
+            # Django < 1.7
+            # TODO: can remove, django doesn't support versions < 1.7
             sql, params = where_as_ldap(item)
             bits.append(sql)
             continue
@@ -154,7 +164,8 @@ class SQLCompiler(compiler.SQLCompiler):
                 else:
                     output.append(e[0])
         else:
-            for alias, col in self.query.extra_select.iteritems():
+            # Django < 1.8
+            for alias, col in six.iteritems(self.query.extra_select):
                 output.append(col[0])
             for key, aggregate in self.query.aggregate_select.items():
                 if isinstance(aggregate, aggregates.Count):
@@ -170,6 +181,7 @@ class SQLCompiler(compiler.SQLCompiler):
 
         if hasattr(self.query, 'select_fields') and len(self.query.select_fields):
             # django < 1.6
+            # TODO: can remove, no django support for django < 1.6
             fields = self.query.select_fields
         elif len(self.query.select):
             # django >= 1.6
@@ -216,11 +228,13 @@ class SQLCompiler(compiler.SQLCompiler):
                     attr_x = attr_x.lower()
                 if hasattr(attr_y, 'lower'):
                     attr_y = attr_y.lower()
-                val = negate and cmp(attr_y, attr_x) or cmp(attr_x, attr_y)
+                val = negate and _cmp(attr_y, attr_x) or _cmp(attr_x, attr_y)
                 if val:
                     return val
             return 0
-        vals = sorted(vals, cmp=cmpvals)
+        # TODO: Convert to using proper keyfunction or keyfunctions.
+        # Sorting via cmp is deprecated and less efficient
+        vals = sorted(vals, key=cmp_to_key(cmpvals))
 
         # process results
         pos = 0
@@ -261,6 +275,7 @@ class SQLCompiler(compiler.SQLCompiler):
                         else:
                             row.append(None)
             else:
+                # Django < 1.8
                 for field in iter(fields):
                     if field.attname == 'dn':
                         row.append(dn)
@@ -304,6 +319,7 @@ class SQLCompiler(compiler.SQLCompiler):
                 return False
         else:
             return False
+
 
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     pass
