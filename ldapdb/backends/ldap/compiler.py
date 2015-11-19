@@ -49,6 +49,10 @@ from ldapdb.models.fields import ListField
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
 
 
+def _cmp(a, b):
+    return (a > b) - (a < b)
+
+
 def get_lookup_operator(lookup_type):
     if lookup_type == 'gte':
         return '>='
@@ -223,7 +227,7 @@ class SQLCompiler(compiler.SQLCompiler):
                     attr_x = attr_x.lower()
                 if hasattr(attr_y, 'lower'):
                     attr_y = attr_y.lower()
-                val = negate and cmp(attr_y, attr_x) or cmp(attr_x, attr_y)
+                val = negate and _cmp(attr_y, attr_x) or _cmp(attr_x, attr_y)
                 if val:
                     return val
             return 0
