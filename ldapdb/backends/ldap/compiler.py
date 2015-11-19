@@ -33,6 +33,7 @@
 import ldap
 import re
 import sys
+from functools import cmp_to_key
 
 import django
 from django.utils import six
@@ -231,7 +232,9 @@ class SQLCompiler(compiler.SQLCompiler):
                 if val:
                     return val
             return 0
-        vals = sorted(vals, cmp=cmpvals)
+        # TODO: Convert to using proper keyfunction or keyfunctions.
+        # Sorting via cmp is deprecated and less efficient
+        vals = sorted(vals, key=cmp_to_key(cmpvals))
 
         # process results
         pos = 0
