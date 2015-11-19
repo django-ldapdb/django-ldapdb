@@ -35,6 +35,7 @@ import re
 import sys
 
 import django
+from django.utils import six
 if django.VERSION >= (1, 8):
     from django.db.models import aggregates
 else:
@@ -159,7 +160,7 @@ class SQLCompiler(compiler.SQLCompiler):
                     output.append(e[0])
         else:
             # Django < 1.8
-            for alias, col in self.query.extra_select.iteritems():
+            for alias, col in six.iteritems(self.query.extra_select):
                 output.append(col[0])
             for key, aggregate in self.query.aggregate_select.items():
                 if isinstance(aggregate, aggregates.Count):
