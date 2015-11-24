@@ -129,7 +129,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def ensure_connection(self):
         if self.connection is None:
-            self.connection = ldap.initialize(self.settings_dict['NAME'])
+            self.connection = ldap.initialize(self.settings_dict['NAME'], bytes_mode=False)
 
             options = self.settings_dict.get('CONNECTION_OPTIONS', {})
             for opt, value in options.items():
