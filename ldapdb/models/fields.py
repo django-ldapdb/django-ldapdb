@@ -31,6 +31,7 @@
 #
 
 from django.db.models import fields, SubfieldBase
+from django.utils import six
 
 from ldapdb import escape_ldap_filter
 
@@ -46,8 +47,10 @@ class CharField(fields.CharField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return ''
-        else:
+        elif six.PY2:
             return value[0].decode(connection.charset)
+        else:
+            return value[0]
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -68,7 +71,10 @@ class CharField(fields.CharField):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [value.encode(connection.charset)]
+        elif six.PY2:
+            return [value.encode(connection.charset)]
+        else:
+            return [value]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -160,7 +166,10 @@ class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
-        return [x.decode(connection.charset) for x in value]
+        if six.PY2:
+            return [x.decode(connection.charset) for x in value]
+        else:
+            return value
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -170,7 +179,10 @@ class ListField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [x.encode(connection.charset) for x in value]
+        elif six.PY2:
+            return [x.encode(connection.charset) for x in value]
+        else:
+            return value
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"

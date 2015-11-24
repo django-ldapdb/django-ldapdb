@@ -29,9 +29,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 import ldap
 import django
+from django.utils import six
 
 if django.VERSION < (1, 8):
     from django.db.backends import (BaseDatabaseFeatures, BaseDatabaseOperations,
@@ -157,30 +157,40 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def add_s(self, dn, modlist):
         cursor = self._cursor()
-        return cursor.connection.add_s(dn.encode(self.charset), modlist)
+        if six.PY2:
+            dn = dn.encode(self.charset)
+        return cursor.connection.add_s(dn, modlist)
 
     def delete_s(self, dn):
         cursor = self._cursor()
-        return cursor.connection.delete_s(dn.encode(self.charset))
+        if six.PY2:
+            dn = dn.encode(self.charset)
+        return cursor.connection.delete_s(dn)
 
     def modify_s(self, dn, modlist):
         cursor = self._cursor()
-        return cursor.connection.modify_s(dn.encode(self.charset), modlist)
+        if six.PY2:
+            dn = dn.encode(self.charset)
+        return cursor.connection.modify_s(dn, modlist)
 
     def rename_s(self, dn, newrdn):
         cursor = self._cursor()
-        return cursor.connection.rename_s(dn.encode(self.charset),
-                                          newrdn.encode(self.charset))
+        if six.PY2:
+            dn = dn.encode(self.charset)
+            newrdn = newrdn.encode(self.charset)
+        return cursor.connection.rename_s(dn, newrdn)
 
     def search_s(self, base, scope, filterstr='(objectClass=*)',
                  attrlist=None):
         cursor = self._cursor()
-        results = cursor.connection.search_s(base, scope,
-                                             filterstr.encode(self.charset),
-                                             attrlist)
+        if six.PY2:
+            filterstr = filterstr.encode(self.charset)
+        results = cursor.connection.search_s(base, scope, filterstr, attrlist)
         output = []
         for dn, attrs in results:
             # skip referrals
             if dn is not None:
-                output.append((dn.decode(self.charset), attrs))
+                if six.PY2:
+                    dn = dn.decode(self.charset)
+                output.append((dn, attrs))
         return output
