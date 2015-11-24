@@ -356,7 +356,7 @@ class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
         output = super(SQLAggregateCompiler, self).execute_sql(result_type)
         if sys.version_info < (3,):
             return filter(lambda a: isinstance(a, int), output)
-        return filter(lambda a: isinstance(a, (int, long)), output)
+        return filter(lambda a: isinstance(a, six.integer_types), output)
 
 
 if django.VERSION < (1, 8):
