@@ -407,7 +407,7 @@ class GroupTestCase(TestCase):
         self.assertEquals(new.usernames, ['foouser', 'baruser'])
 
     def test_values(self):
-        qs = sorted(LdapGroup.objects.values('name'))
+        qs = sorted(LdapGroup.objects.values('name'), key=lambda x: x.get('name'))
         self.assertEquals(len(qs), 3)
         self.assertEquals(qs[0], {'name': 'bargroup'})
         self.assertEquals(qs[1], {'name': 'foogroup'})
