@@ -36,6 +36,7 @@ import ldap
 from django.conf import settings
 from django.db.models import Q, Count
 from django.test import TestCase
+from django.utils import six
 
 from ldapdb.backends.ldap.compiler import query_as_ldap
 from examples.models import LdapUser, LdapGroup
@@ -60,7 +61,7 @@ wizgroup = ('cn=wizgroup,ou=groups,dc=nodomain', {
     'objectClass': ['posixGroup'], 'memberUid': ['wizuser', 'baruser'],
     'gidNumber': ['1002'], 'cn': ['wizgroup']})
 foouser = ('uid=foouser,ou=people,dc=nodomain', {
-    'cn': ['F\xc3\xb4o Us\xc3\xa9r'],
+    'cn': [b'F\xc3\xb4o Us\xc3\xa9r'],
     'objectClass': ['posixAccount', 'shadowAccount', 'inetOrgPerson'],
     'loginShell': ['/bin/bash'],
     'jpegPhoto': [
@@ -82,9 +83,14 @@ foouser = ('uid=foouser,ou=people,dc=nodomain', {
         '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff'
         '\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6'
         '\xfd\x00\x01\xff\xd9'],
-    'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': ['Us\xc3\xa9r'],
-    'homeDirectory': ['/home/foouser'], 'givenName': ['F\xc3\xb4o'],
+    'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': [b'Us\xc3\xa9r'],
+    'homeDirectory': ['/home/foouser'], 'givenName': [b'F\xc3\xb4o'],
     'uid': ['foouser'], 'birthday': ['1982-06-12'], 'latitude': ['3.14']})
+
+if six.PY3:
+    foouser[1]['cn'][0] = foouser[1]['cn'][0].decode('utf-8')
+    foouser[1]['sn'][0] = foouser[1]['sn'][0].decode('utf-8')
+    foouser[1]['givenName'][0] = foouser[1]['givenName'][0].decode('utf-8')
 
 
 class ConnectionTestCase(TestCase):
