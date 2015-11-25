@@ -78,15 +78,15 @@ def query_as_ldap(query):
 def where_as_ldap(self):
     bits = []
     for item in self.children:
+        # Django >= 1.7 compatibility fix
+        # Django no longer supports < 1.7, so everything should go through one of these.
         if hasattr(item, 'lhs') and hasattr(item, 'rhs'):
-            # Django >= 1.7
             item = item.lhs.target.column, item.lookup_name, None, item.rhs
         elif hasattr(item, 'as_sql'):
-            # Django < 1.7
-            # TODO: can remove, django doesn't support versions < 1.7
             sql, params = where_as_ldap(item)
             bits.append(sql)
             continue
+        # End Django >= 1.7 compatibility fix
 
         constraint, lookup_type, y, values = item
         if hasattr(constraint, 'col'):
@@ -104,6 +104,7 @@ def where_as_ldap(self):
     if not len(bits):
         return '', []
 
+    bits.sort(reverse=True)
     if len(bits) == 1:
         sql_string = bits[0]
     elif self.connector == AND:
@@ -354,8 +355,6 @@ class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
     def execute_sql(self, result_type=compiler.SINGLE):
         # Return only number values through the aggregate compiler
         output = super(SQLAggregateCompiler, self).execute_sql(result_type)
-        if sys.version_info < (3,):
-            return filter(lambda a: isinstance(a, int), output)
         return filter(lambda a: isinstance(a, six.integer_types), output)
 
 
