@@ -104,7 +104,7 @@ def where_as_ldap(self):
     if not len(bits):
         return '', []
 
-    bits.sort(reverse=True)
+    bits.sort()
     if len(bits) == 1:
         sql_string = bits[0]
     elif self.connector == AND:
