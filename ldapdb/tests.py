@@ -39,6 +39,8 @@ from ldapdb.backends.ldap.compiler import where_as_ldap
 
 
 class TestModel(Model):
+    class Meta:
+        app_label = "ldapdb"
     cn = fields.CharField()
     uid = fields.IntegerField()
     fuid = fields.FloatField()
