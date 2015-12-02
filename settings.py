@@ -1,6 +1,7 @@
 # Django settings for django-ldapdb project.
 
 import ldap
+import django
 
 DEBUG = True
 
@@ -70,8 +71,10 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
 )
+
+if django.VERSION >= (1, 7):
+    MIDDLEWARE_CLASSES += ('django.contrib.auth.middleware.SessionAuthenticationMiddleware', )
 
 ROOT_URLCONF = 'urls'
 
@@ -86,26 +89,25 @@ INSTALLED_APPS = (
     'django.contrib.admin',
 )
 
-# Templates: Django >= 1.8
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
-    },
-]
+if django.VERSION >= (1, 8):
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'APP_DIRS': True,
+        },
+    ]
+else:
+    TEMPLATE_DIRS = (
+        # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+        # Always use forward slashes, even on Windows.
+        # Don't forget to use absolute paths, not relative paths.
+    )
 
-# Templates: Django < 1.8
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
+    # List of callables that know how to import templates from various sources.
+    TEMPLATE_LOADERS = (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+        # 'django.template.loaders.eggs.Loader',
+    )
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    # 'django.template.loaders.eggs.Loader',
-)
-
-TEMPLATE_DEBUG = DEBUG
+    TEMPLATE_DEBUG = DEBUG
