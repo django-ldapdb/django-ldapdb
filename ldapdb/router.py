@@ -29,6 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+import django
 
 
 def is_ldap_model(model):
@@ -60,11 +61,6 @@ class Router(object):
             return db == self.ldap_alias
         return None
 
-    def allow_migrate(self, db, model):
-        if is_ldap_model(model):
-            return False
-        return None
-
     def db_for_read(self, model, **hints):
         "Point all operations on LDAP models to the LDAP database"
         if is_ldap_model(model):
@@ -76,3 +72,20 @@ class Router(object):
         if is_ldap_model(model):
             return self.ldap_alias
         return None
+
+    def _old_allow_migrate(self, db, model):
+        # For django < 1.8
+        if is_ldap_model(model):
+            return False
+        return None
+
+    def _new_allow_migrate(self, db, app_label, model_name=None, **hints):
+        # For django >= 1.8
+        if is_ldap_model(hints.get('model')):
+            return False
+        return None
+
+if django.VERSION >= (1, 8):
+    Router.allow_migrate = Router._new_allow_migrate
+else:
+    Router.allow_migrate = Router._old_allow_migrate
