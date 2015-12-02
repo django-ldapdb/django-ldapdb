@@ -591,7 +591,7 @@ class AdminTestCase(TestCase):
         self.assertContains(response, "1000")
 
     def test_group_detail(self):
-        response = self.client.get('/admin/examples/ldapgroup/foogroup/')
+        response = self.client.get('/admin/examples/ldapgroup/foogroup/', follow=True)
         self.assertContains(response, "foogroup")
         self.assertContains(response, "1000")
 
@@ -642,7 +642,7 @@ class AdminTestCase(TestCase):
         self.assertContains(response, "2000")
 
     def test_user_detail(self):
-        response = self.client.get('/admin/examples/ldapuser/foouser/')
+        response = self.client.get('/admin/examples/ldapuser/foouser/', follow=True)
         self.assertContains(response, "foouser")
         self.assertContains(response, "2000")
 
