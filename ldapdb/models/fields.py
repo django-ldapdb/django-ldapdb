@@ -47,10 +47,10 @@ class CharField(fields.CharField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return ''
-        elif isinstance(value[0], six.string_types):
-            return value[0]
-        else:
+        elif six.PY2:
             return value[0].decode(connection.charset)
+        else:
+            return value[0]
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -71,10 +71,10 @@ class CharField(fields.CharField):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        elif isinstance(value, six.binary_type):
-            return [value]
-        else:
+        elif six.PY2:
             return [value.encode(connection.charset)]
+        else:
+            return [value]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -107,10 +107,7 @@ class ImageField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        elif isinstance(value, six.binary_type):
-            return [value]
-        else:
-            return [value.encode(connection.charset)]
+        return [value]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -169,8 +166,10 @@ class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
-        return [x if isinstance(x, six.string_types)
-                else x.decode(connection.charset) for x in value]
+        if six.PY2:
+            return [x.decode(connection.charset) for x in value]
+        else:
+            return value
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -180,8 +179,10 @@ class ListField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [x if isinstance(x, six.binary_type)
-                else x.encode(connection.charset) for x in value]
+        elif six.PY2:
+            return [x.encode(connection.charset) for x in value]
+        else:
+            return value
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -216,11 +217,9 @@ class DateField(fields.DateField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return None
-        if isinstance(value[0], six.string_types):
-            date = value[0]
         else:
-            date = value[0].decode(connection.charset)
-        return datetime.datetime.strptime(date, self._date_format).date()
+            return datetime.datetime.strptime(value[0],
+                                              self._date_format).date()
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -234,11 +233,8 @@ class DateField(fields.DateField):
                 and not isinstance(value, datetime.datetime):
             raise ValueError(
                 'DateField can be only set to a datetime.date instance')
-        date = value.strftime(self._date_format)
-        if isinstance(date, six.binary_type):
-            return [date]
-        else:
-            return [date.encode(connection.charset)]
+
+        return [value.strftime(self._date_format)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
