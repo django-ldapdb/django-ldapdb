@@ -32,6 +32,7 @@
 
 from django.db.models import fields, SubfieldBase
 from django.utils import six
+from django.utils.encoding import force_bytes, force_str
 
 from ldapdb import escape_ldap_filter
 
@@ -47,10 +48,7 @@ class CharField(fields.CharField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return ''
-        elif isinstance(value[0], six.string_types):
-            return value[0]
-        else:
-            return value[0].decode(connection.charset)
+        return value[0]
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -71,10 +69,7 @@ class CharField(fields.CharField):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        elif isinstance(value, six.binary_type):
-            return [value]
-        else:
-            return [value.encode(connection.charset)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
