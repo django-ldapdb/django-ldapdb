@@ -164,8 +164,9 @@ class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
-        return [x if isinstance(x, six.string_types)
-                else x.decode(connection.charset) for x in value]
+        if not value:
+            return []
+        return value
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -175,8 +176,7 @@ class ListField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [x if isinstance(x, six.binary_type)
-                else x.encode(connection.charset) for x in value]
+        return [force_bytes(x, encoding=connection.charset) for x in value]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
