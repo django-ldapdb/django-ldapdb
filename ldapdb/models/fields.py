@@ -31,7 +31,6 @@
 #
 
 from django.db.models import fields, SubfieldBase
-from django.utils import six
 from django.utils.encoding import force_bytes, force_str
 
 from ldapdb import escape_ldap_filter
