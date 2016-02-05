@@ -48,7 +48,7 @@ class CharField(fields.CharField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return ''
-        return value[0]
+        return force_str(value[0], encoding=connection.charset)
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -166,7 +166,7 @@ class ListField(fields.Field):
     def from_ldap(self, value, connection):
         if not value:
             return []
-        return value
+        return [force_str(s, encoding=connection.charset) for s in value]
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
