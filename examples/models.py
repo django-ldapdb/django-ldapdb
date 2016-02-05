@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
+from django.utils import six
 from ldapdb.models.fields import (CharField, DateField, ImageField, ListField,
                                   IntegerField, FloatField)
 import ldapdb.models
@@ -68,7 +68,7 @@ class LdapUser(ldapdb.models.Model):
         return self.username
 
     def __unicode__(self):
-        return self.full_name
+        return self.full_name.decode('utf-8')
 
 
 class LdapGroup(ldapdb.models.Model):

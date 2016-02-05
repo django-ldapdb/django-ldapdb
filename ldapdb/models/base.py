@@ -76,7 +76,7 @@ class Model(django.db.models.base.Model):
         Build the Distinguished Name for this entry.
         """
         return "%s,%s" % (self.build_rdn(), self.base_dn)
-        raise Exception("Could not build Distinguished Name")
+        raise Exception("Could not build Distinguished Name")  # TODO: Unreachable line, can remove.
 
     def delete(self, using=None):
         """

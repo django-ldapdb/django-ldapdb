@@ -31,6 +31,7 @@
 #
 
 from django.db.models import fields, SubfieldBase
+from django.utils.encoding import force_bytes, force_str
 
 from ldapdb import escape_ldap_filter
 
@@ -46,8 +47,7 @@ class CharField(fields.CharField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return ''
-        else:
-            return value[0].decode(connection.charset)
+        return force_str(value[0], encoding=connection.charset)
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -68,7 +68,7 @@ class CharField(fields.CharField):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [value.encode(connection.charset)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -101,7 +101,7 @@ class ImageField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [value]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -123,7 +123,7 @@ class IntegerField(fields.IntegerField):
     def get_db_prep_save(self, value, connection):
         if value is None:
             return None
-        return [str(value)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -147,7 +147,7 @@ class FloatField(fields.FloatField):
     def get_db_prep_save(self, value, connection):
         if value is None:
             return None
-        return [str(value)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -160,7 +160,9 @@ class ListField(fields.Field):
     __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
-        return [x.decode(connection.charset) for x in value]
+        if not value:
+            return []
+        return [force_str(s, encoding=connection.charset) for s in value]
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -170,7 +172,7 @@ class ListField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        return [x.encode(connection.charset) for x in value]
+        return [force_bytes(x, encoding=connection.charset) for x in value]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -205,9 +207,10 @@ class DateField(fields.DateField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return None
-        else:
-            return datetime.datetime.strptime(value[0],
-                                              self._date_format).date()
+        return datetime.datetime.strptime(
+            force_str(value[0], encoding=connection.charset),
+            self._date_format
+        ).date()
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -221,8 +224,8 @@ class DateField(fields.DateField):
                 and not isinstance(value, datetime.datetime):
             raise ValueError(
                 'DateField can be only set to a datetime.date instance')
-
-        return [value.strftime(self._date_format)]
+        return [force_bytes(value.strftime(self._date_format),
+                            encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"

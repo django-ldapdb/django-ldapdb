@@ -7,8 +7,10 @@ from django.core.management import execute_from_command_line
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
+
 def run_tests():
     if django.VERSION < (1, 6):
+        # TODO: Versions not supported by django, this can be removed
         execute_from_command_line([os.path.abspath(__file__), 'test', 'ldapdb', 'examples'])
     else:
         execute_from_command_line([os.path.abspath(__file__), 'test'])

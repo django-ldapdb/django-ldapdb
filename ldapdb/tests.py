@@ -32,6 +32,10 @@
 
 from django.test import TestCase
 from django.db.models.sql.where import Constraint, AND, OR, WhereNode
+# TODO: Constraint class deprecated in django>=1.7, will be removed in 1.9.
+# Django no longer supports versions < 1.7.
+# Tests can be refactored to use documented Lookup API.
+# https://docs.djangoproject.com/en/stable/ref/models/lookups/
 
 from ldapdb import escape_ldap_filter
 from ldapdb.backends.ldap.compiler import where_as_ldap
