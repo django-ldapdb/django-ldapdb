@@ -102,10 +102,7 @@ class ImageField(fields.Field):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
-        elif isinstance(value, six.binary_type):
-            return [value]
-        else:
-            return [value.encode(connection.charset)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -127,7 +124,7 @@ class IntegerField(fields.IntegerField):
     def get_db_prep_save(self, value, connection):
         if value is None:
             return None
-        return [str(value)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -151,7 +148,7 @@ class FloatField(fields.FloatField):
     def get_db_prep_save(self, value, connection):
         if value is None:
             return None
-        return [str(value)]
+        return [force_bytes(value, encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -211,11 +208,10 @@ class DateField(fields.DateField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
             return None
-        if isinstance(value[0], six.string_types):
-            date = value[0]
-        else:
-            date = value[0].decode(connection.charset)
-        return datetime.datetime.strptime(date, self._date_format).date()
+        return datetime.datetime.strptime(
+            force_str(value[0], encoding=connection.charset),
+            self._date_format
+        ).date()
 
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
@@ -229,11 +225,8 @@ class DateField(fields.DateField):
                 and not isinstance(value, datetime.datetime):
             raise ValueError(
                 'DateField can be only set to a datetime.date instance')
-        date = value.strftime(self._date_format)
-        if isinstance(date, six.binary_type):
-            return [date]
-        else:
-            return [date.encode(connection.charset)]
+        return [force_bytes(value.strftime(self._date_format),
+                            encoding=connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
