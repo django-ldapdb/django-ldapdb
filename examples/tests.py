@@ -29,7 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
 import datetime
 import ldap
 
@@ -391,14 +390,14 @@ class GroupTestCase(TestCase):
     def test_update(self):
         g = LdapGroup.objects.get(name='foogroup')
         g.gid = 1002
-        g.usernames = ['foouser2', u'barusér2']
+        g.usernames = ['foouser2', 'barus\xc3\xa9r2']
         g.save()
 
         # check group was updated
         new = LdapGroup.objects.get(name='foogroup')
         self.assertEquals(new.name, 'foogroup')
         self.assertEquals(new.gid, 1002)
-        self.assertEquals(new.usernames, ['foouser2', u'barusér2'])
+        self.assertEquals(new.usernames, ['foouser2', 'barus\xc3\xa9r2'])
 
     def test_update_change_dn(self):
         g = LdapGroup.objects.get(name='foogroup')
@@ -455,9 +454,9 @@ class UserTestCase(TestCase):
 
     def test_get(self):
         u = LdapUser.objects.get(username='foouser')
-        self.assertEquals(u.first_name, u'Fôo')
-        self.assertEquals(u.last_name, u'Usér')
-        self.assertEquals(u.full_name, u'Fôo Usér')
+        self.assertEquals(u.first_name, 'F\xc3\xb4o')
+        self.assertEquals(u.last_name, 'Us\xc3\xa9r')
+        self.assertEquals(u.full_name, 'F\xc3\xb4o Us\xc3\xa9r')
 
         self.assertEquals(u.group, 1000)
         self.assertEquals(u.home_directory, '/home/foouser')
@@ -597,7 +596,7 @@ class AdminTestCase(TestCase):
         self.assertContains(response, "1000")
 
     def test_group_detail(self):
-        response = self.client.get('/admin/examples/ldapgroup/foogroup/')
+        response = self.client.get('/admin/examples/ldapgroup/foogroup/', follow=True)
         self.assertContains(response, "foogroup")
         self.assertContains(response, "1000")
 
@@ -648,7 +647,7 @@ class AdminTestCase(TestCase):
         self.assertContains(response, "2000")
 
     def test_user_detail(self):
-        response = self.client.get('/admin/examples/ldapuser/foouser/')
+        response = self.client.get('/admin/examples/ldapuser/foouser/', follow=True)
         self.assertContains(response, "foouser")
         self.assertContains(response, "2000")
 
