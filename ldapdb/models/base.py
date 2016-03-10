@@ -101,7 +101,9 @@ class Model(django.db.models.base.Model):
         if not self.dn:
             # create a new entry
             record_exists = False
-            entry = [('objectClass', self.object_classes)]
+            entry = [
+                ('objectClass', [obj_class.encode('utf-8') for obj_class in self.object_classes])
+            ]
             new_dn = self.build_dn()
 
             for field in self._meta.fields:
