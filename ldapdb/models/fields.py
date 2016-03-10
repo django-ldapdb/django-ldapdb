@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import unicode_literals
+
 from django.db.models import fields, SubfieldBase
 
 from ldapdb import escape_ldap_filter

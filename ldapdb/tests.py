@@ -30,6 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+
+from __future__ import unicode_literals
+
 from django.test import TestCase
 from django.db.models.sql.where import Constraint, AND, OR, WhereNode
 

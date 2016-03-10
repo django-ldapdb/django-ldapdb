@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import unicode_literals
+
 import ldap
 import logging
 
