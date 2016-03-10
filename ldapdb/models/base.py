@@ -168,7 +168,7 @@ class Model(django.db.models.base.Model):
         import re
         suffix = re.sub('[=,]', '_', base_dn)
         name = "%s_%s" % (base_class.__name__, str(suffix))
-        new_class = type(name, (base_class,), {
+        new_class = type(str(name), (base_class,), {
             'base_dn': base_dn, '__module__': base_class.__module__,
             'Meta': Meta})
         return new_class

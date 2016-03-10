@@ -10,5 +10,5 @@ env:
   - DJANGO="Django>=1.7,<1.8"
   - DJANGO="Django>=1.8,<1.9"
 install:
-  - pip install $DJANGO python-ldap mockldap
+  - pip install $DJANGO pyldap mockldap
 script: python setup.py test

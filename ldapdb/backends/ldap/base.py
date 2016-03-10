@@ -104,6 +104,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
+        # Charset used for LDAP text *values*
         self.charset = "utf-8"
         self.creation = DatabaseCreation(self)
         self.features = DatabaseFeatures(self)
@@ -124,7 +125,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def ensure_connection(self):
         if self.connection is None:
-            self.connection = ldap.initialize(self.settings_dict['NAME'])
+            self.connection = ldap.initialize(self.settings_dict['NAME'], bytes_mode=False)
 
             options = self.settings_dict.get('CONNECTION_OPTIONS', {})
             for opt, value in options.items():
@@ -135,7 +136,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
             self.connection.simple_bind_s(
                 self.settings_dict['USER'],
-                self.settings_dict['PASSWORD'])
+                self.settings_dict['PASSWORD'],
+            )
 
     def _commit(self):
         pass
@@ -152,30 +154,27 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def add_s(self, dn, modlist):
         cursor = self._cursor()
-        return cursor.connection.add_s(dn.encode(self.charset), modlist)
+        return cursor.connection.add_s(dn, modlist)
 
     def delete_s(self, dn):
         cursor = self._cursor()
-        return cursor.connection.delete_s(dn.encode(self.charset))
+        return cursor.connection.delete_s(dn)
 
     def modify_s(self, dn, modlist):
         cursor = self._cursor()
-        return cursor.connection.modify_s(dn.encode(self.charset), modlist)
+        return cursor.connection.modify_s(dn, modlist)
 
     def rename_s(self, dn, newrdn):
         cursor = self._cursor()
-        return cursor.connection.rename_s(dn.encode(self.charset),
-                                          newrdn.encode(self.charset))
+        return cursor.connection.rename_s(dn, newrdn)
 
     def search_s(self, base, scope, filterstr='(objectClass=*)',
                  attrlist=None):
         cursor = self._cursor()
-        results = cursor.connection.search_s(base, scope,
-                                             filterstr.encode(self.charset),
-                                             attrlist)
+        results = cursor.connection.search_s(base, scope, filterstr, attrlist)
         output = []
         for dn, attrs in results:
             # skip referrals
             if dn is not None:
-                output.append((dn.decode(self.charset), attrs))
+                output.append((dn, attrs))
         return output
