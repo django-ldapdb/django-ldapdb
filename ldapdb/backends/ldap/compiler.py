@@ -242,15 +242,16 @@ class SQLCompiler(compiler.SQLCompiler):
                 for e in self.select:
                     if isinstance(e[0], aggregates.Count):
                         value = 0
-                        if e[0].input_field.field.attname == 'dn':
+                        input_field = e[0].get_source_expressions()[0].field
+                        if input_field.attname == 'dn':
                             value = 1
-                        elif hasattr(e[0].input_field.field, 'from_ldap'):
-                            result = e[0].input_field.field.from_ldap(
-                                attrs.get(e[0].input_field.field.db_column, []),
+                        elif hasattr(input_field, 'from_ldap'):
+                            result = input_field.from_ldap(
+                                attrs.get(input_field.db_column, []),
                                 connection=self.connection)
                             if result:
                                 value = 1
-                                if isinstance(e[0].input_field.field, ListField):
+                                if isinstance(input_field, ListField):
                                     value = len(result)
                         row.append(value)
                     else:
