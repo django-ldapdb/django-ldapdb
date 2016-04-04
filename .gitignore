@@ -1,3 +1,16 @@
-*.egg
-*.egg-info
+# Temporary files
+.*.swp
 *.pyc
+*.pyo
+
+# Build-related files
+docs/_build/
+.coverage
+.tox
+*.egg-info
+*.egg
+.eggs/
+build/
+dist/
+htmlcov/
+MANIFEST
