@@ -99,9 +99,9 @@ def where_as_ldap(self):
     if len(bits) == 1:
         sql_string = bits[0]
     elif self.connector == AND:
-        sql_string = '(&%s)' % ''.join(bits)
+        sql_string = '(&%s)' % ''.join(sorted(bits))
     elif self.connector == OR:
-        sql_string = '(|%s)' % ''.join(bits)
+        sql_string = '(|%s)' % ''.join(sorted(bits))
     else:
         raise Exception("Unhandled WHERE connector: %s" % self.connector)
 
