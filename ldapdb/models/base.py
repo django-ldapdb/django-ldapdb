@@ -37,6 +37,7 @@ import logging
 
 import django.db.models
 from django.db import connections, router
+from django.db.models import signals
 
 import ldapdb  # noqa
 
@@ -180,4 +181,3 @@ class Model(django.db.models.base.Model):
         abstract = True
 
 
-from django.db.models import signals

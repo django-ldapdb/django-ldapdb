@@ -35,6 +35,7 @@ from __future__ import unicode_literals
 import ldap
 import re
 import sys
+from functools import cmp_to_key
 
 import django
 if django.VERSION >= (1, 8):
@@ -222,7 +223,7 @@ class SQLCompiler(compiler.SQLCompiler):
                 if val:
                     return val
             return 0
-        vals = sorted(vals, cmp=cmpvals)
+        vals = sorted(vals, key=cmp_to_key(cmpvals))
 
         # process results
         pos = 0
