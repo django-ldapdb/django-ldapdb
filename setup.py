@@ -24,7 +24,7 @@ setup(
     ],
     keywords=['django', 'ldap', 'database'],
     install_requires=[
-        'django>=1.2',
+        'django>=1.7',
         'pyldap>=2.4.25',
     ],
     setup_requires=[

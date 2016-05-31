@@ -15,3 +15,5 @@ test:
 lint:
 	flake8 $(CODE_DIRS)
 
+install-deps:
+	pip install -r requirements_dev.txt
