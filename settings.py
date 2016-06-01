@@ -1,5 +1,7 @@
 # Django settings for django-ldapdb project.
 
+from __future__ import unicode_literals
+
 import django
 import ldap
 

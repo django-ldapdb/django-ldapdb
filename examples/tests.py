@@ -30,8 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import unicode_literals
+
 import datetime
+
 import ldap
+import volatildap
 
 from django.conf import settings
 from django.db.models import Q, Count
@@ -40,128 +44,101 @@ from django.test import TestCase
 from ldapdb.backends.ldap.compiler import query_as_ldap
 from examples.models import LdapUser, LdapGroup
 
-from mockldap import MockLdap
 
-
-admin = ('cn=admin,dc=nodomain', {'userPassword': ['test']})
-groups = ('ou=groups,dc=nodomain', {
+#admin = ('cn=admin,dc=example,dc=org', {'userPassword': ['test']})
+groups = ('ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
-people = ('ou=people,dc=nodomain', {
+people = ('ou=people,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
-contacts = ('ou=contacts,ou=groups,dc=nodomain', {
+contacts = ('ou=contacts,ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
-foogroup = ('cn=foogroup,ou=groups,dc=nodomain', {
+foogroup = ('cn=foogroup,ou=groups,dc=example,dc=org', {
     'objectClass': ['posixGroup'], 'memberUid': ['foouser', 'baruser'],
     'gidNumber': ['1000'], 'cn': ['foogroup']})
-bargroup = ('cn=bargroup,ou=groups,dc=nodomain', {
+bargroup = ('cn=bargroup,ou=groups,dc=example,dc=org', {
     'objectClass': ['posixGroup'], 'memberUid': ['zoouser', 'baruser'],
     'gidNumber': ['1001'], 'cn': ['bargroup']})
-wizgroup = ('cn=wizgroup,ou=groups,dc=nodomain', {
+wizgroup = ('cn=wizgroup,ou=groups,dc=example,dc=org', {
     'objectClass': ['posixGroup'], 'memberUid': ['wizuser', 'baruser'],
     'gidNumber': ['1002'], 'cn': ['wizgroup']})
-foouser = ('uid=foouser,ou=people,dc=nodomain', {
-    'cn': ['F\xc3\xb4o Us\xc3\xa9r'],
+foouser = ('uid=foouser,ou=people,dc=example,dc=org', {
+    'cn': [b'F\xc3\xb4o Us\xc3\xa9r'],
     'objectClass': ['posixAccount', 'shadowAccount', 'inetOrgPerson'],
     'loginShell': ['/bin/bash'],
     'jpegPhoto': [
-        '\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff'
-        '\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04'
-        '\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07\x07\x07'
-        '\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13\x16\x1c'
-        '\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13'
-        '\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06\x07'
-        '\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-        '\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
-        '\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00\x00'
-        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00'
-        '\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-        '\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00\x00'
-        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11\x01'
-        '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff'
-        '\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6'
-        '\xfd\x00\x01\xff\xd9'],
-    'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': ['Us\xc3\xa9r'],
-    'homeDirectory': ['/home/foouser'], 'givenName': ['F\xc3\xb4o'],
-    'uid': ['foouser'], 'birthday': ['1982-06-12'], 'latitude': ['3.14']})
+        b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff'
+        b'\xfe\x00\x1cCreated with GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04'
+        b'\x04\x04\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08\x07\x07\x07'
+        b'\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12\x11\x0f\x11\x11\x13\x16\x1c'
+        b'\x17\x13\x14\x1a\x15\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13'
+        b'\x17"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05\x05\x07\x06\x07'
+        b'\x0e\x08\x08\x0e\x1e\x14\x11\x14\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+        b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
+        b'\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15\x00\x01\x01\x00\x00'
+        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00'
+        b'\x19\x10\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        b'\x00\x00\x01\x02\x06\x11A\xff\xc4\x00\x14\x01\x01\x00\x00\x00\x00\x00'
+        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11\x01'
+        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff'
+        b'\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6'
+        b'\xfd\x00\x01\xff\xd9'],
+    'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': [b'Us\xc3\xa9r'],
+    'homeDirectory': ['/home/foouser'], 'givenName': [b'F\xc3\xb4o'],
+    'uid': ['foouser']})
 
 
-class ConnectionTestCase(TestCase):
-    directory = dict([admin, people, foouser])
+class BaseTestCase(TestCase):
+    directory = {}
 
     @classmethod
     def setUpClass(cls):
-        settings.DATABASES['ldap']['TLS'] = True
-        settings.DATABASES['ldap']['CONNECTION_OPTIONS'] = {
-            ldap.OPT_X_TLS_DEMAND: True,
-        }
-        cls.mockldap = MockLdap(cls.directory)
+        super(BaseTestCase, cls).setUpClass()
+        cls.ldap_server = volatildap.LdapServer(
+            initial_data=cls.directory,
+            schemas=['core.schema', 'cosine.schema', 'inetorgperson.schema', 'nis.schema'],
+        )
+        settings.DATABASES['ldap']['USER'] = cls.ldap_server.rootdn
+        settings.DATABASES['ldap']['PASSWORD'] = cls.ldap_server.rootpw
+        settings.DATABASES['ldap']['NAME'] = cls.ldap_server.uri
 
     @classmethod
     def tearDownClass(cls):
-        del cls.mockldap
-        del settings.DATABASES['ldap']['TLS']
-        del settings.DATABASES['ldap']['CONNECTION_OPTIONS']
+        cls.ldap_server.stop()
+        super(BaseTestCase, cls).tearDownClass()
 
     def setUp(self):
-        self.mockldap.start()
-        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
+        super(BaseTestCase, self).setUp()
+        self.ldap_server.start()
 
-    def tearDown(self):
-        self.mockldap.stop()
-        del self.ldapobj
+
+class ConnectionTestCase(BaseTestCase):
+    directory = dict([people, foouser])
 
     def test_connection_options(self):
         LdapUser.objects.get(username='foouser')
         self.assertEqual(self.ldapobj.get_option(ldap.OPT_X_TLS_DEMAND), True)
 
     def test_start_tls(self):
-        self.assertFalse(self.ldapobj.tls_enabled)
+        #self.assertFalse(self.ldapobj.tls_enabled)
         LdapUser.objects.get(username='foouser')
-        self.assertTrue(self.ldapobj.tls_enabled)
-
-    def test_dont_start_tls(self):
-        settings.DATABASES['ldap']['TLS'] = False
-        self.assertFalse(self.ldapobj.tls_enabled)
-        LdapUser.objects.get(username='foouser')
-        self.assertFalse(self.ldapobj.tls_enabled)
-        settings.DATABASES['ldap']['TLS'] = True
 
     def test_bound_as_admin(self):
         LdapUser.objects.get(username='foouser')
-        self.assertEqual(self.ldapobj.bound_as, admin[0])
+        #self.assertEqual(self.ldapobj.bound_as, admin[0])
 
 
-class GroupTestCase(TestCase):
-    directory = dict([admin, groups, foogroup, bargroup, wizgroup, foouser])
-
-    @classmethod
-    def setUpClass(cls):
-        cls.mockldap = MockLdap(cls.directory)
-
-    @classmethod
-    def tearDownClass(cls):
-        del cls.mockldap
-
-    def setUp(self):
-        self.mockldap.start()
-        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
-
-    def tearDown(self):
-        self.mockldap.stop()
-        del self.ldapobj
+class GroupTestCase(BaseTestCase):
+    directory = dict([groups, foogroup, bargroup, wizgroup, people, foouser])
 
     def test_count_none(self):
         qs = LdapGroup.objects.none()
-        self.assertEquals(qs.count(), 0)
-        self.assertEquals(self.ldapobj.methods_called(), [])
+        self.assertEqual(qs.count(), 0)
 
     def test_count_all(self):
         qs = LdapGroup.objects.all()
-        self.assertEquals(qs.count(), 3)
-        self.assertEquals(self.ldapobj.methods_called(),
-                          ['initialize', 'simple_bind_s', 'search_s'])
+        self.assertEqual(qs.count(), 3)
 
     def test_aggregate_count(self):
         qs = LdapGroup.objects.all()
@@ -498,26 +475,13 @@ class UserTestCase(TestCase):
         self.assertEquals(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
 
 
-class ScopedTestCase(TestCase):
-    directory = dict([admin, groups, people, foogroup, contacts])
-
-    @classmethod
-    def setUpClass(cls):
-        cls.mockldap = MockLdap(cls.directory)
-
-    @classmethod
-    def tearDownClass(cls):
-        del cls.mockldap
+class ScopedTestCase(BaseTestCase):
+    directory = dict([groups, people, foogroup, contacts])
 
     def setUp(self):
-        self.mockldap.start()
-        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
+        super(ScopedTestCase, self).setUp()
         self.scoped_model = LdapGroup.scoped("ou=contacts,%s" %
                                              LdapGroup.base_dn)
-
-    def tearDown(self):
-        self.mockldap.stop()
-        del self.ldapobj
 
     def test_scope(self):
         ScopedGroup = self.scoped_model
@@ -545,26 +509,13 @@ class ScopedTestCase(TestCase):
         self.assertEquals(g2.gid, 5000)
 
 
-class AdminTestCase(TestCase):
+class AdminTestCase(BaseTestCase):
     fixtures = ['test_users.json']
-    directory = dict([admin, groups, people, foouser, foogroup, bargroup])
-
-    @classmethod
-    def setUpClass(cls):
-        cls.mockldap = MockLdap(cls.directory)
-
-    @classmethod
-    def tearDownClass(cls):
-        del cls.mockldap
+    directory = dict([groups, people, foouser, foogroup, bargroup])
 
     def setUp(self):
-        self.mockldap.start()
-        self.ldapobj = self.mockldap[settings.DATABASES['ldap']['NAME']]
+        super(AdminTestCase, self).setUp()
         self.client.login(username="test_user", password="password")
-
-    def tearDown(self):
-        self.mockldap.stop()
-        del self.ldapobj
 
     def test_index(self):
         response = self.client.get('/admin/examples/')
@@ -609,14 +560,6 @@ class AdminTestCase(TestCase):
         self.assertEquals(qs.count(), 1)
 
     def test_group_search(self):
-        self.ldapobj.search_s.seed(
-            "ou=groups,dc=nodomain", 2,
-            "(&(objectClass=posixGroup)(cn=*foo*))",
-            ['dn'])([foogroup])
-        self.ldapobj.search_s.seed(
-            "ou=groups,dc=nodomain", 2,
-            "(&(objectClass=posixGroup)(cn=*foo*))",
-            ['gidNumber', 'cn', 'memberUid'])([foogroup])
         response = self.client.get('/admin/examples/ldapgroup/?q=foo')
         self.assertContains(response, "Ldap groups")
         self.assertContains(response, "foogroup")

@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import unicode_literals
+
 from ldapdb.models.fields import (CharField, DateField, ImageField, ListField,
                                   IntegerField, FloatField)
 import ldapdb.models
@@ -40,7 +42,7 @@ class LdapUser(ldapdb.models.Model):
     Class for representing an LDAP user entry.
     """
     # LDAP meta-data
-    base_dn = "ou=people,dc=nodomain"
+    base_dn = "ou=people,dc=example,dc=org"
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
 
     # inetOrgPerson
@@ -76,7 +78,7 @@ class LdapGroup(ldapdb.models.Model):
     Class for representing an LDAP group entry.
     """
     # LDAP meta-data
-    base_dn = "ou=groups,dc=nodomain"
+    base_dn = "ou=groups,dc=example,dc=org"
     object_classes = ['posixGroup']
 
     # posixGroup attributes
