@@ -37,15 +37,15 @@ import re
 import sys
 
 import django
-if django.VERSION >= (1, 8):
-    from django.db.models import aggregates
-else:
-    from django.db.models.sql import aggregates
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR
 
 from ldapdb.models.fields import ListField
 
+if django.VERSION >= (1, 8):
+    from django.db.models import aggregates
+else:
+    from django.db.models.sql import aggregates
 
 if sys.version_info[0] < 3:
     integer_types = (int, long)
@@ -53,7 +53,9 @@ else:
     integer_types = (int,)
 
 
-_ORDER_BY_LIMIT_OFFSET_RE = re.compile(r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
+_ORDER_BY_LIMIT_OFFSET_RE = re.compile(
+    r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
+
 
 def get_lookup_operator(lookup_type):
     if lookup_type == 'gte':
@@ -217,6 +219,7 @@ class SQLCompiler(compiler.SQLCompiler):
             if sort_field == 'pk':
                 sort_field = self.query.model._meta.pk.name
             field = self.query.model._meta.get_field(sort_field)
+
             def get_key(obj):
                 attr = field.from_ldap(
                     obj[1].get(field.db_column, []),
@@ -271,8 +274,10 @@ class SQLCompiler(compiler.SQLCompiler):
                     if field.attname == 'dn':
                         row.append(dn)
                     elif hasattr(field, 'from_ldap'):
-                        row.append(field.from_ldap(attrs.get(field.db_column, []),
-                                                connection=self.connection))
+                        row.append(field.from_ldap(
+                            attrs.get(field.db_column, []),
+                            connection=self.connection,
+                        ))
                     else:
                         row.append(None)
                 for key, aggregate in self.query.aggregate_select.items():
@@ -304,12 +309,13 @@ class SQLCompiler(compiler.SQLCompiler):
         iterator = self.results_iter()
         if inspect.isgenerator(iterator):
             try:
-                obj = iterator.next()
+                iterator.next()
                 return True
             except:
                 return False
         else:
             return False
+
 
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
     pass

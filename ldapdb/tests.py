@@ -38,7 +38,6 @@ from django.test import TestCase
 from django.db.models.sql.where import AND, OR, WhereNode
 from django.db.models.sql import datastructures
 from django.db.models import expressions
-from django.db.models import lookups
 
 from ldapdb import escape_ldap_filter
 from ldapdb.backends.ldap.compiler import where_as_ldap
@@ -63,8 +62,7 @@ class WhereTestCase(TestCase):
         self.assertEqual(escape_ldap_filter('foo(bar'), 'foo\\28bar')
         self.assertEqual(escape_ldap_filter('foo)bar'), 'foo\\29bar')
         self.assertEqual(escape_ldap_filter('foo\\bar'), 'foo\\5cbar')
-        self.assertEqual(escape_ldap_filter('foo\\bar*wiz'),
-                          'foo\\5cbar\\2awiz')
+        self.assertEqual(escape_ldap_filter('foo\\bar*wiz'), 'foo\\5cbar\\2awiz')
 
     def test_char_field_max_length(self):
         self.assertEqual(CharField(max_length=42).max_length, 42)
@@ -85,8 +83,7 @@ class WhereTestCase(TestCase):
 
         where = WhereNode()
         where.add(self._build_lookup("cn", 'in', ["(foo)", "(bar)"]), AND)
-        self.assertEqual(where_as_ldap(where),
-                          ("(|(cn=\\28foo\\29)(cn=\\28bar\\29))", []))
+        self.assertEqual(where_as_ldap(where), ("(|(cn=\\28foo\\29)(cn=\\28bar\\29))", []))
 
     def test_char_field_startswith(self):
         where = WhereNode()
@@ -148,8 +145,7 @@ class WhereTestCase(TestCase):
 
         where = WhereNode()
         where.add(self._build_lookup("memberUid", 'contains', '(foouser)', field=ListField), AND)
-        self.assertEqual(where_as_ldap(where), ("(memberUid=\\28foouser\\29)",
-                                                 []))
+        self.assertEqual(where_as_ldap(where), ("(memberUid=\\28foouser\\29)", []))
 
     def test_date_field(self):
         where = WhereNode()
@@ -160,12 +156,10 @@ class WhereTestCase(TestCase):
         where = WhereNode()
         where.add(self._build_lookup("cn", 'exact', "foo", field=CharField), AND)
         where.add(self._build_lookup("givenName", 'exact', "bar", field=CharField), AND)
-        self.assertEqual(where_as_ldap(where), ("(&(cn=foo)(givenName=bar))",
-                                                 []))
+        self.assertEqual(where_as_ldap(where), ("(&(cn=foo)(givenName=bar))", []))
 
     def test_or(self):
         where = WhereNode()
         where.add(self._build_lookup("cn", 'exact', "foo", field=CharField), AND)
         where.add(self._build_lookup("givenName", 'exact', "bar", field=CharField), OR)
-        self.assertEqual(where_as_ldap(where), ("(|(cn=foo)(givenName=bar))",
-                                                 []))
+        self.assertEqual(where_as_ldap(where), ("(|(cn=foo)(givenName=bar))", []))
