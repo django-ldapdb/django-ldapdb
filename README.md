@@ -2,7 +2,7 @@ django-ldapdb - support for django models over LDAP
 Copyright (c) 2009-2011, Bolloré Telecom  
 Copyright (c) 2013, Jeremy Lainé
 
-[![Build Status](https://travis-ci.org/jlaine/django-ldapdb.png)](https://travis-ci.org/jlaine/django-ldapdb)
+[![Build Status](https://travis-ci.org/django-ldapdb/django-ldapdb.png)](https://travis-ci.org/django-ldapdb/django-ldapdb)
 
 About
 -----
