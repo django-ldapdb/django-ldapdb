@@ -46,6 +46,13 @@ from django.db.models.sql.where import AND, OR
 
 from ldapdb.models.fields import ListField
 
+
+if sys.version_info[0] < 3:
+    integer_types = (int, long)
+else:
+    integer_types = (int,)
+
+
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
 
 def get_lookup_operator(lookup_type):
@@ -156,7 +163,7 @@ class SQLCompiler(compiler.SQLCompiler):
                 else:
                     output.append(e[0])
         else:
-            for alias, col in self.query.extra_select.iteritems():
+            for alias, col in self.query.extra_select.items():
                 output.append(col[0])
             for key, aggregate in self.query.aggregate_select.items():
                 if isinstance(aggregate, aggregates.Count):
@@ -199,30 +206,26 @@ class SQLCompiler(compiler.SQLCompiler):
         else:
             ordering = self.query.order_by or self.query.model._meta.ordering
 
-        def cmpvals(x, y):
-            for fieldname in ordering:
-                if fieldname.startswith('-'):
-                    fieldname = fieldname[1:]
-                    negate = True
-                else:
-                    negate = False
-                if fieldname == 'pk':
-                    fieldname = self.query.model._meta.pk.name
-                field = self.query.model._meta.get_field(fieldname)
-                attr_x = field.from_ldap(x[1].get(field.db_column, []),
-                                         connection=self.connection)
-                attr_y = field.from_ldap(y[1].get(field.db_column, []),
-                                         connection=self.connection)
-                # perform case insensitive comparison
-                if hasattr(attr_x, 'lower'):
-                    attr_x = attr_x.lower()
-                if hasattr(attr_y, 'lower'):
-                    attr_y = attr_y.lower()
-                val = negate and cmp(attr_y, attr_x) or cmp(attr_x, attr_y)
-                if val:
-                    return val
-            return 0
-        vals = sorted(vals, cmp=cmpvals)
+        for fieldname in reversed(ordering):
+            if fieldname.startswith('-'):
+                sort_field = fieldname[1:]
+                reverse = True
+            else:
+                sort_field = fieldname
+                reverse = False
+
+            if sort_field == 'pk':
+                sort_field = self.query.model._meta.pk.name
+            field = self.query.model._meta.get_field(sort_field)
+            def get_key(obj):
+                attr = field.from_ldap(
+                    obj[1].get(field.db_column, []),
+                    connection=self.connection,
+                )
+                if hasattr(attr, 'lower'):
+                    attr = attr.lower()
+                return attr
+            vals = sorted(vals, key=get_key, reverse=reverse)
 
         # process results
         pos = 0
@@ -343,7 +346,7 @@ class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
         output = super(SQLAggregateCompiler, self).execute_sql(result_type)
         if sys.version_info < (3,):
             return filter(lambda a: isinstance(a, int), output)
-        return filter(lambda a: isinstance(a, (int, long)), output)
+        return filter(lambda a: isinstance(a, integer_types), output)
 
 
 if django.VERSION < (1, 8):

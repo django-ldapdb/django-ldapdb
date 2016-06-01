@@ -125,7 +125,7 @@ class IntegerField(fields.IntegerField):
     def get_db_prep_save(self, value, connection):
         if value is None:
             return None
-        return [str(value)]
+        return [str(value).encode(connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
@@ -149,7 +149,7 @@ class FloatField(fields.FloatField):
     def get_db_prep_save(self, value, connection):
         if value is None:
             return None
-        return [str(value)]
+        return [str(value).encode(connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
