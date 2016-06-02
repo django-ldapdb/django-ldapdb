@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="django-ldapdb",
-    version="0.4.0",
+    version="0.5.0",
     description=u"An LDAP database backend for Django",
     long_description=open('README.md').read(),
     url="https://github.com/jlaine/django-ldapdb",
@@ -15,6 +15,8 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "Framework :: Django",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
