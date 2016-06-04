@@ -32,9 +32,6 @@
 
 from __future__ import unicode_literals
 
-import datetime
-
-import ldap
 import volatildap
 
 from django.conf import settings
@@ -45,7 +42,6 @@ from ldapdb.backends.ldap.compiler import query_as_ldap
 from examples.models import LdapUser, LdapGroup
 
 
-#admin = ('cn=admin,dc=example,dc=org', {'userPassword': ['test']})
 groups = ('ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
 people = ('ou=people,dc=example,dc=org', {
@@ -118,15 +114,15 @@ class ConnectionTestCase(BaseTestCase):
 
     def test_connection_options(self):
         LdapUser.objects.get(username='foouser')
-        #self.assertEqual(self.ldapobj.get_option(ldap.OPT_X_TLS_DEMAND), True)
+        # self.assertEqual(self.ldapobj.get_option(ldap.OPT_X_TLS_DEMAND), True)
 
     def test_start_tls(self):
-        #self.assertFalse(self.ldapobj.tls_enabled)
+        # self.assertFalse(self.ldapobj.tls_enabled)
         LdapUser.objects.get(username='foouser')
 
     def test_bound_as_admin(self):
         LdapUser.objects.get(username='foouser')
-        #self.assertEqual(self.ldapobj.bound_as, admin[0])
+        # self.assertEqual(self.ldapobj.bound_as, admin[0])
 
 
 class GroupTestCase(BaseTestCase):
@@ -174,48 +170,35 @@ class GroupTestCase(BaseTestCase):
     def test_ldap_filter(self):
         # single filter
         qs = LdapGroup.objects.filter(name='foogroup')
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(cn=foogroup))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(cn=foogroup))')
 
         qs = LdapGroup.objects.filter(Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(cn=foogroup))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(cn=foogroup))')
 
         # AND filter
         qs = LdapGroup.objects.filter(gid=1000, name='foogroup')
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(&(cn=foogroup)'
-                          '(gidNumber=1000)))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
 
         qs = LdapGroup.objects.filter(Q(gid=1000) & Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(&(cn=foogroup)'
-                          '(gidNumber=1000)))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
 
         # OR filter
         qs = LdapGroup.objects.filter(Q(gid=1000) | Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(|(cn=foogroup)'
-                          '(gidNumber=1000)))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))')
 
         # single exclusion
         qs = LdapGroup.objects.exclude(name='foogroup')
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(!(cn=foogroup)))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
 
         qs = LdapGroup.objects.filter(~Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(!(cn=foogroup)))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
 
         # multiple exclusion
         qs = LdapGroup.objects.exclude(name='foogroup', gid=1000)
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(!(&(cn=foogroup)'
-                          '(gidNumber=1000))))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))')
 
         qs = LdapGroup.objects.filter(name='foogroup').exclude(gid=1000)
-        self.assertEqual(query_as_ldap(qs.query),
-                          '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))')
+        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))')
 
     def test_filter(self):
         qs = LdapGroup.objects.filter(name='foogroup')
@@ -412,31 +395,34 @@ class UserTestCase(BaseTestCase):
         self.assertEqual(u.home_directory, '/home/foouser')
         self.assertEqual(u.uid, 2000)
         self.assertEqual(u.username, 'foouser')
-        self.assertEqual(u.photo, b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01'
-                          b'\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with '
-                          b'GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04'
-                          b'\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08'
-                          b'\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12'
-                          b'\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15'
-                          b'\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17'
-                          b'"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05'
-                          b'\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14'
-                          b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-                          b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-                          b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-                          b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
-                          b'\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
-                          b'\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15'
-                          b'\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                          b'\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10'
-                          b'\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00'
-                          b'\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00'
-                          b'\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                          b'\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
-                          b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                          b'\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00'
-                          b'\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00'
-                          b'\x01\xff\xd9')
+        self.assertEqual(
+            u.photo,
+            b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01'
+            b'\x01\x00H\x00H\x00\x00\xff\xfe\x00\x1cCreated with '
+            b'GIMP on a Mac\xff\xdb\x00C\x00\x05\x03\x04\x04\x04'
+            b'\x03\x05\x04\x04\x04\x05\x05\x05\x06\x07\x0c\x08'
+            b'\x07\x07\x07\x07\x0f\x0b\x0b\t\x0c\x11\x0f\x12\x12'
+            b'\x11\x0f\x11\x11\x13\x16\x1c\x17\x13\x14\x1a\x15'
+            b'\x11\x11\x18!\x18\x1a\x1d\x1d\x1f\x1f\x1f\x13\x17'
+            b'"$"\x1e$\x1c\x1e\x1f\x1e\xff\xdb\x00C\x01\x05\x05'
+            b'\x05\x07\x06\x07\x0e\x08\x08\x0e\x1e\x14\x11\x14'
+            b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+            b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+            b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+            b'\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e'
+            b'\x1e\x1e\xff\xc0\x00\x11\x08\x00\x08\x00\x08\x03'
+            b'\x01"\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x15'
+            b'\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x19\x10'
+            b'\x00\x03\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x01\x02\x06\x11A\xff\xc4\x00'
+            b'\x14\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x11'
+            b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00'
+            b'\x02\x11\x03\x11\x00?\x00\x9d\xf29wU5Q\xd6\xfd\x00'
+            b'\x01\xff\xd9',
+        )
 
         self.assertRaises(LdapUser.DoesNotExist, LdapUser.objects.get,
                           username='does_not_exist')
@@ -446,7 +432,7 @@ class UserTestCase(BaseTestCase):
         u.first_name = u'Fôo2'
         u.save()
 
-        # make sure DN gets updated if we change the pk
+        # make sure DN gets updated if we change the pk
         u.username = 'foouser2'
         u.save()
         self.assertEqual(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)

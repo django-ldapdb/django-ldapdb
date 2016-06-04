@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import django
-import ldap
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -22,10 +21,10 @@ DATABASES = {
         'NAME': 'ldap://localhost',
         'USER': 'cn=admin,dc=nodomain',
         'PASSWORD': 'test',
-        #'TLS': True,
-        #'CONNECTION_OPTIONS': {
-        #    ldap.OPT_X_TLS_DEMAND: True,
-        #}
+        # 'TLS': True,
+        # 'CONNECTION_OPTIONS': {
+        #     ldap.OPT_X_TLS_DEMAND: True,
+        # }
     }
 }
 DATABASE_ROUTERS = ['ldapdb.router.Router']
@@ -89,7 +88,6 @@ if django.VERSION[:2] <= (1, 7):
     TEMPLATE_LOADERS = (
         'django.template.loaders.filesystem.Loader',
         'django.template.loaders.app_directories.Loader',
-    #     'django.template.loaders.eggs.Loader',
     )
 
     TEMPLATE_DIRS = (
@@ -126,4 +124,3 @@ INSTALLED_APPS = (
     'examples',
     'django.contrib.admin',
 )
-
