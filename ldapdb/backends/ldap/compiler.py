@@ -38,7 +38,7 @@ import sys
 
 import django
 from django.db.models.sql import compiler
-from django.db.models.sql.where import AND, OR
+from django.db.models.sql.where import AND, OR, WhereNode
 
 from ldapdb.models.fields import ListField
 
@@ -78,27 +78,24 @@ def query_as_ldap(query):
     return '(&%s)' % filterstr
 
 
-def where_as_ldap(self):
+def where_as_ldap(where):
     bits = []
-    for item in self.children:
-        if hasattr(item, 'lhs') and hasattr(item, 'rhs'):
-            # Django 1.7
-            item = item.lhs.target.column, item.lookup_name, None, item.rhs
-        elif hasattr(item, 'as_sql'):
+    for item in where.children:
+        if isinstance(item, WhereNode):
+            # A sub-node: using Q objects for complex lookups.
             sql, params = where_as_ldap(item)
             bits.append(sql)
             continue
 
-        constraint, lookup_type, y, values = item
-        if hasattr(constraint, 'col'):
-            constraint = constraint.col
-        comp = get_lookup_operator(lookup_type)
-        if lookup_type == 'in':
-            equal_bits = ["(%s%s%s)" % (constraint, comp, value) for value
-                          in values]
+        attr_name = item.lhs.target.column
+        comp = get_lookup_operator(item.lookup_name)
+        values = item.rhs
+
+        if item.lookup_name == 'in':
+            equal_bits = ["(%s%s%s)" % (attr_name, comp, value) for value in values]
             clause = '(|%s)' % ''.join(equal_bits)
         else:
-            clause = "(%s%s%s)" % (constraint, comp, values)
+            clause = "(%s%s%s)" % (attr_name, comp, values)
 
         bits.append(clause)
 
@@ -107,14 +104,14 @@ def where_as_ldap(self):
 
     if len(bits) == 1:
         sql_string = bits[0]
-    elif self.connector == AND:
+    elif where.connector == AND:
         sql_string = '(&%s)' % ''.join(sorted(bits))
-    elif self.connector == OR:
+    elif where.connector == OR:
         sql_string = '(|%s)' % ''.join(sorted(bits))
     else:
-        raise Exception("Unhandled WHERE connector: %s" % self.connector)
+        raise Exception("Unhandled WHERE connector: %s" % where.connector)
 
-    if self.negated:
+    if where.negated:
         sql_string = ('(!%s)' % sql_string)
 
     return sql_string, []
