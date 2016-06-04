@@ -32,6 +32,7 @@
 
 from __future__ import unicode_literals
 
+import collections
 import ldap
 import re
 import sys
@@ -57,6 +58,13 @@ _ORDER_BY_LIMIT_OFFSET_RE = re.compile(
     r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
 
 
+class LdapDBError(Exception):
+    """Base class for LDAPDB errors."""
+
+
+LdapLookup = collections.namedtuple('LdapLookup', ['base', 'scope', 'filterstr'])
+
+
 def get_lookup_operator(lookup_type):
     if lookup_type == 'gte':
         return '>='
@@ -73,9 +81,28 @@ def query_as_ldap(query):
 
     filterstr = ''.join(['(objectClass=%s)' % cls for cls in
                          query.model.object_classes])
-    sql, params = where_as_ldap(query.where)
+
+    if (len(query.where.children) == 1
+            and not isinstance(query.where.children[0], WhereNode)
+            and query.where.children[0].lhs.target.column == 'dn'):
+
+        lookup = query.where.children[0]
+        if lookup.lookup_name != 'exact':
+            raise LdapDBError("Unsupported dn lookup: %s" % lookup.lookup_name)
+
+        return LdapLookup(
+            base=lookup.rhs,
+            scope=ldap.SCOPE_BASE,
+            filterstr='(&%s)' % filterstr,
+        )
+
+    sql = where_as_ldap(query.where)
     filterstr += sql
-    return '(&%s)' % filterstr
+    return LdapLookup(
+        base=query.model.base_dn,
+        scope=query.model.search_scope,
+        filterstr='(&%s)' % filterstr,
+    )
 
 
 def where_as_ldap(where):
@@ -83,13 +110,16 @@ def where_as_ldap(where):
     for item in where.children:
         if isinstance(item, WhereNode):
             # A sub-node: using Q objects for complex lookups.
-            sql, params = where_as_ldap(item)
+            sql = where_as_ldap(item)
             bits.append(sql)
             continue
 
         attr_name = item.lhs.target.column
         comp = get_lookup_operator(item.lookup_name)
         values = item.rhs
+
+        if attr_name == 'dn':
+            raise LdapDBError("Looking up more than one distinguishedName is unsupported.")
 
         if item.lookup_name == 'in':
             equal_bits = ["(%s%s%s)" % (attr_name, comp, value) for value in values]
@@ -100,7 +130,7 @@ def where_as_ldap(where):
         bits.append(clause)
 
     if not len(bits):
-        return '', []
+        return ''
 
     if len(bits) == 1:
         sql_string = bits[0]
@@ -109,28 +139,30 @@ def where_as_ldap(where):
     elif where.connector == OR:
         sql_string = '(|%s)' % ''.join(sorted(bits))
     else:
-        raise Exception("Unhandled WHERE connector: %s" % where.connector)
+        raise LdapDBError("Unhandled WHERE connector: %s" % where.connector)
 
     if where.negated:
         sql_string = ('(!%s)' % sql_string)
 
-    return sql_string, []
+    return sql_string
 
 
 class SQLCompiler(compiler.SQLCompiler):
+
     def execute_sql(self, result_type=compiler.SINGLE):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
-        filterstr = query_as_ldap(self.query)
-        if not filterstr:
+        lookup = query_as_ldap(self.query)
+
+        if lookup is None:
             return
 
         try:
             vals = self.connection.search_s(
-                self.query.model.base_dn,
-                self.query.model.search_scope,
-                filterstr=filterstr,
+                base=lookup.base,
+                scope=lookup.scope,
+                filterstr=lookup.filterstr,
                 attrlist=['dn'],
             )
         except ldap.NO_SUCH_OBJECT:
@@ -172,8 +204,8 @@ class SQLCompiler(compiler.SQLCompiler):
         return output
 
     def results_iter(self, results=None):
-        filterstr = query_as_ldap(self.query)
-        if not filterstr:
+        lookup = query_as_ldap(self.query)
+        if lookup is None:
             return
 
         if hasattr(self.query, 'select_fields') and len(self.query.select_fields):
@@ -189,9 +221,9 @@ class SQLCompiler(compiler.SQLCompiler):
 
         try:
             vals = self.connection.search_s(
-                self.query.model.base_dn,
-                self.query.model.search_scope,
-                filterstr=filterstr,
+                base=lookup.base,
+                scope=lookup.scope,
+                filterstr=lookup.filterstr,
                 attrlist=attrlist,
             )
         except ldap.NO_SUCH_OBJECT:
@@ -320,15 +352,15 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
     def execute_sql(self, result_type=compiler.MULTI):
-        filterstr = query_as_ldap(self.query)
-        if not filterstr:
+        lookup = query_as_ldap(self.query)
+        if not lookup:
             return
 
         try:
             vals = self.connection.search_s(
-                self.query.model.base_dn,
-                self.query.model.search_scope,
-                filterstr=filterstr,
+                base=lookup.base,
+                scope=lookup.scope,
+                filterstr=lookup.filterstr,
                 attrlist=['dn'],
             )
         except ldap.NO_SUCH_OBJECT:

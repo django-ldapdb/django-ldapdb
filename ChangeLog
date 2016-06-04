@@ -1,7 +1,20 @@
 ChangeLog
 =========
 
+.. _v0.5.1:
+
+0.5.1 (XXXX-XX-XX)
+------------------
+
+*New:*
+
+    * Add direct ``dn`` lookup (e.g ``MyModel.objects.get(dn=x)``)
+
+
 .. _v0.5.0:
+
+0.5.0 (2016-06-01)
+------------------
 
 *New:*
 

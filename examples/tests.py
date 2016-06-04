@@ -168,37 +168,40 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(len(qs), 0)
 
     def test_ldap_filter(self):
+        def get_filterstr(qs):
+            return query_as_ldap(qs.query).filterstr
+
         # single filter
         qs = LdapGroup.objects.filter(name='foogroup')
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(cn=foogroup))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(cn=foogroup))')
 
         qs = LdapGroup.objects.filter(Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(cn=foogroup))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(cn=foogroup))')
 
         # AND filter
         qs = LdapGroup.objects.filter(gid=1000, name='foogroup')
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
 
         qs = LdapGroup.objects.filter(Q(gid=1000) & Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
 
         # OR filter
         qs = LdapGroup.objects.filter(Q(gid=1000) | Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))')
 
         # single exclusion
         qs = LdapGroup.objects.exclude(name='foogroup')
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
 
         qs = LdapGroup.objects.filter(~Q(name='foogroup'))
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(!(cn=foogroup)))')
 
         # multiple exclusion
         qs = LdapGroup.objects.exclude(name='foogroup', gid=1000)
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))')
 
         qs = LdapGroup.objects.filter(name='foogroup').exclude(gid=1000)
-        self.assertEqual(query_as_ldap(qs.query), '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))')
+        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))')
 
     def test_filter(self):
         qs = LdapGroup.objects.filter(name='foogroup')
@@ -230,6 +233,13 @@ class GroupTestCase(BaseTestCase):
         # try to get a non-existent entry
         self.assertRaises(LdapGroup.DoesNotExist, LdapGroup.objects.get,
                           name='does_not_exist')
+
+    def test_get_by_dn(self):
+        g = LdapGroup.objects.get(dn='cn=foogroup,%s' % LdapGroup.base_dn)
+        self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
+        self.assertEqual(g.name, 'foogroup')
+        self.assertEqual(g.gid, 1000)
+        self.assertEqual(g.usernames, ['foouser', 'baruser'])
 
     def test_insert(self):
         g = LdapGroup()
