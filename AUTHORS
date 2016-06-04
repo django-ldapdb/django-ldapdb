@@ -1,3 +1,65 @@
-Jeremy Lainé <jeremy.laine@m4x.org>
- * Original developer of django-ldapdb
+Maintainers
+-----------
 
+The ``django-ldapdb`` project is operated and maintained by:
+
+* Jeremy Lainé <jeremy.laine@m4x.org> (https://github.com/jlaine), primary author
+* Raphaël Barrois <raphael.barrois+django-ldapdb@polytechnique.org> (https://github.com/rbarrois)
+
+
+.. _contributors:
+
+Contributors
+------------
+
+The django-ldapdb project has received contributions from (in alphabetical order):
+
+* Jeremy Lainé <jeremy.laine@m4x.org> (https://github.com/jlaine)
+* Raphaël Barrois <raphael.barrois+django-ldapdb@polytechnique.org>(https://github.com/rbarrois)
+
+
+Pending agreement
+-----------------
+
+The CLA has only been put in place recently; the project has previously received help from
+the following contributors:
+
+* Alessandro -oggei- Ogier <team-sysadms@ieo.eu>
+* Andres Mejia <mejiaa@amazon.com>
+* Dmitri Bogomolov <4glitch@gmail.com>
+* Fabs <fabien.michel@illyse.org>
+* Karsten Heymann <karsten.heymann@telecolumbus.net>
+* Michał Górny <mgorny@gentoo.org>
+* Theo Chatzimichos <tampakrap@gentoo.org>
+* Thomas Güttler <hv@tbz-pariv.de>
+* Xaroth Brook <xaroth@xaroth.nl>
+
+
+Contributor license agreement
+-----------------------------
+
+.. note:: This agreement is required to allow redistribution of submitted contributions.
+          See http://oss-watch.ac.uk/resources/cla for an explanation.
+
+Any contributor proposing updates to the code or documentation of this project *MUST*
+add its name to the list in the :ref:`contributors` section, thereby "signing" the
+following contributor license agreement:
+
+They accept and agree to the following terms for their present end future contributions
+submitted to the ``django-ldapdb`` project:
+
+* They represent that they are legally entitled to grant this license, and that their
+  contributions are their original creation
+
+* They grant the ``django-ldapdb`` project a perpetual, worldwide, non-exclusive,
+  no-charge, royalty-free, irrevocable copyright license to reproduce,
+  prepare derivative works of, publicly display, sublicense and distribute their contributions
+  and such derivative works.
+
+* They are not expected to provide support for their contributions, except to the extent they
+  desire to provide support.
+
+
+.. note:: The above agreement is inspired by the Apache Contributor License Agreement.
+
+.. vim:set ft=rst:
