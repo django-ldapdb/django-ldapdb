@@ -5,7 +5,7 @@ import sys
 import django
 from django.core.management import execute_from_command_line
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "examples.settings")
 
 def run_tests():
     if django.VERSION < (1, 6):

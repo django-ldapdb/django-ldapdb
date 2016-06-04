@@ -63,5 +63,5 @@ setup(
         "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    test_suite = 'manage.run_tests'
+    test_suite = 'manage_dev.run_tests'
 )

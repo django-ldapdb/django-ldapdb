@@ -20,7 +20,7 @@ testall:
 	tox
 
 test:
-	python -Wdefault manage.py test
+	python -Wdefault manage_dev.py test
 
 .PHONY: test testall
 

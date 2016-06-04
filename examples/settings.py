@@ -80,7 +80,7 @@ MIDDLEWARE_CLASSES = [
 if django.VERSION[:2] <= (1, 7):
     MIDDLEWARE_CLASSES.remove('django.contrib.auth.middleware.SessionAuthenticationMiddleware')
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'examples.urls'
 
 STATIC_URL = '/static/'
 
