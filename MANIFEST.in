@@ -1,3 +1,10 @@
-include AUTHORS
-include LICENSE
-include README.md
+include AUTHORS LICENSE README.rst
+include requirements*.txt
+
+graft ldapdb
+
+prune examples
+
+global-exclude .py[cod] __pycache__ .swp
+
+exclude Makefile manage_dev.py tox.ini .flake8

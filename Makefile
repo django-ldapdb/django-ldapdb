@@ -1,10 +1,20 @@
 PACKAGE := ldapdb
+TESTS_DIR := examples
 
-CODE_DIRS := $(PACKAGE)/
 
+default:
 
-default: test
+clean:
+	find . -type f -name '*.pyc' -delete
+	find . -type f -path '*/__pycache__/*' -delete
+	find . -type d -empty -delete
 
+install-deps:
+	pip install --upgrade pip setuptools
+	pip install -r requirements_dev.txt
+	pip freeze
+
+.PHONY: default clean install-deps
 
 testall:
 	tox
@@ -12,8 +22,14 @@ testall:
 test:
 	python -Wdefault manage.py test
 
-lint:
-	flake8 $(CODE_DIRS)
+.PHONY: test testall
 
-install-deps:
-	pip install -r requirements_dev.txt
+lint: flake8 check-manifest
+
+flake8:
+	flake8 --config .flake8 $(PACKAGE) $(TESTS_DIR)
+
+check-manifest:
+	check-manifest
+
+.PHONY: lint flake8 check-manifest

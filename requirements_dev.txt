@@ -1,5 +1,6 @@
 -e .
 
-tox
+check-manifest
 flake8
+tox
 volatildap
