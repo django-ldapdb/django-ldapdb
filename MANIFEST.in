@@ -1,4 +1,4 @@
-include AUTHORS LICENSE README.rst
+include AUTHORS ChangeLog LICENSE README.rst
 include requirements*.txt
 
 graft ldapdb
