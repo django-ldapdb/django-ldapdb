@@ -1,6 +1,7 @@
 [flake8]
 
 max-line-length = 120
+# W503: 'and' on start of line
 ignore = W503
 
 ; vim:set ft=dosini:

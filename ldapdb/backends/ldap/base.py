@@ -84,7 +84,7 @@ class LdapDatabase(object):
             ldap.UNAVAILABLE,
             ldap.UNAVAILABLE_CRITICAL_EXTENSION,
             ldap.UNWILLING_TO_PERFORM,
-        ):
+    ):
         """Exceptions related to the database operations, out of the programmer control."""
 
     class IntegrityError(
@@ -93,7 +93,7 @@ class LdapDatabase(object):
             ldap.ALREADY_EXISTS,
             ldap.CONSTRAINT_VIOLATION,
             ldap.TYPE_OR_VALUE_EXISTS,
-        ):
+    ):
         """Exceptions related to database Integrity."""
 
     class DataError(
@@ -104,7 +104,7 @@ class LdapDatabase(object):
             ldap.NOT_ALLOWED_ON_RDN,
             ldap.OBJECT_CLASS_VIOLATION,
             ldap.UNDEFINED_TYPE,
-        ):
+    ):
         """Exceptions related to invalid data"""
 
     class InterfaceError(
@@ -118,14 +118,14 @@ class LdapDatabase(object):
             ldap.REFERRAL_LIMIT_EXCEEDED,
             ldap.USER_CANCELLED,
             Error,
-        ):
+    ):
         """Exceptions related to the pyldap interface."""
 
     class InternalError(
             DatabaseError,
             ldap.ALIAS_DEREF_PROBLEM,
             ldap.ALIAS_PROBLEM,
-        ):
+    ):
         """Exceptions encountered within the database."""
 
     class ProgrammingError(
@@ -137,13 +137,13 @@ class LdapDatabase(object):
             ldap.NO_SUCH_ATTRIBUTE,
             ldap.NO_SUCH_OBJECT,
             ldap.PARAM_ERROR,
-        ):
+    ):
         """Invalid data send by the programmer."""
 
     class NotSupportedError(
             DatabaseError,
             ldap.NOT_SUPPORTED,
-        ):
+    ):
         """Exception for unsupported actions."""
 
 
