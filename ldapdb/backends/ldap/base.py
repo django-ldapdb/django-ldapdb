@@ -177,10 +177,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.charset = "utf-8"
         self.creation = DatabaseCreation(self)
         self.features = DatabaseFeatures(self)
-        if django.VERSION > (1, 4):
-            self.ops = DatabaseOperations(self)
-        else:
-            self.ops = DatabaseOperations()
+        self.ops = DatabaseOperations(self)
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
 
