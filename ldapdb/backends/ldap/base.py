@@ -55,8 +55,102 @@ class DatabaseOperations(BaseDatabaseOperations):
         return -1
 
 
+class LdapDatabase(object):
+    # Base class for all exceptions
+    Error = ldap.LDAPError
+
+    class DatabaseError(Error):
+        """Database-side errors."""
+
+    class OperationalError(
+            DatabaseError,
+            ldap.ADMINLIMIT_EXCEEDED,
+            ldap.AUTH_METHOD_NOT_SUPPORTED,
+            ldap.AUTH_UNKNOWN,
+            ldap.BUSY,
+            ldap.CONFIDENTIALITY_REQUIRED,
+            ldap.CONNECT_ERROR,
+            ldap.INAPPROPRIATE_AUTH,
+            ldap.INVALID_CREDENTIALS,
+            ldap.OPERATIONS_ERROR,
+            ldap.RESULTS_TOO_LARGE,
+            ldap.SASL_BIND_IN_PROGRESS,
+            ldap.SERVER_DOWN,
+            ldap.SIZELIMIT_EXCEEDED,
+            ldap.STRONG_AUTH_NOT_SUPPORTED,
+            ldap.STRONG_AUTH_REQUIRED,
+            ldap.TIMELIMIT_EXCEEDED,
+            ldap.TIMEOUT,
+            ldap.UNAVAILABLE,
+            ldap.UNAVAILABLE_CRITICAL_EXTENSION,
+            ldap.UNWILLING_TO_PERFORM,
+        ):
+        """Exceptions related to the database operations, out of the programmer control."""
+
+    class IntegrityError(
+            DatabaseError,
+            ldap.AFFECTS_MULTIPLE_DSAS,
+            ldap.ALREADY_EXISTS,
+            ldap.CONSTRAINT_VIOLATION,
+            ldap.TYPE_OR_VALUE_EXISTS,
+        ):
+        """Exceptions related to database Integrity."""
+
+    class DataError(
+            DatabaseError,
+            ldap.INVALID_DN_SYNTAX,
+            ldap.INVALID_SYNTAX,
+            ldap.NOT_ALLOWED_ON_NONLEAF,
+            ldap.NOT_ALLOWED_ON_RDN,
+            ldap.OBJECT_CLASS_VIOLATION,
+            ldap.UNDEFINED_TYPE,
+        ):
+        """Exceptions related to invalid data"""
+
+    class InterfaceError(
+            ldap.CLIENT_LOOP,
+            ldap.DECODING_ERROR,
+            ldap.ENCODING_ERROR,
+            ldap.LOCAL_ERROR,
+            ldap.LOOP_DETECT,
+            ldap.NO_MEMORY,
+            ldap.PROTOCOL_ERROR,
+            ldap.REFERRAL_LIMIT_EXCEEDED,
+            ldap.USER_CANCELLED,
+            Error,
+        ):
+        """Exceptions related to the pyldap interface."""
+
+    class InternalError(
+            DatabaseError,
+            ldap.ALIAS_DEREF_PROBLEM,
+            ldap.ALIAS_PROBLEM,
+        ):
+        """Exceptions encountered within the database."""
+
+    class ProgrammingError(
+            DatabaseError,
+            ldap.CONTROL_NOT_FOUND,
+            ldap.FILTER_ERROR,
+            ldap.INAPPROPRIATE_MATCHING,
+            ldap.NAMING_VIOLATION,
+            ldap.NO_SUCH_ATTRIBUTE,
+            ldap.NO_SUCH_OBJECT,
+            ldap.PARAM_ERROR,
+        ):
+        """Invalid data send by the programmer."""
+
+    class NotSupportedError(
+            DatabaseError,
+            ldap.NOT_SUPPORTED,
+        ):
+        """Exception for unsupported actions."""
+
+
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'ldap'
+
+    Database = LdapDatabase
 
     # NOTE: These are copied from the mysql DatabaseWrapper
     operators = {
@@ -98,21 +192,39 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection.unbind_s()
             self.connection = None
 
-    def ensure_connection(self):
-        if self.connection is None:
-            self.connection = ldap.initialize(self.settings_dict['NAME'], bytes_mode=False)
+    def get_connection_params(self):
+        """Compute appropriate parameters for establishing a new connection.
 
-            options = self.settings_dict.get('CONNECTION_OPTIONS', {})
-            for opt, value in options.items():
-                self.connection.set_option(opt, value)
+        Computed at system startup.
+        """
+        return {
+            'uri': self.settings_dict['NAME'],
+            'tls': self.settings_dict.get('TLS', False),
+            'bind_dn': self.settings_dict['USER'],
+            'bind_pw': self.settings_dict['PASSWORD'],
+            'options': self.settings_dict.get('CONNECTION_OPTIONS', {}),
+        }
 
-            if self.settings_dict.get('TLS', False):
-                self.connection.start_tls_s()
+    def get_new_connection(self, conn_params):
+        """Build a connection from its parameters."""
+        connection = ldap.initialize(conn_params['uri'], bytes_mode=False)
 
-            self.connection.simple_bind_s(
-                self.settings_dict['USER'],
-                self.settings_dict['PASSWORD'],
-            )
+        options = conn_params['options']
+        for opt, value in options.items():
+            connection.set_option(opt, value)
+
+        if conn_params['tls']:
+            connection.start_tls_s()
+
+        connection.simple_bind_s(
+            conn_params['bind_dn'],
+            conn_params['bind_pw'],
+        )
+        return connection
+
+    def init_connection_state(self):
+        """Initialize python-side connection state."""
+        pass
 
     def _commit(self):
         pass
