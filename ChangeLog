@@ -1,6 +1,19 @@
 ChangeLog
 =========
 
+.. _v0.6.0:
+
+0.6.0 (2016-06-06)
+------------------
+
+*Bugfix:*
+
+    * Implement connection recycling according to Django defaults
+
+*Deprecation:*
+
+    * Remove support code for Django < 1.7
+
 .. _v0.5.1:
 
 0.5.1 (2016-06-04)
