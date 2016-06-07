@@ -4,6 +4,10 @@
 
 from __future__ import unicode_literals
 
+from django.db import models
+from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
+
 from ldapdb.models.fields import (CharField, DateField, ImageField, ListField,
                                   IntegerField, FloatField)
 import ldapdb.models
@@ -63,3 +67,18 @@ class LdapGroup(ldapdb.models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+class RelatedObject(models.Model):
+    """
+    A model with GFK to ldapdb.models.Model
+    """
+    name = models.CharField(max_length=10)
+    reference_type = models.ForeignKey(
+        ContentType, limit_choices_to={'app_label__exact': 'example'}
+    )
+    reference_id = CharField(max_length=200)
+    reference = generic.GenericForeignKey('reference_type', 'reference_id')
+
+    def __unicode__(self):
+        return u"%s (%s)" % (self.name, self.reference)

@@ -42,6 +42,8 @@ class CharField(fields.CharField):
     def get_db_prep_save(self, value, connection):
         if not value:
             return None
+        if connection.settings_dict['ENGINE'] != 'ldapdb.backends.ldap':
+            return super(CharField, self).get_db_prep_save(value, connection)
         return [value.encode(connection.charset)]
 
     def get_prep_lookup(self, lookup_type, value):
