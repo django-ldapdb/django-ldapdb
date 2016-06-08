@@ -4,6 +4,9 @@
 
 from __future__ import unicode_literals
 
+import hashlib
+import os
+
 from django.db.models import fields, SubfieldBase
 
 from ldapdb import escape_ldap_filter
@@ -203,3 +206,22 @@ class DateField(fields.DateField):
         if lookup_type in ('exact',):
             return value
         raise TypeError("DateField has invalid lookup: %s" % lookup_type)
+
+
+class PasswordField(CharField):
+    u""" Field which encodes password like slappasswd """
+    def __init__(self, *args, **kwargs):
+        defaults = {'blank': True,
+                    'db_column': 'userPassword',
+                    'max_length': 128}
+        defaults.update(kwargs)
+        super(fields.CharField, self).__init__(*args, **defaults)
+
+    def get_db_prep_save(self, value, connection):
+        salt = os.urandom(4)
+        h = hashlib.sha1(value)
+        h.update(salt)
+        return super(PasswordField, self).get_db_prep_save(
+            '{SSHA}' + (h.digest() + salt).encode('base64').strip(),
+            connection
+        )
