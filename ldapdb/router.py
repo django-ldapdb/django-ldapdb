@@ -32,8 +32,8 @@ class Router(object):
             return db == self.ldap_alias
         return None
 
-    def allow_migrate(self, db, model):
-        if is_ldap_model(model):
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        if db == self.ldap_alias:
             return False
         return None
 
