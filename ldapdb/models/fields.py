@@ -4,11 +4,9 @@
 
 from __future__ import unicode_literals
 
-from django.db.models import fields, SubfieldBase
-
 from ldapdb import escape_ldap_filter
-
 import datetime
+from django.db.models import fields
 
 
 class CharField(fields.CharField):
@@ -131,7 +129,6 @@ class FloatField(fields.FloatField):
 
 
 class ListField(fields.Field):
-    __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
         return [x.decode(connection.charset) for x in value]
@@ -151,6 +148,11 @@ class ListField(fields.Field):
         if lookup_type == 'contains':
             return escape_ldap_filter(value)
         raise TypeError("ListField has invalid lookup: %s" % lookup_type)
+
+    def from_db_value(self, value, expression, connection, context):
+        if not value:
+            return []
+        return value
 
     def to_python(self, value):
         if not value:
