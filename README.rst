@@ -33,6 +33,11 @@ It supports most of the same APIs as a Django model:
 
 ``django-ldapdb`` supports Django versions 1.7 to 1.9, and Python 2.7/3.4/3.5.
 
+Install django-ldapdb
+-------------------
+
+``` pip install django-ldapdb ```
+
 
 Using django-ldapdb
 -------------------
@@ -41,16 +46,25 @@ Add the following to your ``settings.py``:
 
 .. code-block:: python
 
-    DATABASES = {
-        ...
-        'ldap': {
-            'ENGINE': 'ldapdb.backends.ldap',
-            'NAME': 'ldap://ldap.nodomain.org/',
-            'USER': 'cn=admin,dc=nodomain,dc=org',
-            'PASSWORD': 'some_secret_password',
-         }
-     }
-    DATABASE_ROUTERS = ['ldapdb.router.Router']
+	DATABASES = {
+		'ldap': {
+		    'ENGINE': 'ldapdb.backends.ldap',
+		    'NAME': 'ldap://ldap.nodomain.org/',
+		    'USER': 'cn=admin,dc=nodomain,dc=org',
+		    'PASSWORD': 'some_secret_password',
+		    #'TLS': True,
+		    #'CONNECTION_OPTIONS': {
+		    #    ldap.OPT_X_TLS_DEMAND: True,
+		    #}
+		 },
+		'default': {
+		    'ENGINE': 'django.db.backends.sqlite3',
+		    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+		 },
+	}
+	DATABASE_ROUTERS = ['ldapdb.router.Router']
+
+
 
 If you want to access posixGroup entries in your application, you can add
 something like this to your ``models.py``:
