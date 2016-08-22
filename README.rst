@@ -88,3 +88,4 @@ something like this to your ``models.py``:
     
     For instance in the example above, a group whose cn is ``foo``
     will have the DN ``cn=foo,ou=groups,dc=nodomain,dc=org``.
+
