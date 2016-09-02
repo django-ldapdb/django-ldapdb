@@ -26,14 +26,8 @@ class Router(object):
                 self.ldap_alias = alias
                 break
 
-    def allow_syncdb(self, db, model):
-        "Do not create tables for LDAP models"
-        if is_ldap_model(model):
-            return db == self.ldap_alias
-        return None
-
-    def allow_migrate(self, db, model):
-        if is_ldap_model(model):
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        if 'model' in hints and is_ldap_model(hints['model']):
             return False
         return None
 

@@ -7,7 +7,7 @@ import ldap.filter
 
 
 def escape_ldap_filter(value):
-    return ldap.filter.escape_filter_chars(value)
+    return ldap.filter.escape_filter_chars(str(value))
 
 # Legacy single database support
 if hasattr(settings, 'LDAPDB_SERVER_URI'):

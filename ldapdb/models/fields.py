@@ -4,11 +4,102 @@
 
 from __future__ import unicode_literals
 
-from django.db.models import fields, SubfieldBase
+from django.db.models import fields
+from django.db.models import lookups
 
 from ldapdb import escape_ldap_filter
 
 import datetime
+
+
+class LdapLookup(lookups.Lookup):
+    def _as_ldap(self, lhs, rhs):
+        raise NotImplementedError()
+
+    def process_lhs(self, compiler, connection):
+        return (self.lhs.target.column, [])
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        params = lhs_params + rhs_params
+        return self._as_ldap(lhs, rhs), params
+
+
+class ContainsLookup(LdapLookup):
+    lookup_name = 'contains'
+
+    def _as_ldap(self, lhs, rhs):
+        return '%s=*%s*' % (lhs, rhs)
+
+
+class IContainsLookup(ContainsLookup):
+    lookup_name = 'icontains'
+
+
+class StartsWithLookup(LdapLookup):
+    lookup_name = 'startswith'
+
+    def _as_ldap(self, lhs, rhs):
+        return '%s=%s*' % (lhs, rhs)
+
+
+class EndsWithLookup(LdapLookup):
+    lookup_name = 'endswith'
+
+    def _as_ldap(self, lhs, rhs):
+        return '%s=*%s' % (lhs, rhs)
+
+
+class ExactLookup(LdapLookup):
+    lookup_name = 'exact'
+
+    def _as_ldap(self, lhs, rhs):
+        return '%s=%s' % (lhs, rhs)
+
+
+class GteLookup(LdapLookup):
+    lookup_name = 'gte'
+
+    def _as_ldap(self, lhs, rhs):
+        return '%s>=%s' % (lhs, rhs)
+
+
+class LteLookup(LdapLookup):
+    lookup_name = 'lte'
+
+    def _as_ldap(self, lhs, rhs):
+        return '%s<=%s' % (lhs, rhs)
+
+
+class InLookup(LdapLookup):
+    lookup_name = 'in'
+    rhs_is_iterable = True
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        params = lhs_params + rhs_params
+        return '|' + ''.join('(%s=%s)' % (lhs, '%s') for _p in rhs_params), params
+
+    def get_prep_lookup(self):
+        return self.rhs
+
+    def get_db_prep_lookup(self, value, connection):
+        if self.rhs_is_iterable:
+            return (
+                ['%s'] * len(value),
+                [self.lhs.output_field.get_db_prep_value(v, connection, prepared=True) for v in value]
+            )
+        else:
+            return (
+                '%s',
+                [self.lhs.output_field.get_db_prep_value(value, connection, prepared=True)],
+            )
+
+
+class ListContainsLookup(ExactLookup):
+    lookup_name = 'contains'
 
 
 class CharField(fields.CharField):
@@ -60,6 +151,14 @@ class CharField(fields.CharField):
         raise TypeError("CharField has invalid lookup: %s" % lookup_type)
 
 
+CharField.register_lookup(ContainsLookup)
+CharField.register_lookup(IContainsLookup)
+CharField.register_lookup(StartsWithLookup)
+CharField.register_lookup(EndsWithLookup)
+CharField.register_lookup(InLookup)
+CharField.register_lookup(ExactLookup)
+
+
 class ImageField(fields.Field):
     def from_ldap(self, value, connection):
         if len(value) == 0:
@@ -80,6 +179,9 @@ class ImageField(fields.Field):
     def get_prep_lookup(self, lookup_type, value):
         "Perform preliminary non-db specific lookup checks and conversions"
         raise TypeError("ImageField has invalid lookup: %s" % lookup_type)
+
+
+ImageField.register_lookup(ExactLookup)
 
 
 class IntegerField(fields.IntegerField):
@@ -106,6 +208,11 @@ class IntegerField(fields.IntegerField):
         raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
 
 
+IntegerField.register_lookup(ExactLookup)
+IntegerField.register_lookup(GteLookup)
+IntegerField.register_lookup(LteLookup)
+
+
 class FloatField(fields.FloatField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
@@ -130,8 +237,12 @@ class FloatField(fields.FloatField):
         raise TypeError("FloatField has invalid lookup: %s" % lookup_type)
 
 
+FloatField.register_lookup(ExactLookup)
+FloatField.register_lookup(GteLookup)
+FloatField.register_lookup(LteLookup)
+
+
 class ListField(fields.Field):
-    __metaclass__ = SubfieldBase
 
     def from_ldap(self, value, connection):
         return [x.decode(connection.charset) for x in value]
@@ -152,10 +263,20 @@ class ListField(fields.Field):
             return escape_ldap_filter(value)
         raise TypeError("ListField has invalid lookup: %s" % lookup_type)
 
+    def from_db_value(self, value, expression, connection, context):
+        """Convert from the database format.
+
+        This should be the inverse of self.get_prep_value()
+        """
+        return self.to_python(value)
+
     def to_python(self, value):
         if not value:
             return []
         return value
+
+
+ListField.register_lookup(ListContainsLookup)
 
 
 class DateField(fields.DateField):
@@ -203,3 +324,6 @@ class DateField(fields.DateField):
         if lookup_type in ('exact',):
             return value
         raise TypeError("DateField has invalid lookup: %s" % lookup_type)
+
+
+DateField.register_lookup(ExactLookup)

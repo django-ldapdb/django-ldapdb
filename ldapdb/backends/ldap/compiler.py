@@ -10,9 +10,11 @@ import re
 import sys
 
 import django
+from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR, WhereNode
 
+from ldapdb import escape_ldap_filter
 from ldapdb.models.fields import ListField
 
 if django.VERSION >= (1, 8):
@@ -46,7 +48,7 @@ def get_lookup_operator(lookup_type):
         return '='
 
 
-def query_as_ldap(query):
+def query_as_ldap(query, compiler, connection):
     # starting with django 1.6 we can receive empty querysets
     if hasattr(query, 'is_empty') and query.is_empty():
         return
@@ -68,8 +70,9 @@ def query_as_ldap(query):
             filterstr='(&%s)' % filterstr,
         )
 
-    sql = where_as_ldap(query.where)
-    filterstr += sql
+    sql, params = compiler.compile(query.where)
+    if sql:
+        filterstr += '(%s)' % (sql % tuple(escape_ldap_filter(param) for param in params))
     return LdapLookup(
         base=query.model.base_dn,
         scope=query.model.search_scope,
@@ -77,29 +80,18 @@ def query_as_ldap(query):
     )
 
 
-def where_as_ldap(where):
+def where_as_ldap(where, compiler, connection):
     bits = []
     for item in where.children:
         if isinstance(item, WhereNode):
             # A sub-node: using Q objects for complex lookups.
-            sql = where_as_ldap(item)
+            sql = where_as_ldap(item, compiler, connection)
             bits.append(sql)
             continue
 
-        attr_name = item.lhs.target.column
-        comp = get_lookup_operator(item.lookup_name)
-        values = item.rhs
-
-        if attr_name == 'dn':
-            raise LdapDBError("Looking up more than one distinguishedName is unsupported.")
-
-        if item.lookup_name == 'in':
-            equal_bits = ["(%s%s%s)" % (attr_name, comp, value) for value in values]
-            clause = '(|%s)' % ''.join(equal_bits)
-        else:
-            clause = "(%s%s%s)" % (attr_name, comp, values)
-
-        bits.append(clause)
+        pattern, params = item.as_sql(compiler, connection)
+        clause = pattern % tuple(escape_ldap_filter(param) for param in params)
+        bits.append('(%s)' % clause)
 
     if not len(bits):
         return ''
@@ -119,13 +111,46 @@ def where_as_ldap(where):
     return sql_string
 
 
+def where_node_as_ldap(where, compiler, connection):
+    bits, params = [], []
+    for item in where.children:
+        if isinstance(item, WhereNode):
+            clause, clause_params = compiler.compile(item)
+        else:
+            clause, clause_params = item.as_sql(compiler, connection)
+
+        bits.append(clause)
+        params.extend(clause_params)
+
+    if not bits:
+        return '', []
+
+    if len(bits) == 1:
+        clause = bits[0]
+    elif where.connector == AND:
+        clause = '&' + ''.join('(%s)' % bit for bit in bits)
+    elif where.connector == OR:
+        clause = '|' + ''.join('(%s)' % bit for bit in bits)
+    else:
+        raise LdapDBError("Unhandled WHERE connector: %s" % where.connector)
+
+    if where.negated:
+        clause = ('!(%s)' % clause)
+
+    return clause, params
+
+
 class SQLCompiler(compiler.SQLCompiler):
+    def compile(self, node, *args, **kwargs):
+        if isinstance(node, WhereNode):
+            return where_node_as_ldap(node, self, self.connection)
+        return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
     def execute_sql(self, result_type=compiler.SINGLE):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
-        lookup = query_as_ldap(self.query)
+        lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
 
         if lookup is None:
             return
@@ -176,7 +201,7 @@ class SQLCompiler(compiler.SQLCompiler):
         return output
 
     def results_iter(self, results=None):
-        lookup = query_as_ldap(self.query)
+        lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
         if lookup is None:
             return
 
@@ -324,7 +349,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
     def execute_sql(self, result_type=compiler.MULTI):
-        lookup = query_as_ldap(self.query)
+        lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
         if not lookup:
             return
 

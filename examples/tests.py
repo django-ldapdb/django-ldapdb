@@ -4,13 +4,19 @@
 
 from __future__ import unicode_literals
 
+import factory
+import factory.django
+import factory.fuzzy
 import volatildap
 
 from django.conf import settings
+from django.contrib.auth import models as auth_models
+from django.contrib.auth import hashers as auth_hashers
+from django.db import connections
 from django.db.models import Q, Count
 from django.test import TestCase
 
-from ldapdb.backends.ldap.compiler import query_as_ldap
+from ldapdb.backends.ldap.compiler import query_as_ldap, SQLCompiler
 from examples.models import LdapUser, LdapGroup
 
 
@@ -55,6 +61,23 @@ foouser = ('uid=foouser,ou=people,dc=example,dc=org', {
     'uidNumber': ['2000'], 'gidNumber': ['1000'], 'sn': [b'Us\xc3\xa9r'],
     'homeDirectory': ['/home/foouser'], 'givenName': [b'F\xc3\xb4o'],
     'uid': ['foouser']})
+
+
+class UserFactory(factory.django.DjangoModelFactory):
+    username = factory.Faker('username')
+    email = factory.Faker('email')
+    is_active = True
+    password = factory.LazyAttribute(lambda o: auth_hashers.make_password(o.cleartext_password))
+
+    class Meta:
+        model = auth_models.User
+
+    class Params:
+        cleartext_password = factory.fuzzy.FuzzyText(30)
+        superuser = factory.Trait(
+            is_staff=True,
+            is_superuser=True,
+        )
 
 
 class BaseTestCase(TestCase):
@@ -141,7 +164,13 @@ class GroupTestCase(BaseTestCase):
 
     def test_ldap_filter(self):
         def get_filterstr(qs):
-            return query_as_ldap(qs.query).filterstr
+            connection = connections['ldap']
+            compiler = SQLCompiler(
+                query=qs.query,
+                connection=connection,
+                using=None,
+            )
+            return query_as_ldap(qs.query, compiler, connection).filterstr
 
         # single filter
         qs = LdapGroup.objects.filter(name='foogroup')
@@ -364,6 +393,11 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(qs[1], 'foogroup')
         self.assertEqual(qs[2], 'wizgroup')
 
+    def test_search(self):
+        qs = sorted(LdapGroup.objects.filter(name__contains='foo'))
+        self.assertEqual(len(qs), 1)
+        self.assertEqual(qs[0].name, 'foogroup')
+
     def test_values_list(self):
         qs = sorted(LdapGroup.objects.values_list('name'))
         self.assertEqual(len(qs), 3)
@@ -470,11 +504,15 @@ class ScopedTestCase(BaseTestCase):
 
 
 class AdminTestCase(BaseTestCase):
-    fixtures = ['test_users.json']
     directory = dict([groups, people, foouser, foogroup, bargroup])
 
     def setUp(self):
         super(AdminTestCase, self).setUp()
+        self._user = UserFactory(
+            username='test_user',
+            cleartext_password='password',
+            superuser=True,
+        )
         self.client.login(username="test_user", password="password")
 
     def test_index(self):
