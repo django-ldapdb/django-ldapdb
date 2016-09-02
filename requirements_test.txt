@@ -1,0 +1,4 @@
+# Requirements for executing tests
+check-manifest
+flake8
+volatildap
