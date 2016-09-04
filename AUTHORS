@@ -15,9 +15,13 @@ Contributors
 The django-ldapdb project has received contributions from (in alphabetical order):
 
 * Alessandro -oggei- Ogier <team-sysadms@ieo.eu>
+* Andres Mejia <mejiaa@amazon.com>
 * Jeremy Lainé <jeremy.laine@m4x.org> (https://github.com/jlaine)
 * Michał Górny <mgorny@gentoo.org>
-* Raphaël Barrois <raphael.barrois+django-ldapdb@polytechnique.org>(https://github.com/rbarrois)
+* Raphaël Barrois <raphael.barrois+django-ldapdb@polytechnique.org> (https://github.com/rbarrois)
+* Theo Chatzimichos <tampakrap@gmail.com> (https://github.com/tampakrap)
+* Thomas Güttler <hv@tbz-pariv.de>
+* Xaroth Brook <xaroth@xaroth.nl>
 
 
 Pending agreement
@@ -26,13 +30,9 @@ Pending agreement
 The CLA has only been put in place recently; the project has previously received help from
 the following contributors:
 
-* Andres Mejia <mejiaa@amazon.com>
 * Dmitri Bogomolov <4glitch@gmail.com>
 * Fabs <fabien.michel@illyse.org>
 * Karsten Heymann <karsten.heymann@telecolumbus.net>
-* Theo Chatzimichos <tampakrap@gentoo.org>
-* Thomas Güttler <hv@tbz-pariv.de>
-* Xaroth Brook <xaroth@xaroth.nl>
 
 
 Contributor license agreement
