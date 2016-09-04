@@ -152,14 +152,23 @@ class GroupTestCase(BaseTestCase):
 
         # AND filter
         qs = LdapGroup.objects.filter(gid=1000, name='foogroup')
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(&(gidNumber=1000)(cn=foogroup)))',
+            '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))',
+        ])
 
         qs = LdapGroup.objects.filter(Q(gid=1000) & Q(name='foogroup'))
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(&(gidNumber=1000)(cn=foogroup)))',
+            '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))',
+        ])
 
         # OR filter
         qs = LdapGroup.objects.filter(Q(gid=1000) | Q(name='foogroup'))
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(|(gidNumber=1000)(cn=foogroup)))',
+            '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))',
+        ])
 
         # single exclusion
         qs = LdapGroup.objects.exclude(name='foogroup')
@@ -170,10 +179,16 @@ class GroupTestCase(BaseTestCase):
 
         # multiple exclusion
         qs = LdapGroup.objects.exclude(name='foogroup', gid=1000)
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(!(&(gidNumber=1000)(cn=foogroup))))',
+            '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))',
+        ])
 
         qs = LdapGroup.objects.filter(name='foogroup').exclude(gid=1000)
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(&(cn=foogroup)(!(gidNumber=1000))))',
+            '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))',
+        ])
 
     def test_filter(self):
         qs = LdapGroup.objects.filter(name='foogroup')
