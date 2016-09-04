@@ -277,6 +277,19 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(new.gid, 1010)
         self.assertEqual(new.usernames, ['someuser', 'foouser'])
 
+    def test_create(self):
+        LdapGroup.objects.create(
+            name='newgroup',
+            gid=1010,
+            usernames=['someuser', 'foouser'],
+        )
+
+        # check group was created
+        new = LdapGroup.objects.get(name='newgroup')
+        self.assertEqual(new.name, 'newgroup')
+        self.assertEqual(new.gid, 1010)
+        self.assertEqual(new.usernames, ['someuser', 'foouser'])
+
     def test_order_by(self):
         # ascending name
         qs = LdapGroup.objects.order_by('name')
