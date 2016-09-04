@@ -3,11 +3,17 @@
 # Copyright (c) The django-ldapdb project
 
 from django.conf import settings
+import sys
+
 import ldap.filter
 
 
 def escape_ldap_filter(value):
-    return ldap.filter.escape_filter_chars(str(value))
+    if sys.version_info[0] < 3:
+        text_value = unicode(value)
+    else:
+        text_value = str(value)
+    return ldap.filter.escape_filter_chars(text_value)
 
 # Legacy single database support
 if hasattr(settings, 'LDAPDB_SERVER_URI'):
