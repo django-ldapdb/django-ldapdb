@@ -158,6 +158,7 @@ class IntegerField(fields.IntegerField):
 IntegerField.register_lookup(ExactLookup)
 IntegerField.register_lookup(GteLookup)
 IntegerField.register_lookup(LteLookup)
+IntegerField.register_lookup(InLookup)
 
 
 class FloatField(fields.FloatField):
@@ -176,6 +177,7 @@ class FloatField(fields.FloatField):
 FloatField.register_lookup(ExactLookup)
 FloatField.register_lookup(GteLookup)
 FloatField.register_lookup(LteLookup)
+FloatField.register_lookup(InLookup)
 
 
 class ListField(fields.Field):

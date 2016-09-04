@@ -257,6 +257,13 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(g.gid, 1000)
         self.assertEqual(g.usernames, ['foouser', 'baruser'])
 
+    def test_gid_lookup(self):
+        g = LdapGroup.objects.get(gid__in=[1000, 2000, 3000])
+        self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
+        self.assertEqual(g.name, 'foogroup')
+        self.assertEqual(g.gid, 1000)
+        self.assertEqual(g.usernames, ['foouser', 'baruser'])
+
     def test_insert(self):
         g = LdapGroup()
         g.name = 'newgroup'

@@ -119,6 +119,10 @@ class WhereTestCase(TestCase):
         where.add(self._build_lookup("uid", 'lte', 1, field=IntegerField), AND)
         self.assertEqual(self._where_as_ldap(where), "(uid<=1)")
 
+        where = WhereNode()
+        where.add(self._build_lookup("uid", 'in', [1, 2], field=IntegerField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(|(uid=1)(uid=2))")
+
     def test_float_field(self):
         where = WhereNode()
         where.add(self._build_lookup("uid", 'exact', 1.2, field=FloatField), AND)
