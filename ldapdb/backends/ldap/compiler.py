@@ -10,7 +10,6 @@ import re
 import sys
 
 import django
-from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR, WhereNode
 
@@ -22,8 +21,9 @@ if django.VERSION >= (1, 8):
 else:
     from django.db.models.sql import aggregates
 
+
 if sys.version_info[0] < 3:
-    integer_types = (int, long)
+    integer_types = (int, long)  # noqa: F821
 else:
     integer_types = (int,)
 

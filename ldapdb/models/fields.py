@@ -4,12 +4,10 @@
 
 from __future__ import unicode_literals
 
+import datetime
+
 from django.db.models import fields
 from django.db.models import lookups
-
-from ldapdb import escape_ldap_filter
-
-import datetime
 
 
 class LdapLookup(lookups.Lookup):
