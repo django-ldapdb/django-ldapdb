@@ -11,12 +11,12 @@ clean:
 	find . -type f -path '*/__pycache__/*' -delete
 	find . -type d -empty -delete
 
-install-deps:
+update:
 	pip install --upgrade pip setuptools
 	pip install -r requirements_dev.txt
 	pip freeze
 
-.PHONY: default clean install-deps
+.PHONY: default clean update
 
 testall:
 	tox
