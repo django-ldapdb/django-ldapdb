@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 import django
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 DATABASES = {
     'default': {

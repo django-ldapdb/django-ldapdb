@@ -12,6 +12,7 @@ import volatildap
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.contrib.auth import hashers as auth_hashers
+from django.core import management
 from django.db import connections
 from django.db.models import Q, Count
 from django.test import TestCase
@@ -106,6 +107,9 @@ class BaseTestCase(TestCase):
 
 class ConnectionTestCase(BaseTestCase):
     directory = dict([people, foouser])
+
+    def test_system_checks(self):
+        management.call_command('check')
 
     def test_connection_options(self):
         LdapUser.objects.get(username='foouser')

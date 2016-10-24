@@ -10,6 +10,7 @@ from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.operations import BaseDatabaseOperations
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.creation import BaseDatabaseCreation
+from django.db.backends.base.validation import BaseDatabaseValidation
 
 
 class DatabaseCreation(BaseDatabaseCreation):
@@ -47,6 +48,10 @@ class DatabaseOperations(BaseDatabaseOperations):
 
     def no_limit_value(self):
         return -1
+
+
+class DatabaseValidation(BaseDatabaseValidation):
+    pass
 
 
 class LdapDatabase(object):
@@ -172,6 +177,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.creation = DatabaseCreation(self)
         self.features = DatabaseFeatures(self)
         self.ops = DatabaseOperations(self)
+        self.validation = DatabaseValidation(self)
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
 
