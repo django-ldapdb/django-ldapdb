@@ -33,6 +33,13 @@ It supports most of the same APIs as a Django model:
 
 ``django-ldapdb`` supports Django versions 1.8 to 1.10, and Python 2.7/3.4/3.5.
 
+Install django-ldapdb
+-------------------
+
+``pip install django-ldapdb``
+
+and the packages ``slap`` and ``ldap-utils``
+
 
 Using django-ldapdb
 -------------------
@@ -41,16 +48,27 @@ Add the following to your ``settings.py``:
 
 .. code-block:: python
 
-    DATABASES = {
-        ...
-        'ldap': {
-            'ENGINE': 'ldapdb.backends.ldap',
-            'NAME': 'ldap://ldap.nodomain.org/',
-            'USER': 'cn=admin,dc=nodomain,dc=org',
-            'PASSWORD': 'some_secret_password',
-         }
-     }
-    DATABASE_ROUTERS = ['ldapdb.router.Router']
+	DATABASES = {
+		'ldap': {
+		    'ENGINE': 'ldapdb.backends.ldap',
+		    'NAME': 'ldap://ldap.nodomain.org/',
+		    'USER': 'cn=admin,dc=nodomain,dc=org',
+		    'PASSWORD': 'some_secret_password',
+		 },
+		'default': {
+		    'ENGINE': 'django.db.backends.sqlite3',
+		    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+		 },
+	}
+	DATABASE_ROUTERS = ['ldapdb.router.Router']
+
+
+Testing django-ldapdb
+---------------------
+
+`` make testall ``
+
+
 
 If you want to access posixGroup entries in your application, you can add
 something like this to your ``models.py``:
@@ -79,6 +97,19 @@ something like this to your ``models.py``:
 
         def __unicode__(self):
             return self.name
+
+and add this to your ``admin.py``:
+
+.. code-block:: python
+
+	from django.contrib import admin
+	from .models import LDAPGroup
+
+	class LDAPGroupAdmin(admin.ModelAdmin):
+		exclude = ['dn', 'objectClass']
+		list_display = ['gid', 'name']
+
+	admin.site.register(LDAPGroup, LDAPGroupAdmin)
 
 
 **Important note:**
