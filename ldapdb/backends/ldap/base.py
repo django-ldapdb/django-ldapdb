@@ -4,13 +4,14 @@
 
 from __future__ import unicode_literals
 
-import ldap
-
-from django.db.backends.base.features import BaseDatabaseFeatures
-from django.db.backends.base.operations import BaseDatabaseOperations
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.creation import BaseDatabaseCreation
+from django.db.backends.base.features import BaseDatabaseFeatures
+from django.db.backends.base.introspection import BaseDatabaseIntrospection
+from django.db.backends.base.operations import BaseDatabaseOperations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.backends.base.validation import BaseDatabaseValidation
+import ldap
 
 
 class DatabaseCreation(BaseDatabaseCreation):
@@ -52,6 +53,30 @@ class DatabaseOperations(BaseDatabaseOperations):
 
 class DatabaseValidation(BaseDatabaseValidation):
     pass
+
+
+class DatabaseIntrospection(BaseDatabaseIntrospection):
+
+    def get_table_list(self, cursor):
+        return []
+
+    def get_table_description(self, cursor, table_name):
+        return []
+
+    def get_relations(self, cursor, table_name):
+        return []
+
+    def get_indexes(self, cursor, table_name):
+        return []
+
+    def get_key_columns(self, cursor, table_name):
+        return []
+
+
+class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
+
+    def execute(self, sql, params=[]):
+        pass
 
 
 class LdapDatabase(object):
@@ -150,6 +175,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'ldap'
 
     Database = LdapDatabase
+    SchemaEditorClass = DatabaseSchemaEditor
 
     # NOTE: These are copied from the mysql DatabaseWrapper
     operators = {
@@ -178,6 +204,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.features = DatabaseFeatures(self)
         self.ops = DatabaseOperations(self)
         self.validation = DatabaseValidation(self)
+        self.introspection = DatabaseIntrospection(self)
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
 

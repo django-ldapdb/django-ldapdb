@@ -13,6 +13,7 @@ from django.db.models import aggregates
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR, WhereNode
 
+import ldapdb.models
 from ldapdb import escape_ldap_filter
 from ldapdb.models.fields import ListField
 
@@ -37,7 +38,7 @@ LdapLookup = collections.namedtuple('LdapLookup', ['base', 'scope', 'filterstr']
 def query_as_ldap(query, compiler, connection):
     """Convert a django.db.models.sql.query.Query to a LdapLookup."""
     # starting with django 1.6 we can receive empty querysets
-    if hasattr(query, 'is_empty') and query.is_empty():
+    if hasattr(query, 'is_empty') and query.is_empty() or not isinstance(query.model, ldapdb.models.Model):
         return
 
     # FIXME(rbarrois): this could be an extra Where clause
