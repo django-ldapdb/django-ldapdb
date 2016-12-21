@@ -37,7 +37,7 @@ LdapLookup = collections.namedtuple('LdapLookup', ['base', 'scope', 'filterstr']
 def query_as_ldap(query, compiler, connection):
     """Convert a django.db.models.sql.query.Query to a LdapLookup."""
     # starting with django 1.6 we can receive empty querysets
-    if hasattr(query, 'is_empty') and query.is_empty():
+    if (hasattr(query, 'is_empty') and query.is_empty()) or not hasattr(query.model, 'object_classes'):
         return
 
     # FIXME(rbarrois): this could be an extra Where clause

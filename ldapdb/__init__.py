@@ -16,6 +16,7 @@ def escape_ldap_filter(value):
         text_value = str(value)
     return ldap.filter.escape_filter_chars(text_value)
 
+
 # Legacy single database support
 if hasattr(settings, 'LDAPDB_SERVER_URI'):
     from django import db
