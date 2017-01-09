@@ -439,6 +439,31 @@ class GroupTestCase(BaseTestCase):
         qs = LdapGroup.objects.all()
         self.assertEqual(len(qs), 2)
 
+    def test_paginated_search(self):
+        # This test will change the settings, assert we don't break things
+        self.assertIsNone(settings.DATABASES['ldap'].get('CONNECTION_OPTIONS', {}).get('page_size'))
+
+        # Test without BATCH_SIZE
+        qs = LdapGroup.objects.filter(name__contains='group').order_by('name')
+        self.assertEqual(len(qs), 3)
+        self.assertEqual(qs[0].name, 'bargroup')
+        self.assertEqual(qs[1].name, 'foogroup')
+        self.assertEqual(qs[2].name, 'wizgroup')
+
+        # Set new page size
+        settings.DATABASES['ldap']['CONNECTION_OPTIONS'] = settings.DATABASES['ldap'].get('CONNECTION_OPTIONS', {})
+        settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size'] = 1
+        connections['ldap'].close()  # Force connection reload
+
+        qs = LdapGroup.objects.filter(name__contains='group').order_by('name')
+        self.assertEqual(len(qs), 3)
+        self.assertEqual(qs[0].name, 'bargroup')
+        self.assertEqual(qs[1].name, 'foogroup')
+        self.assertEqual(qs[2].name, 'wizgroup')
+
+        # Restore previous configuration
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size']
+
 
 class UserTestCase(BaseTestCase):
     directory = dict([groups, people, foouser])

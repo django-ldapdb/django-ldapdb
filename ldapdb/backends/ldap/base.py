@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 
 import ldap
+import ldap.controls
 
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
@@ -194,6 +195,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.validation = DatabaseValidation(self)
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
+        # Default page size of 1000 items, ActiveDirectory's default
+        # See https://support.microsoft.com/en-us/help/315071/how-to-view-and-set-ldap-policy-in-active-directory-by-using-ntdsutil.exe  # noqa
+        self.page_size = 1000
 
     def close(self):
         if hasattr(self, 'validate_thread_sharing'):
@@ -222,7 +226,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         options = conn_params['options']
         for opt, value in options.items():
-            connection.set_option(opt, value)
+            if opt.lower() == 'query_timeout':
+                connection.timeout = int(value)
+            elif opt.lower() == 'page_size':
+                self.page_size = int(value)
+            else:
+                connection.set_option(opt, value)
 
         if conn_params['tls']:
             connection.start_tls_s()
@@ -266,13 +275,42 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         cursor = self._cursor()
         return cursor.connection.rename_s(dn, newrdn)
 
-    def search_s(self, base, scope, filterstr='(objectClass=*)',
-                 attrlist=None):
+    def search_s(self, base, scope, filterstr='(objectClass=*)', attrlist=None):
         cursor = self._cursor()
-        results = cursor.connection.search_s(base, scope, filterstr, attrlist)
-        output = []
-        for dn, attrs in results:
-            # skip referrals
-            if dn is not None:
-                output.append((dn, attrs))
-        return output
+        query_timeout = cursor.connection.timeout
+
+        # Request pagination; don't fail if the server doesn't support it.
+        ldap_control = ldap.controls.SimplePagedResultsControl(
+            criticality=False,
+            size=self.page_size,
+            cookie='',
+        )
+
+        # Fetch results
+        page = 0
+
+        while True:
+            msgid = cursor.connection.search_ext(
+                base=base,
+                scope=scope,
+                filterstr=filterstr,
+                attrlist=attrlist,
+                serverctrls=[ldap_control],
+                timeout=query_timeout,
+            )
+
+            _res_type, results, _res_msgid, server_controls = cursor.connection.result3(msgid, timeout=query_timeout)
+            page_controls = [ctrl for ctrl in server_controls if ctrl.controlType == ldap.CONTROL_PAGEDRESULTS]
+
+            for dn, attrs in results:
+                # skip referrals
+                if dn is not None:
+                    yield dn, attrs
+
+            page_control = page_controls[0]
+            page += 1
+            if page_control.cookie:
+                ldap_control.cookie = page_control.cookie
+            else:
+                # End of pages
+                break
