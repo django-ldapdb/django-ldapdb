@@ -2,4 +2,4 @@
 check-manifest
 flake8
 factory_boy
-volatildap
+volatildap>=1.1.0

@@ -114,3 +114,20 @@ and add this to your ``admin.py``:
     
     For instance in the example above, a group whose cn is ``foo``
     will have the DN ``cn=foo,ou=groups,dc=nodomain,dc=org``.
+
+
+Tuning django-ldapdb
+--------------------
+
+It is possible to adjust django-ldapdb's behavior by defining a few parameters in the ``DATABASE`` section:
+
+``PAGE_SIZE`` (default: ``1000``)
+    Define the maximum size of a results page to be returned by the server
+
+``QUERY_TIMEOUT`` (default: no limit)
+    Define the maximum time in seconds we'll wait to get a reply from the server (on a per-query basis).
+
+    .. note:: This setting applies on individual requests; if a high-level operation requires many
+              queries (for instance a paginated search yielding thousands of entries),
+              the timeout will be used on each individual request;
+              the overall processing time might be much higher.

@@ -129,6 +129,8 @@ class SQLCompiler(compiler.SQLCompiler):
                 filterstr=lookup.filterstr,
                 attrlist=['dn'],
             )
+            # Flatten iterator
+            vals = list(vals)
         except ldap.NO_SUCH_OBJECT:
             vals = []
 
