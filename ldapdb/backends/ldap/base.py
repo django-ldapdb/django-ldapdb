@@ -203,6 +203,28 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection.unbind_s()
             self.connection = None
 
+    def ensure_connection(self):
+        if self.connection is None:
+            self.connection = ldap.ldapobject.ReconnectLDAPObject(
+                uri=self.settings_dict['NAME'],
+                retry_max=self.settings_dict.get('RETRY_MAX', 1),
+                retry_delay=self.settings_dict.get('RETRY_DELAY', 60.0),
+                bytes_mode=False)
+
+            conn_params = self.get_connection_params()
+
+            options = conn_params['options']
+            for opt, value in options.items():
+                self.connection.set_option(opt, value)
+
+            if conn_params['tls']:
+                self.connection.start_tls_s()
+
+            self.connection.simple_bind_s(
+                conn_params['bind_dn'],
+                conn_params['bind_pw'],
+            )
+
     def get_connection_params(self):
         """Compute appropriate parameters for establishing a new connection.
 
@@ -215,23 +237,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             'bind_pw': self.settings_dict['PASSWORD'],
             'options': self.settings_dict.get('CONNECTION_OPTIONS', {}),
         }
-
-    def get_new_connection(self, conn_params):
-        """Build a connection from its parameters."""
-        connection = ldap.initialize(conn_params['uri'], bytes_mode=False)
-
-        options = conn_params['options']
-        for opt, value in options.items():
-            connection.set_option(opt, value)
-
-        if conn_params['tls']:
-            connection.start_tls_s()
-
-        connection.simple_bind_s(
-            conn_params['bind_dn'],
-            conn_params['bind_pw'],
-        )
-        return connection
 
     def init_connection_state(self):
         """Initialize python-side connection state."""
