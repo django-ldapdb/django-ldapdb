@@ -27,7 +27,7 @@ def get_version(package_name):
     return '0.1.0'
 
 
-PACKAGE = 'django-ldapdb'
+PACKAGE = 'django-ldapdb-ugent'
 PYPACKAGE = 'ldapdb'
 
 
@@ -42,11 +42,11 @@ setup(
     maintainer_email="raphael.barrois+%s@polytechnique.org" % PACKAGE,
     license="BSD",
     keywords=['django', 'ldap', 'database'],
-    url="https://github.com/{pn}/{pn}".format(pn=PACKAGE),
+    url="https://github.com/UGentPortaal/django-ldapdb-ugent",
     packages=find_packages(exclude=['tests*', 'examples*']),
     install_requires=[
         'Django>=1.8',
-        'pyldap>=2.4.25',
+        'pyldap-ugent>=2.4.28',
     ],
     setup_requires=[
         'setuptools>=0.8',
