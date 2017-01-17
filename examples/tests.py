@@ -111,6 +111,9 @@ class ConnectionTestCase(BaseTestCase):
     def test_system_checks(self):
         management.call_command('check')
 
+    def test_make_migrations(self):
+        management.call_command('makemigrations', dry_run=True)
+
     def test_connection_options(self):
         LdapUser.objects.get(username='foouser')
         # self.assertEqual(self.ldapobj.get_option(ldap.OPT_X_TLS_DEMAND), True)

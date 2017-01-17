@@ -7,10 +7,12 @@ from __future__ import unicode_literals
 import ldap
 
 from django.db.backends.base.features import BaseDatabaseFeatures
+from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.base.operations import BaseDatabaseOperations
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.creation import BaseDatabaseCreation
 from django.db.backends.base.validation import BaseDatabaseValidation
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 
 
 class DatabaseCreation(BaseDatabaseCreation):
@@ -38,6 +40,11 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     def __init__(self, connection):
         self.connection = connection
         self.supports_transactions = False
+
+
+class DatabaseIntrospection(BaseDatabaseIntrospection):
+    def get_table_list(self, cursor):
+        return []
 
 
 class DatabaseOperations(BaseDatabaseOperations):
@@ -146,10 +153,16 @@ class LdapDatabase(object):
         """Exception for unsupported actions."""
 
 
+class LdapSchemaEditor(BaseDatabaseSchemaEditor):
+    def create_model(self, cursor):
+        pass
+
+
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'ldap'
 
     Database = LdapDatabase
+    SchemaEditorClass = LdapSchemaEditor
 
     # NOTE: These are copied from the mysql DatabaseWrapper
     operators = {
@@ -176,6 +189,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.charset = "utf-8"
         self.creation = DatabaseCreation(self)
         self.features = DatabaseFeatures(self)
+        self.introspection = DatabaseIntrospection(self)
         self.ops = DatabaseOperations(self)
         self.validation = DatabaseValidation(self)
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True

@@ -1,6 +1,16 @@
 ChangeLog
 =========
 
+
+.. _v0.8.0:
+
+0.8.0 (master)
+--------------
+
+*Bufix:*
+
+    * Improve Django 1.10 support: fix errors with ``makemigrations``
+
 .. _v0.7.0:
 
 0.7.0 (2016-10-24)
