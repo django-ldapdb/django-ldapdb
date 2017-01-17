@@ -2,6 +2,7 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
+
 import sys
 
 import ldap.filter
@@ -15,6 +16,7 @@ def escape_ldap_filter(value):
     else:
         text_value = str(value)
     return ldap.filter.escape_filter_chars(text_value)
+
 
 # Legacy single database support
 if hasattr(settings, 'LDAPDB_SERVER_URI'):

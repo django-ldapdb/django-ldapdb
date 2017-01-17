@@ -9,7 +9,6 @@ import ldap
 import re
 import sys
 
-from django.db import migrations
 from django.db.models import aggregates
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR, WhereNode

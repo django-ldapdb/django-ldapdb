@@ -5,6 +5,6 @@ graft ldapdb
 
 prune examples
 
-global-exclude .py[cod] __pycache__ .swp
+global-exclude *.py[cod] __pycache__ .*swp
 
 exclude Makefile manage_dev.py tox.ini .flake8
