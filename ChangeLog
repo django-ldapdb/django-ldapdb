@@ -4,12 +4,17 @@ ChangeLog
 
 .. _v0.8.0:
 
-0.8.0 (master)
---------------
+0.8.0 (2017-01-24)
+------------------
 
 *Bufix:*
 
     * Improve Django 1.10 support: fix errors with ``makemigrations``
+
+*New:*
+
+    * Add query timeout support, through the ``QUERY_TIMEOUT`` setting
+    * Handle paginated results, tunable by the ``PAGE_SIZE`` setting
 
 .. _v0.7.0:
 

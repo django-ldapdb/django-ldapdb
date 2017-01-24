@@ -4,4 +4,4 @@
 
 from __future__ import unicode_literals
 
-VERSION = '0.7.0'
+VERSION = '0.8.0'
