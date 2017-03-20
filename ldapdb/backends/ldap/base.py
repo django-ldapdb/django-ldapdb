@@ -217,7 +217,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             'tls': self.settings_dict.get('TLS', False),
             'bind_dn': self.settings_dict['USER'],
             'bind_pw': self.settings_dict['PASSWORD'],
-            'options': self.settings_dict.get('CONNECTION_OPTIONS', {}),
+            'options': {
+                k if isinstance(k, int) else k.lower(): v
+                for k, v in self.settings_dict.get('CONNECTION_OPTIONS', {}).items()
+            },
         }
 
     def get_new_connection(self, conn_params):
@@ -226,9 +229,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         options = conn_params['options']
         for opt, value in options.items():
-            if opt.lower() == 'query_timeout':
+            if opt == 'query_timeout':
                 connection.timeout = int(value)
-            elif opt.lower() == 'page_size':
+            elif opt == 'page_size':
                 self.page_size = int(value)
             else:
                 connection.set_option(opt, value)

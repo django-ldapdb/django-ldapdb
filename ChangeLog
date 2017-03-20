@@ -2,6 +2,14 @@ ChangeLog
 =========
 
 
+Next version
+------------
+
+*Bugfix:*
+
+    * Restore support for raw LDAP options
+
+
 .. _v0.8.0:
 
 0.8.0 (2017-01-24)
