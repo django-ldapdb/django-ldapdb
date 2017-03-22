@@ -1,0 +1,5 @@
+# Requirements for executing tests
+check-manifest
+flake8
+factory_boy
+volatildap>=1.1.0

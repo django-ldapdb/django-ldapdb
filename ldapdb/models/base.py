@@ -21,7 +21,7 @@ class Model(django.db.models.base.Model):
     """
     Base class for all LDAP models.
     """
-    dn = django.db.models.fields.CharField(max_length=200)
+    dn = django.db.models.fields.CharField(max_length=200, primary_key=True)
 
     # meta-data
     base_dn = None
@@ -62,72 +62,91 @@ class Model(django.db.models.base.Model):
         connection.delete_s(self.dn)
         signals.post_delete.send(sender=self.__class__, instance=self)
 
-    def save(self, using=None):
+    def _save_table(self, raw=False, cls=None, force_insert=None, force_update=None, using=None, update_fields=None):
         """
         Saves the current instance.
         """
-        signals.pre_save.send(sender=self.__class__, instance=self)
-
-        using = using or router.db_for_write(self.__class__, instance=self)
+        # Connection aliasing
         connection = connections[using]
-        if not self.dn:
-            # create a new entry
-            record_exists = False
-            entry = [
+
+        create = bool(force_insert or not self.dn)
+
+        # Prepare fields
+        if update_fields:
+            target_fields = [
+                self._meta.get_field(name)
+                for name in update_fields
+            ]
+        else:
+            target_fields = [
+                field
+                for field in cls._meta.get_fields(include_hidden=True)
+                if field.concrete and not field.primary_key
+            ]
+
+        def get_field_value(field, instance):
+            python_value = getattr(instance, field.attname)
+            return field.get_db_prep_save(python_value, connection=connection)
+
+        if create:
+            old = None
+        else:
+            old = cls.objects.using(using).get(pk=self.saved_pk)
+        changes = {
+            field.db_column: (
+                None if old is None else get_field_value(field, old),
+                get_field_value(field, self),
+            )
+            for field in target_fields
+        }
+
+        # Actual saving
+
+        old_dn = self.dn
+        new_dn = self.build_dn()
+        updated = False
+
+        # Insertion
+        if create:
+            # FIXME(rbarrois): This should be handled through a hidden field.
+            hidden_values = [
                 ('objectClass', [obj_class.encode('utf-8') for obj_class in self.object_classes])
             ]
+            new_values = hidden_values + [
+                (colname, change[1])
+                for colname, change in sorted(changes.items())
+                if change[1] is not None
+            ]
             new_dn = self.build_dn()
+            logger.debug("Creating new LDAP entry %s", new_dn)
+            connection.add_s(new_dn, new_values)
 
-            for field in self._meta.fields:
-                if not field.db_column:
-                    continue
-                value = getattr(self, field.name)
-                value = field.get_db_prep_save(value, connection=connection)
-                if value:
-                    entry.append((field.db_column, value))
-
-            logger.debug("Creating new LDAP entry %s" % new_dn)
-            connection.add_s(new_dn, entry)
-
-            # update object
-            self.dn = new_dn
-
+        # Update
         else:
-            # update an existing entry
-            record_exists = True
             modlist = []
-            orig = self.__class__.objects.using(using).get(pk=self.saved_pk)
-            for field in self._meta.fields:
-                if not field.db_column:
+            for colname, change in sorted(changes.items()):
+                old_value, new_value = change
+                if old_value == new_value:
                     continue
-                old_value = getattr(orig, field.name, None)
-                new_value = getattr(self, field.name, None)
-                if old_value != new_value:
-                    new_value = field.get_db_prep_save(new_value, connection=connection)
-                    if new_value:
-                        modlist.append((ldap.MOD_REPLACE, field.db_column, new_value))
-                    elif old_value:
-                        modlist.append((ldap.MOD_DELETE, field.db_column, None))
+                modlist.append((
+                    ldap.MOD_DELETE if new_value is None else ldap.MOD_REPLACE,
+                    colname,
+                    new_value,
+                ))
 
-            if len(modlist):
-                # handle renaming
-                new_dn = self.build_dn()
-                if new_dn != self.dn:
-                    logger.debug("Renaming LDAP entry %s to %s" % (self.dn,
-                                                                   new_dn))
-                    connection.rename_s(self.dn, self.build_rdn())
-                    self.dn = new_dn
+            if new_dn != old_dn:
+                logger.debug("renaming ldap entry %s to %s", old_dn, new_dn)
+                connection.rename_s(old_dn, self.build_rdn())
 
-                logger.debug("Modifying existing LDAP entry %s" % self.dn)
-                connection.modify_s(self.dn, modlist)
-            else:
-                logger.debug("No changes to be saved to LDAP entry %s" %
-                             self.dn)
+            logger.debug("Modifying existing LDAP entry %s", new_dn)
+            connection.modify_s(new_dn, modlist)
+            updated = True
 
-        # done
+        self.dn = new_dn
+
+        # Finishing
         self.saved_pk = self.pk
-        signals.post_save.send(sender=self.__class__, instance=self,
-                               created=(not record_exists))
+        return updated
 
     @classmethod
     def scoped(base_class, base_dn):

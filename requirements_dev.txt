@@ -1,6 +1,5 @@
 -e .
+-r requirements_test.txt
 
-check-manifest
-flake8
 tox
-volatildap
+wheel

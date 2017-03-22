@@ -44,7 +44,7 @@ setup(
     url="https://github.com/{pn}/{pn}".format(pn=PACKAGE),
     packages=find_packages(exclude=['tests*', 'examples*']),
     install_requires=[
-        'django>=1.7',
+        'Django>=1.8',
         'pyldap>=2.4.25',
     ],
     setup_requires=[
@@ -55,8 +55,11 @@ setup(
         "Environment :: Web Environment",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Framework :: Django",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Framework :: Django :: 1.8",
+        "Framework :: Django :: 1.9",
+        "Framework :: Django :: 1.10",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
         "Topic :: Internet :: WWW/HTTP",

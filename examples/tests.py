@@ -4,13 +4,20 @@
 
 from __future__ import unicode_literals
 
+import factory
+import factory.django
+import factory.fuzzy
 import volatildap
 
 from django.conf import settings
+from django.contrib.auth import models as auth_models
+from django.contrib.auth import hashers as auth_hashers
+from django.core import management
+from django.db import connections
 from django.db.models import Q, Count
 from django.test import TestCase
 
-from ldapdb.backends.ldap.compiler import query_as_ldap
+from ldapdb.backends.ldap.compiler import query_as_ldap, SQLCompiler
 from examples.models import LdapUser, LdapGroup
 
 
@@ -57,6 +64,23 @@ foouser = ('uid=foouser,ou=people,dc=example,dc=org', {
     'uid': ['foouser']})
 
 
+class UserFactory(factory.django.DjangoModelFactory):
+    username = factory.Faker('username')
+    email = factory.Faker('email')
+    is_active = True
+    password = factory.LazyAttribute(lambda o: auth_hashers.make_password(o.cleartext_password))
+
+    class Meta:
+        model = auth_models.User
+
+    class Params:
+        cleartext_password = factory.fuzzy.FuzzyText(30)
+        superuser = factory.Trait(
+            is_staff=True,
+            is_superuser=True,
+        )
+
+
 class BaseTestCase(TestCase):
     directory = {}
 
@@ -83,6 +107,12 @@ class BaseTestCase(TestCase):
 
 class ConnectionTestCase(BaseTestCase):
     directory = dict([people, foouser])
+
+    def test_system_checks(self):
+        management.call_command('check')
+
+    def test_make_migrations(self):
+        management.call_command('makemigrations', dry_run=True)
 
     def test_connection_options(self):
         LdapUser.objects.get(username='foouser')
@@ -141,7 +171,13 @@ class GroupTestCase(BaseTestCase):
 
     def test_ldap_filter(self):
         def get_filterstr(qs):
-            return query_as_ldap(qs.query).filterstr
+            connection = connections['ldap']
+            compiler = SQLCompiler(
+                query=qs.query,
+                connection=connection,
+                using=None,
+            )
+            return query_as_ldap(qs.query, compiler, connection).filterstr
 
         # single filter
         qs = LdapGroup.objects.filter(name='foogroup')
@@ -152,14 +188,23 @@ class GroupTestCase(BaseTestCase):
 
         # AND filter
         qs = LdapGroup.objects.filter(gid=1000, name='foogroup')
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(&(gidNumber=1000)(cn=foogroup)))',
+            '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))',
+        ])
 
         qs = LdapGroup.objects.filter(Q(gid=1000) & Q(name='foogroup'))
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(&(gidNumber=1000)(cn=foogroup)))',
+            '(&(objectClass=posixGroup)(&(cn=foogroup)(gidNumber=1000)))',
+        ])
 
         # OR filter
         qs = LdapGroup.objects.filter(Q(gid=1000) | Q(name='foogroup'))
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(|(gidNumber=1000)(cn=foogroup)))',
+            '(&(objectClass=posixGroup)(|(cn=foogroup)(gidNumber=1000)))',
+        ])
 
         # single exclusion
         qs = LdapGroup.objects.exclude(name='foogroup')
@@ -170,10 +215,16 @@ class GroupTestCase(BaseTestCase):
 
         # multiple exclusion
         qs = LdapGroup.objects.exclude(name='foogroup', gid=1000)
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(!(&(gidNumber=1000)(cn=foogroup))))',
+            '(&(objectClass=posixGroup)(!(&(cn=foogroup)(gidNumber=1000))))',
+        ])
 
         qs = LdapGroup.objects.filter(name='foogroup').exclude(gid=1000)
-        self.assertEqual(get_filterstr(qs), '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))')
+        self.assertIn(get_filterstr(qs), [
+            '(&(objectClass=posixGroup)(&(cn=foogroup)(!(gidNumber=1000))))',
+            '(&(objectClass=posixGroup)(&(!(gidNumber=1000))(cn=foogroup)))',
+        ])
 
     def test_filter(self):
         qs = LdapGroup.objects.filter(name='foogroup')
@@ -213,12 +264,32 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(g.gid, 1000)
         self.assertEqual(g.usernames, ['foouser', 'baruser'])
 
+    def test_gid_lookup(self):
+        g = LdapGroup.objects.get(gid__in=[1000, 2000, 3000])
+        self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
+        self.assertEqual(g.name, 'foogroup')
+        self.assertEqual(g.gid, 1000)
+        self.assertEqual(g.usernames, ['foouser', 'baruser'])
+
     def test_insert(self):
         g = LdapGroup()
         g.name = 'newgroup'
         g.gid = 1010
         g.usernames = ['someuser', 'foouser']
         g.save()
+
+        # check group was created
+        new = LdapGroup.objects.get(name='newgroup')
+        self.assertEqual(new.name, 'newgroup')
+        self.assertEqual(new.gid, 1010)
+        self.assertEqual(new.usernames, ['someuser', 'foouser'])
+
+    def test_create(self):
+        LdapGroup.objects.create(
+            name='newgroup',
+            gid=1010,
+            usernames=['someuser', 'foouser'],
+        )
 
         # check group was created
         new = LdapGroup.objects.get(name='newgroup')
@@ -349,6 +420,11 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(qs[1], 'foogroup')
         self.assertEqual(qs[2], 'wizgroup')
 
+    def test_search(self):
+        qs = sorted(LdapGroup.objects.filter(name__contains='foo'))
+        self.assertEqual(len(qs), 1)
+        self.assertEqual(qs[0].name, 'foogroup')
+
     def test_values_list(self):
         qs = sorted(LdapGroup.objects.values_list('name'))
         self.assertEqual(len(qs), 3)
@@ -362,6 +438,31 @@ class GroupTestCase(BaseTestCase):
 
         qs = LdapGroup.objects.all()
         self.assertEqual(len(qs), 2)
+
+    def test_paginated_search(self):
+        # This test will change the settings, assert we don't break things
+        self.assertIsNone(settings.DATABASES['ldap'].get('CONNECTION_OPTIONS', {}).get('page_size'))
+
+        # Test without BATCH_SIZE
+        qs = LdapGroup.objects.filter(name__contains='group').order_by('name')
+        self.assertEqual(len(qs), 3)
+        self.assertEqual(qs[0].name, 'bargroup')
+        self.assertEqual(qs[1].name, 'foogroup')
+        self.assertEqual(qs[2].name, 'wizgroup')
+
+        # Set new page size
+        settings.DATABASES['ldap']['CONNECTION_OPTIONS'] = settings.DATABASES['ldap'].get('CONNECTION_OPTIONS', {})
+        settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size'] = 1
+        connections['ldap'].close()  # Force connection reload
+
+        qs = LdapGroup.objects.filter(name__contains='group').order_by('name')
+        self.assertEqual(len(qs), 3)
+        self.assertEqual(qs[0].name, 'bargroup')
+        self.assertEqual(qs[1].name, 'foogroup')
+        self.assertEqual(qs[2].name, 'wizgroup')
+
+        # Restore previous configuration
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size']
 
 
 class UserTestCase(BaseTestCase):
@@ -455,11 +556,15 @@ class ScopedTestCase(BaseTestCase):
 
 
 class AdminTestCase(BaseTestCase):
-    fixtures = ['test_users.json']
     directory = dict([groups, people, foouser, foogroup, bargroup])
 
     def setUp(self):
         super(AdminTestCase, self).setUp()
+        self._user = UserFactory(
+            username='test_user',
+            cleartext_password='password',
+            superuser=True,
+        )
         self.client.login(username="test_user", password="password")
 
     def test_index(self):

@@ -31,7 +31,15 @@ It supports most of the same APIs as a Django model:
 * Full admin support and browsing
 
 
-``django-ldapdb`` supports Django versions 1.7 to 1.9, and Python 2.7/3.4/3.5.
+``django-ldapdb`` supports Django versions 1.8 to 1.10, and Python 2.7/3.4/3.5.
+
+
+Installing django-ldapdb
+------------------------
+
+Use pip: ``pip install django-ldapdb``
+
+You might also need the usual ``LDAP`` packages from your distribution, usually named ``openldap`` or ``ldap-utils``.
 
 
 Using django-ldapdb
@@ -42,15 +50,20 @@ Add the following to your ``settings.py``:
 .. code-block:: python
 
     DATABASES = {
-        ...
         'ldap': {
             'ENGINE': 'ldapdb.backends.ldap',
             'NAME': 'ldap://ldap.nodomain.org/',
             'USER': 'cn=admin,dc=nodomain,dc=org',
             'PASSWORD': 'some_secret_password',
-         }
-     }
+         },
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+         },
+    }
     DATABASE_ROUTERS = ['ldapdb.router.Router']
+
+
 
 If you want to access posixGroup entries in your application, you can add
 something like this to your ``models.py``:
@@ -80,6 +93,19 @@ something like this to your ``models.py``:
         def __unicode__(self):
             return self.name
 
+and add this to your ``admin.py``:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from . import models
+
+    class LDAPGroupAdmin(admin.ModelAdmin):
+        exclude = ['dn', 'objectClass']
+        list_display = ['gid', 'name']
+
+    admin.site.register(models.LDAPGroup, LDAPGroupAdmin)
+
 
 **Important note:**
     You **must** declare an attribute to be used as the primary key.
@@ -88,3 +114,20 @@ something like this to your ``models.py``:
     
     For instance in the example above, a group whose cn is ``foo``
     will have the DN ``cn=foo,ou=groups,dc=nodomain,dc=org``.
+
+
+Tuning django-ldapdb
+--------------------
+
+It is possible to adjust django-ldapdb's behavior by defining a few parameters in the ``DATABASE`` section:
+
+``PAGE_SIZE`` (default: ``1000``)
+    Define the maximum size of a results page to be returned by the server
+
+``QUERY_TIMEOUT`` (default: no limit)
+    Define the maximum time in seconds we'll wait to get a reply from the server (on a per-query basis).
+
+    .. note:: This setting applies on individual requests; if a high-level operation requires many
+              queries (for instance a paginated search yielding thousands of entries),
+              the timeout will be used on each individual request;
+              the overall processing time might be much higher.

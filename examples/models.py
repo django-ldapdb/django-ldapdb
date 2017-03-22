@@ -4,8 +4,8 @@
 
 from __future__ import unicode_literals
 
-from ldapdb.models.fields import (CharField, DateField, ImageField, ListField,
-                                  IntegerField, FloatField)
+from ldapdb.models.fields import (CharField, ImageField, ListField,
+                                  IntegerField)
 import ldapdb.models
 
 
@@ -34,9 +34,6 @@ class LdapUser(ldapdb.models.Model):
     login_shell = CharField(db_column='loginShell', default='/bin/bash')
     username = CharField(db_column='uid', primary_key=True)
     password = CharField(db_column='userPassword')
-
-    date_of_birth = DateField(db_column='birthday', blank=True)
-    latitude = FloatField(db_column='latitude', blank=True)
 
     def __str__(self):
         return self.username

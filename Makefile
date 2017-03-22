@@ -1,6 +1,8 @@
 PACKAGE := ldapdb
 TESTS_DIR := examples
 
+# Error on all warnings, except one in python's site.py module.
+PYWARNINGS = -Wdefault -Werror -Wignore::DeprecationWarning:site:165
 
 default:
 
@@ -9,18 +11,18 @@ clean:
 	find . -type f -path '*/__pycache__/*' -delete
 	find . -type d -empty -delete
 
-install-deps:
+update:
 	pip install --upgrade pip setuptools
 	pip install -r requirements_dev.txt
 	pip freeze
 
-.PHONY: default clean install-deps
+.PHONY: default clean update
 
 testall:
 	tox
 
 test:
-	python -Wdefault manage_dev.py test
+	python $(PYWARNINGS) manage_dev.py test
 
 .PHONY: test testall
 

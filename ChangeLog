@@ -1,6 +1,47 @@
 ChangeLog
 =========
 
+
+Next version
+------------
+
+*Bugfix:*
+
+    * Restore support for raw LDAP options
+
+
+.. _v0.8.0:
+
+0.8.0 (2017-01-24)
+------------------
+
+*Bufix:*
+
+    * Improve Django 1.10 support: fix errors with ``makemigrations``
+
+*New:*
+
+    * Add query timeout support, through the ``QUERY_TIMEOUT`` setting
+    * Handle paginated results, tunable by the ``PAGE_SIZE`` setting
+
+.. _v0.7.0:
+
+0.7.0 (2016-10-24)
+------------------
+
+*New:*
+
+    * Add support for Django ≥ 1.10
+    * Allow ``__in`` lookups for int/float fields
+
+*Bugfix:*
+
+    * Remove all remaining warnings
+
+*Deprecation:*
+
+    * Drop support for Django < 1.8
+
 .. _v0.6.0:
 
 0.6.0 (2016-06-06)
