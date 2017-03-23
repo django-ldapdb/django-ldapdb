@@ -241,18 +241,20 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         if conn_params['tls']:
             connection.start_tls_s()
-        username = conn_params['bind_dn']
+        username = conn_params['bind_dn'] or ''
         password = conn_params['bind_pw']
         sasl_authname = conn_params['sasl-authname']
         sasl_method = conn_params['sasl-method']
         if sasl_method == 'gssapi':
             connection.sasl_interactive_bind_s('', ldap.sasl.gssapi(authz_id=username))
         elif sasl_method == 'cram_md5':
-            connection.sasl_interactive_bind_s('', ldap.sasl.cram_md5(sasl_authname, password, username))
+            sasl = ldap.sasl.cram_md5(authc_id=sasl_authname, password=password, authz_id=username)
+            connection.sasl_interactive_bind_s('', sasl)
         elif sasl_method == 'digest_md5':
-            connection.sasl_interactive_bind_s('', ldap.sasl.digest_md5(sasl_authname, password, username))
+            sasl = ldap.sasl.digest_md5(authc_id=sasl_authname, password=password, authz_id=username)
+            connection.sasl_interactive_bind_s('', sasl)
         elif sasl_method == 'external':
-            connection.sasl_interactive_bind_s('', ldap.sasl.external(authz_id=username or ''))
+            connection.sasl_interactive_bind_s('', ldap.sasl.external(authz_id=username))
         elif username and password:
             connection.simple_bind_s(username, password)
         return connection
