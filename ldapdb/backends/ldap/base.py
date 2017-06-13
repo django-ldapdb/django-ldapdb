@@ -14,6 +14,7 @@ from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.creation import BaseDatabaseCreation
 from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.backends.base.client import BaseDatabaseClient
 
 
 class DatabaseCreation(BaseDatabaseCreation):
@@ -164,6 +165,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     Database = LdapDatabase
     SchemaEditorClass = LdapSchemaEditor
+
+    client_class = BaseDatabaseClient
+    creation_class = BaseDatabaseCreation
+    features_class = BaseDatabaseFeatures
+    introspection_class = BaseDatabaseIntrospection
+    ops_class = BaseDatabaseOperations
 
     # NOTE: These are copied from the mysql DatabaseWrapper
     operators = {
