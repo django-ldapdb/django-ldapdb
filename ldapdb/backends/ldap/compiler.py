@@ -116,7 +116,7 @@ class SQLCompiler(compiler.SQLCompiler):
             return where_node_as_ldap(node, self, self.connection)
         return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
-    def execute_sql(self, result_type=compiler.SINGLE):
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
@@ -279,7 +279,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
-    def execute_sql(self, result_type=compiler.MULTI):
+    def execute_sql(self, result_type=compiler.MULTI, chunked_fetch=False):
         lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
         if not lookup:
             return
@@ -304,7 +304,7 @@ class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
 
 
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
-    def execute_sql(self, result_type=compiler.SINGLE):
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False):
         # Return only number values through the aggregate compiler
         output = super(SQLAggregateCompiler, self).execute_sql(result_type)
         if sys.version_info < (3,):
