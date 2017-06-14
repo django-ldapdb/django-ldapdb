@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 import ldap
 import ldap.controls
 
+import django
+from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.base.operations import BaseDatabaseOperations
@@ -38,9 +40,11 @@ class DatabaseCursor(object):
 
 
 class DatabaseFeatures(BaseDatabaseFeatures):
+    can_use_chunked_reads = False
+    supports_transactions = False
+
     def __init__(self, connection):
         self.connection = connection
-        self.supports_transactions = False
 
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
@@ -159,11 +163,23 @@ class LdapSchemaEditor(BaseDatabaseSchemaEditor):
         pass
 
 
+class LdapClient(BaseDatabaseClient):
+    executable_name = 'ldapsearch'
+
+
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'ldap'
 
     Database = LdapDatabase
     SchemaEditorClass = LdapSchemaEditor
+
+    # Hook for sibling classes
+    client_class = LdapClient
+    creation_class = DatabaseCreation
+    features_class = DatabaseFeatures
+    introspection_class = DatabaseIntrospection
+    ops_class = DatabaseOperations
+    validation_class = DatabaseValidation
 
     # NOTE: These are copied from the mysql DatabaseWrapper
     operators = {
@@ -188,11 +204,15 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         # Charset used for LDAP text *values*
         self.charset = "utf-8"
-        self.creation = DatabaseCreation(self)
-        self.features = DatabaseFeatures(self)
-        self.introspection = DatabaseIntrospection(self)
-        self.ops = DatabaseOperations(self)
-        self.validation = DatabaseValidation(self)
+
+        if django.VERSION[:2] < (1, 11):
+            self.client = None
+            self.creation = DatabaseCreation(self)
+            self.features = DatabaseFeatures(self)
+            self.introspection = DatabaseIntrospection(self)
+            self.ops = DatabaseOperations(self)
+            self.validation = DatabaseValidation(self)
+
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
         # Default page size of 1000 items, ActiveDirectory's default

@@ -9,6 +9,14 @@ Next version
 
     * Restore support for raw LDAP options
 
+*New:*
+
+    * Add support for Django 1.11
+
+*Deprecation:*
+
+    * Drop support for Django 1.9 (we only support 2 LTS and 2 latest releases)
+
 
 .. _v0.8.0:
 

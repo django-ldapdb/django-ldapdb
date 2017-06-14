@@ -17,19 +17,19 @@ matrix:
     - python: "2.7"
       env: TOXENV=py27-django18
     - python: "2.7"
-      env: TOXENV=py27-django19
+      env: TOXENV=py27-django110
     - python: "2.7"
       env: TOXENV=py27-django110
     - python: "3.4"
       env: TOXENV=py34-django18
     - python: "3.4"
-      env: TOXENV=py34-django19
-    - python: "3.4"
       env: TOXENV=py34-django110
+    - python: "3.4"
+      env: TOXENV=py34-django111
 
     # Python 3.4/3.5 are close enough, don't test all combinations.
     - python: "3.5"
-      env: TOXENV=py35-django110
+      env: TOXENV=py35-django111
 
     # Linting
     - python: "3.4"

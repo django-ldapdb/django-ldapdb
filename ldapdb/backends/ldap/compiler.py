@@ -116,10 +116,13 @@ class SQLCompiler(compiler.SQLCompiler):
             return where_node_as_ldap(node, self, self.connection)
         return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
-    def execute_sql(self, result_type=compiler.SINGLE):
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
+        # Setup self.select, self.klass_info, self.annotation_col_map
+        # All expected from ModelIterable.__iter__
+        self.pre_sql_setup()
         lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
 
         if lookup is None:
@@ -148,7 +151,7 @@ class SQLCompiler(compiler.SQLCompiler):
                 # that value, else append the length of the return values
                 # from LDAP.
                 sql = self.as_sql()[0]
-                if hasattr(self.query, 'subquery'):
+                if hasattr(self.query, 'subquery') and self.query.subquery:
                     sql = self.query.subquery
                 m = _ORDER_BY_LIMIT_OFFSET_RE.search(sql)
                 limit = m.group(2)
