@@ -16,6 +16,9 @@ from django.db.models.sql.where import AND, OR, WhereNode
 from ldapdb import escape_ldap_filter
 from ldapdb.models.fields import ListField
 
+from django.core.exceptions import EmptyResultSet
+from django.db.models.sql.constants import GET_ITERATOR_CHUNK_SIZE
+
 
 if sys.version_info[0] < 3:
     integer_types = (int, long)  # noqa: F821
@@ -24,7 +27,7 @@ else:
 
 
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(
-    r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
+    r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(?P<limit>-?\d+))?\s*(?:\bOFFSET\b\s+(?P<offset>\d+))?$')
 
 
 class LdapDBError(Exception):
@@ -116,7 +119,7 @@ class SQLCompiler(compiler.SQLCompiler):
             return where_node_as_ldap(node, self, self.connection)
         return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
-    def execute_sql(self, result_type=compiler.SINGLE):
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
@@ -147,18 +150,20 @@ class SQLCompiler(compiler.SQLCompiler):
                 # Check if the SQL query has a limit value and append
                 # that value, else append the length of the return values
                 # from LDAP.
-                sql = self.as_sql()[0]
+                sql, _ = self.as_sql()
                 if hasattr(self.query, 'subquery'):
                     sql = self.query.subquery
-                m = _ORDER_BY_LIMIT_OFFSET_RE.search(sql)
-                limit = m.group(2)
-                offset = m.group(3)
-                if limit and int(limit) >= 0:
-                    output.append(int(limit))
-                elif offset:
-                    output.append(len(vals) - int(offset))
-                else:
-                    output.append(len(vals))
+                    if sql:
+                        m = _ORDER_BY_LIMIT_OFFSET_RE.search(sql)
+                        if m:                    
+                            limit = m.group('limit')
+                            offset = m.group('offset')
+                            if limit and int(limit) >= 0:
+                                output.append(int(limit))
+                            elif offset:
+                                output.append(len(vals) - int(offset))
+                            else:
+                                output.append(len(vals)) 
             else:
                 output.append(e[0])
         return output
@@ -279,7 +284,7 @@ class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler):
 
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
-    def execute_sql(self, result_type=compiler.MULTI):
+    def execute_sql(self, result_type=compiler.MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE):
         lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
         if not lookup:
             return
@@ -304,7 +309,7 @@ class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
 
 
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
-    def execute_sql(self, result_type=compiler.SINGLE):
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE):
         # Return only number values through the aggregate compiler
         output = super(SQLAggregateCompiler, self).execute_sql(result_type)
         if sys.version_info < (3,):
