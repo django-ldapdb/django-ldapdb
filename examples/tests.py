@@ -468,6 +468,10 @@ class GroupTestCase(BaseTestCase):
 class UserTestCase(BaseTestCase):
     directory = dict([groups, people, foouser])
 
+    def test_verbose_name(self):
+        self.assertEqual("Prime name", LdapUser._meta.get_field('first_name').verbose_name)
+        self.assertEqual("Final name", LdapUser._meta.get_field('last_name').verbose_name)
+
     def test_get(self):
         u = LdapUser.objects.get(username='foouser')
         self.assertEqual(u.first_name, u'Fôo')

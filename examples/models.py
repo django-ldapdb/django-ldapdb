@@ -18,8 +18,8 @@ class LdapUser(ldapdb.models.Model):
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
 
     # inetOrgPerson
-    first_name = CharField(db_column='givenName')
-    last_name = CharField(db_column='sn')
+    first_name = CharField(db_column='givenName', verbose_name="Prime name")
+    last_name = CharField("Final name", db_column='sn')
     full_name = CharField(db_column='cn')
     email = CharField(db_column='mail')
     phone = CharField(db_column='telephoneNumber', blank=True)
