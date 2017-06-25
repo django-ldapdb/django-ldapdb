@@ -8,6 +8,7 @@ from examples.models import LdapGroup, LdapUser
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
 
 
 class LdapUserAdmin(admin.ModelAdmin):
