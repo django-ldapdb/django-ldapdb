@@ -7,7 +7,6 @@ from django.contrib import admin
 from examples.models import LdapGroup, LdapUser
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.utils.translation import ugettext as _
 
 
 class LdapUserAdmin(admin.ModelAdmin):
@@ -18,8 +17,8 @@ class LdapUserAdmin(admin.ModelAdmin):
 
 class LdapGroupForm(forms.ModelForm):
     usernames = forms.ModelMultipleChoiceField(queryset=LdapUser.objects.all(),
-                               widget=FilteredSelectMultiple('Users', is_stacked=False),
-                               required=False)
+                                               widget=FilteredSelectMultiple('Users', is_stacked=False),
+                                               required=False)
 
     class Meta:
         exclude = []
