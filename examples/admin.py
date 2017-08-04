@@ -7,7 +7,6 @@ from django.contrib import admin
 from examples.models import LdapGroup, LdapUser
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 
@@ -17,15 +16,10 @@ class LdapUserAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name', 'full_name', 'username']
 
 
-class GroupUserField(forms.ModelMultipleChoiceField):
-    def clean(self, value):
-        return value
-
-
 class LdapGroupForm(forms.ModelForm):
-    usernames = GroupUserField(queryset=LdapUser.objects.all(),
+    usernames = forms.ModelMultipleChoiceField(queryset=LdapUser.objects.all(),
                                widget=FilteredSelectMultiple('Users', is_stacked=False),
-                               required=True, to_field_name='dn')
+                               required=False)
 
     class Meta:
         exclude = []
@@ -34,8 +28,8 @@ class LdapGroupForm(forms.ModelForm):
     def clean_usernames(self):
         data = self.cleaned_data['usernames']
         if not data:
-            raise ValidationError(_('Enter a list of values.'), code='list')
-        return data
+            return []
+        return list(data.values_list('username', flat=True))
 
 
 class LdapGroupAdmin(admin.ModelAdmin):
