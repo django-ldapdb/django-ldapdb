@@ -228,7 +228,7 @@ class DateField(fields.DateField):
         if len(value) == 0:
             return None
         else:
-            return datetime.datetime.strptime(value[0],
+            return datetime.datetime.strptime(value[0].decode(connection.charset),
                                               self._date_format).date()
 
     def get_db_prep_save(self, value, connection):
@@ -239,7 +239,7 @@ class DateField(fields.DateField):
             raise ValueError(
                 'DateField can be only set to a datetime.date instance')
 
-        return [value.strftime(self._date_format)]
+        return [value.strftime(self._date_format).encode(connection.charset)]
 
 
 DateField.register_lookup(ExactLookup)
