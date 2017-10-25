@@ -2,8 +2,6 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import factory
 import factory.django
 import factory.fuzzy
@@ -426,7 +424,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(qs[0].name, 'foogroup')
 
     def test_values_list(self):
-        qs = sorted(LdapGroup.objects.values_list('name'))
+        qs = sorted(LdapGroup.objects.values_list('name', flat=False))
         self.assertEqual(len(qs), 3)
         self.assertEqual(qs[0], ('bargroup',))
         self.assertEqual(qs[1], ('foogroup',))
