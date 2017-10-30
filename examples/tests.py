@@ -2,22 +2,20 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-import factory
-import factory.django
-import factory.fuzzy
-import volatildap
-
 from django.conf import settings
-from django.contrib.auth import models as auth_models
 from django.contrib.auth import hashers as auth_hashers
+from django.contrib.auth import models as auth_models
 from django.core import management
 from django.db import connections
 from django.db.models import Q, Count
 from django.test import TestCase
 
-from ldapdb.backends.ldap.compiler import query_as_ldap, SQLCompiler
-from examples.models import LdapUser, LdapGroup
-
+import factory
+import factory.django
+import factory.fuzzy
+import volatildap
+from examples.models import LdapGroup, LdapUser
+from ldapdb.backends.ldap.compiler import SQLCompiler, query_as_ldap
 
 groups = ('ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})

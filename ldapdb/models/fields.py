@@ -4,8 +4,7 @@
 
 import datetime
 
-from django.db.models import fields
-from django.db.models import lookups
+from django.db.models import fields, lookups
 
 
 class LdapLookup(lookups.Lookup):

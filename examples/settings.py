@@ -3,6 +3,7 @@
 # Copyright (c) The django-ldapdb project
 
 import django
+
 import ldap
 
 DEBUG = True

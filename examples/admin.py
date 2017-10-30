@@ -3,6 +3,7 @@
 # Copyright (c) The django-ldapdb project
 
 from django.contrib import admin
+
 from examples.models import LdapGroup, LdapUser
 
 

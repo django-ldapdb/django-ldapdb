@@ -2,9 +2,8 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from ldapdb.models.fields import (CharField, ImageField, ListField,
-                                  IntegerField)
 import ldapdb.models
+from ldapdb.models.fields import CharField, ImageField, IntegerField, ListField
 
 
 class LdapUser(ldapdb.models.Model):
