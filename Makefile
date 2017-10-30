@@ -32,7 +32,7 @@ flake8:
 	flake8 --config .flake8 $(PACKAGE) $(TESTS_DIR)
 
 isort:
-	isort $(PACKAGE) $(TESTS_DIR) --recursive --check-only
+	isort $(PACKAGE) $(TESTS_DIR) --recursive --check-only --diff
 
 check-manifest:
 	check-manifest
