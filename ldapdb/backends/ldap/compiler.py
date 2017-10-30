@@ -265,7 +265,7 @@ class SQLCompiler(compiler.SQLCompiler):
             try:
                 iterator.next()
                 return True
-            except:
+            except Exception as e:
                 return False
         else:
             return False
