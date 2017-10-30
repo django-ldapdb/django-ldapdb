@@ -2,9 +2,7 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-
 import django
-
 from django.conf.urls import include, url
 from django.contrib import admin
 

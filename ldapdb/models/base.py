@@ -2,17 +2,14 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
-import ldap
 import logging
 
 import django.db.models
+import ldap
 from django.db import connections, router
 from django.db.models import signals
 
 import ldapdb  # noqa
-
 
 logger = logging.getLogger('ldapdb')
 

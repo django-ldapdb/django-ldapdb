@@ -2,13 +2,11 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import collections
-import ldap
+import inspect
 import re
-import sys
 
+import ldap
 from django.db.models import aggregates
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR, WhereNode
@@ -16,12 +14,7 @@ from django.db.models.sql.where import AND, OR, WhereNode
 from ldapdb import escape_ldap_filter
 from ldapdb.models.fields import ListField
 
-
-if sys.version_info[0] < 3:
-    integer_types = (int, long)  # noqa: F821
-else:
-    integer_types = (int,)
-
+integer_types = (int,)
 
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(
     r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
@@ -116,7 +109,8 @@ class SQLCompiler(compiler.SQLCompiler):
             return where_node_as_ldap(node, self, self.connection)
         return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
-    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False):
+    # which value should chunk_size have?
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False, chunk_size=100):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
@@ -265,13 +259,12 @@ class SQLCompiler(compiler.SQLCompiler):
             pos += 1
 
     def has_results(self):
-        import inspect
         iterator = self.results_iter()
         if inspect.isgenerator(iterator):
             try:
                 iterator.next()
                 return True
-            except:
+            except Exception as e:
                 return False
         else:
             return False
@@ -310,6 +303,4 @@ class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
     def execute_sql(self, result_type=compiler.SINGLE):
         # Return only number values through the aggregate compiler
         output = super(SQLAggregateCompiler, self).execute_sql(result_type)
-        if sys.version_info < (3,):
-            return filter(lambda a: isinstance(a, int), output)
         return filter(lambda a: isinstance(a, integer_types), output)

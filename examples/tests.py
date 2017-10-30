@@ -2,24 +2,20 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import factory
 import factory.django
 import factory.fuzzy
 import volatildap
-
 from django.conf import settings
-from django.contrib.auth import models as auth_models
 from django.contrib.auth import hashers as auth_hashers
+from django.contrib.auth import models as auth_models
 from django.core import management
 from django.db import connections
-from django.db.models import Q, Count
+from django.db.models import Count, Q
 from django.test import TestCase
 
-from ldapdb.backends.ldap.compiler import query_as_ldap, SQLCompiler
-from examples.models import LdapUser, LdapGroup
-
+from examples.models import LdapGroup, LdapUser
+from ldapdb.backends.ldap.compiler import SQLCompiler, query_as_ldap
 
 groups = ('ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
@@ -426,7 +422,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(qs[0].name, 'foogroup')
 
     def test_values_list(self):
-        qs = sorted(LdapGroup.objects.values_list('name'))
+        qs = sorted(LdapGroup.objects.values_list('name', flat=False))
         self.assertEqual(len(qs), 3)
         self.assertEqual(qs[0], ('bargroup',))
         self.assertEqual(qs[1], ('foogroup',))

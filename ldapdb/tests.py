@@ -2,22 +2,16 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-
-from __future__ import unicode_literals
-
-import django
-from django.test import TestCase
 from django.db import connections
-from django.db.models.sql.where import AND, OR, WhereNode
-from django.db.models.sql import datastructures
-from django.db.models.sql import query as django_query
 from django.db.models import expressions
+from django.db.models.sql import query as django_query
+from django.db.models.sql.where import AND, OR, WhereNode
+from django.test import TestCase
 
-from ldapdb import escape_ldap_filter
-from ldapdb import models
+from ldapdb import escape_ldap_filter, models
 from ldapdb.backends.ldap import compiler as ldapdb_compiler
-from ldapdb.models.fields import (CharField, IntegerField, FloatField,
-                                  ListField, DateField)
+from ldapdb.models.fields import (CharField, DateField, FloatField,
+                                  IntegerField, ListField)
 
 
 class FakeModel(models.Model):
@@ -33,10 +27,7 @@ class WhereTestCase(TestCase):
     def _build_lookup(self, field_name, lookup, value, field=CharField):
         fake_field = field()
         fake_field.set_attributes_from_name(field_name)
-        if django.VERSION[:2] <= (1, 7):
-            lhs = datastructures.Col('faketable', fake_field, fake_field)
-        else:
-            lhs = expressions.Col('faketable', fake_field, fake_field)
+        lhs = expressions.Col('faketable', fake_field, fake_field)
         lookup = lhs.get_lookup(lookup)
         return lookup(lhs, value)
 

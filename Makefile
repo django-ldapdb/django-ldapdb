@@ -26,10 +26,13 @@ test:
 
 .PHONY: test testall
 
-lint: flake8 check-manifest
+lint: flake8 isort check-manifest
 
 flake8:
 	flake8 --config .flake8 $(PACKAGE) $(TESTS_DIR)
+
+isort:
+	isort $(PACKAGE) $(TESTS_DIR) --recursive --check-only --diff
 
 check-manifest:
 	check-manifest

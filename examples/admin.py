@@ -2,8 +2,8 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-
 from django.contrib import admin
+
 from examples.models import LdapGroup, LdapUser
 
 
