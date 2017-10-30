@@ -6,11 +6,11 @@ import collections
 import inspect
 import re
 
+import ldap
 from django.db.models import aggregates
 from django.db.models.sql import compiler
 from django.db.models.sql.where import AND, OR, WhereNode
 
-import ldap
 from ldapdb import escape_ldap_filter
 from ldapdb.models.fields import ListField
 

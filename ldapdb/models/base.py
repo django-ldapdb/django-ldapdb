@@ -5,10 +5,10 @@
 import logging
 
 import django.db.models
+import ldap
 from django.db import connections, router
 from django.db.models import signals
 
-import ldap
 import ldapdb  # noqa
 
 logger = logging.getLogger('ldapdb')
