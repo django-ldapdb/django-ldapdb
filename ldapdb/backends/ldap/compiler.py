@@ -11,6 +11,7 @@ import sys
 
 from django.db.models import aggregates
 from django.db.models.sql import compiler
+from django.db.models.sql.constants import GET_ITERATOR_CHUNK_SIZE
 from django.db.models.sql.where import AND, OR, WhereNode
 
 from ldapdb import escape_ldap_filter
@@ -116,7 +117,8 @@ class SQLCompiler(compiler.SQLCompiler):
             return where_node_as_ldap(node, self, self.connection)
         return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
-    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False):
+    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False,
+                    chunk_size=GET_ITERATOR_CHUNK_SIZE):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
