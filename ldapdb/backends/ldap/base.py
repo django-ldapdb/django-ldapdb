@@ -2,12 +2,8 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import ldap
 import ldap.controls
-
-import django
 from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
@@ -204,14 +200,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         # Charset used for LDAP text *values*
         self.charset = "utf-8"
-
-        if django.VERSION[:2] < (1, 11):
-            self.client = None
-            self.creation = DatabaseCreation(self)
-            self.features = DatabaseFeatures(self)
-            self.introspection = DatabaseIntrospection(self)
-            self.ops = DatabaseOperations(self)
-            self.validation = DatabaseValidation(self)
 
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
