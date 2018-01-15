@@ -31,7 +31,7 @@ It supports most of the same APIs as a Django model:
 * Full admin support and browsing
 
 
-``django-ldapdb`` supports Django versions 1.8, 1.10 and 1.11, and Python 2.7/3.4/3.5.
+``django-ldapdb`` supports Django versions 1.11 and 2.0.1 and Python 3.4/3.5/3.6.
 
 
 Installing django-ldapdb
