@@ -166,7 +166,7 @@ class SQLCompiler(compiler.SQLCompiler):
                 output.append(e[0])
         return output
 
-    def results_iter(self, results=None):
+    def results_iter(self, results=None, chunked_fetch=False):
         lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
         if lookup is None:
             return
