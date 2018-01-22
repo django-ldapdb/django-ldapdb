@@ -9,6 +9,10 @@ PYWARNINGS = -Wdefault -Werror \
 
 default:
 
+install:
+
+	python setup.py install
+
 clean:
 	find . -type f -name '*.pyc' -delete
 	find . -type f -path '*/__pycache__/*' -delete
@@ -19,7 +23,7 @@ update:
 	pip install -r requirements_dev.txt
 	pip freeze
 
-.PHONY: default clean update
+.PHONY: default install clean update
 
 testall:
 	tox
