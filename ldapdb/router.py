@@ -2,6 +2,8 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
+from django.conf import settings
+
 
 def is_ldap_model(model):
     # FIXME: there is probably a better check than testing 'base_dn'
@@ -19,7 +21,6 @@ class Router(object):
 
     def __init__(self):
         "Find the name of the LDAP database"
-        from django.conf import settings
         self.ldap_alias = None
         for alias, settings_dict in settings.DATABASES.items():
             if settings_dict['ENGINE'] == 'ldapdb.backends.ldap':

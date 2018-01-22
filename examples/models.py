@@ -2,8 +2,6 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 from ldapdb.models.fields import (CharField, ImageField, ListField,
                                   IntegerField)
 import ldapdb.models

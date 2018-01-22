@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 import codecs
 import os
 import re
-import sys
 
 from setuptools import find_packages, setup
 
@@ -55,12 +54,10 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
-        "Framework :: Django :: 1.8",
-        "Framework :: Django :: 1.10",
-        "Framework :: Django :: 1.11",
+        "Programming Language :: Python :: 3.6",
+        "Framework :: Django :: 2.0",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
         "Topic :: Internet :: WWW/HTTP",
