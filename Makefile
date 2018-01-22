@@ -6,9 +6,14 @@ PYWARNINGS = -Wdefault -Werror -Wignore::DeprecationWarning:site:165
 
 default:
 
+install:
+	python setup.py install
+
+check:
+	test
+
 clean:
-	find . -type f -name '*.pyc' -delete
-	find . -type f -path '*/__pycache__/*' -delete
+	./manage.py clean_pyc
 	find . -type d -empty -delete
 
 update:
