@@ -55,7 +55,7 @@ Download `pyldap‑2.4.37‑cp36‑cp36m‑win32.whl <https://www.lfd.uci.edu/%7
 
 ``pip install pyldap‑2.4.37‑cp36‑cp36m‑win32.whl``
 
-and tehn you can also install ``django-ldapdb`` with
+and then you can also install ``django-ldapdb`` with
 
 ``pip install django-ldapdb``
 
