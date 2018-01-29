@@ -7,7 +7,7 @@ from examples.models import LdapGroup, LdapUser
 
 
 class LdapGroupAdmin(admin.ModelAdmin):
-    exclude = ['dn', 'usernames']
+    exclude = ['dn', 'usernames', 'member']
     list_display = ['name', 'gid']
     search_fields = ['name']
 
