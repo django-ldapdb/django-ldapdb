@@ -296,6 +296,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(new.name, 'newgroup')
         self.assertEqual(new.gid, 1010)
         self.assertEqual(new.usernames, ['someuser', 'foouser'])
+        self.assertEquals(new.member, ['user1', 'user2'])
 
     def test_order_by(self):
         # ascending name
@@ -614,6 +615,10 @@ class AdminTestCase(BaseTestCase):
         self.assertEqual(qs.count(), 1)
 
     def test_group_search(self):
+        self.ldapobj.search_s.seed(
+            "ou=groups,dc=nodomain", 2,
+            "(&(objectClass=posixGroup)(cn=*foo*))",
+            ['gidNumber', 'cn', 'memberUid', 'member'])([foogroup])
         response = self.client.get('/admin/examples/ldapgroup/?q=foo')
         self.assertContains(response, "Ldap groups")
         self.assertContains(response, "foogroup")
