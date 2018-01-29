@@ -197,13 +197,6 @@ class ListField(fields.Field):
         """
         return self.to_python(value)
 
-    def get_default(self):
-        "Encode every item and return the list if a default is defined."
-        if self.has_default():
-            return [force_unicode(i, strings_only=True) for i in self.default]
-        else:
-            return ""
-
     def to_python(self, value):
         if not value:
             return []
