@@ -52,6 +52,7 @@ class LdapGroup(ldapdb.models.Model):
     gid = IntegerField(db_column='gidNumber', unique=True)
     name = CharField(db_column='cn', max_length=200, primary_key=True)
     usernames = ListField(db_column='memberUid')
+    member = ListField(db_column='member', default=['user1', 'user2'])
 
     def __str__(self):
         return self.name
