@@ -37,9 +37,25 @@ It supports most of the same APIs as a Django model:
 Installing django-ldapdb
 ------------------------
 
+Linux
+~~~~~
+
 Use pip: ``pip install django-ldapdb``
 
 You might also need the usual ``LDAP`` packages from your distribution, usually named ``openldap`` or ``ldap-utils``.
+
+
+Windows
+~~~~~~~
+
+``django-ldapdb`` depends on the `pyldap <https://pypi.python.org/pypi/pyldap>` project.
+Either follow `its Windows installation guide <https://www.python-ldap.org/en/latest/installing.html>`_,
+or install a pre-built version from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyldap
+(choose the ``.whl`` file matching your Python/Windows combination, and install it with ``pip install pyldap-2.4...whl``).
+
+and then you can also install ``django-ldapdb`` with
+
+``pip install django-ldapdb``
 
 
 Using django-ldapdb
