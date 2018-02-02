@@ -3,6 +3,7 @@
 # Copyright (c) The django-ldapdb project
 
 import ldap
+import ldap.sasl
 import ldap.controls
 from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.base.features import BaseDatabaseFeatures
@@ -225,6 +226,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             'tls': self.settings_dict.get('TLS', False),
             'bind_dn': self.settings_dict['USER'],
             'bind_pw': self.settings_dict['PASSWORD'],
+            'sasl-method': (self.settings_dict.get('SASL-METHOD') or '').lower().replace('-', '_'),
+            'sasl-authname': self.settings_dict.get('SASL') or '',
             'options': {
                 k if isinstance(k, int) else k.lower(): v
                 for k, v in self.settings_dict.get('CONNECTION_OPTIONS', {}).items()
@@ -246,11 +249,22 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         if conn_params['tls']:
             connection.start_tls_s()
-
-        connection.simple_bind_s(
-            conn_params['bind_dn'],
-            conn_params['bind_pw'],
-        )
+        username = conn_params['bind_dn'] or ''
+        password = conn_params['bind_pw']
+        sasl_authname = conn_params['sasl-authname']
+        sasl_method = conn_params['sasl-method']
+        if sasl_method == 'gssapi':
+            connection.sasl_interactive_bind_s('', ldap.sasl.gssapi(authz_id=username))
+        elif sasl_method == 'cram_md5':
+            sasl = ldap.sasl.cram_md5(authc_id=sasl_authname, password=password, authz_id=username)
+            connection.sasl_interactive_bind_s('', sasl)
+        elif sasl_method == 'digest_md5':
+            sasl = ldap.sasl.digest_md5(authc_id=sasl_authname, password=password, authz_id=username)
+            connection.sasl_interactive_bind_s('', sasl)
+        elif sasl_method == 'external':
+            connection.sasl_interactive_bind_s('', ldap.sasl.external(authz_id=username))
+        elif username and password:
+            connection.simple_bind_s(username, password)
         return connection
 
     def init_connection_state(self):
