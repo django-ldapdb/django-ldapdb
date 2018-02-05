@@ -1,5 +1,6 @@
 # Requirements for executing tests
 check-manifest
 flake8
+isort
 factory_boy
 volatildap>=1.1.0

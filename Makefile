@@ -38,4 +38,7 @@ flake8:
 check-manifest:
 	check-manifest
 
-.PHONY: lint flake8 check-manifest
+isort:
+	isort $(PACKAGE) --recursive --check-only --diff
+
+.PHONY: lint flake8 check-manifest isort
