@@ -40,5 +40,6 @@ check-manifest:
 
 isort:
 	isort $(PACKAGE) --recursive --check-only --diff
+	isort $(TEST_DIR) --recursive --check-only --diff
 
 .PHONY: lint flake8 check-manifest isort
