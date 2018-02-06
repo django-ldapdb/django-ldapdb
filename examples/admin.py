@@ -16,7 +16,7 @@ class LdapUserAdmin(admin.ModelAdmin):
 
 
 class LdapGroupForm(forms.ModelForm):
-    usernames = forms.ModelMultipleChoiceField(queryset=LdapUser.objects.all(), 
+    usernames = forms.ModelMultipleChoiceField(queryset=LdapUser.objects.all(),
                                                widget=FilteredSelectMultiple('Users', is_stacked=False),
                                                required=False)
 
@@ -32,8 +32,8 @@ class LdapGroupForm(forms.ModelForm):
 
 
 class LdapGroupAdmin(admin.ModelAdmin):
-    form = LdapGroupForm 
-    exclude = ['dn', 'usernames', 'member']
+    form = LdapGroupForm
+    exclude = ['dn', 'usernames']
     list_display = ['name', 'gid']
     search_fields = ['name']
 
