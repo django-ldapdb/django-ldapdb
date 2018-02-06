@@ -2,7 +2,7 @@ PACKAGE := ldapdb
 TESTS_DIR := examples
 
 # Error on all warnings, except one in python's site.py module.
-PYWARNINGS = -Wdefault -Werror -Wignore::DeprecationWarning:site:165
+PYWARNINGS = -Wdefault -Werror -Wignore::DeprecationWarning:site:165 -Wignore::PendingDeprecationWarning:imp -Wignore::ImportWarning:
 
 default:
 
