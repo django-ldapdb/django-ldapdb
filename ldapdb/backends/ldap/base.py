@@ -205,14 +205,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # Charset used for LDAP text *values*
         self.charset = "utf-8"
 
-        if django.VERSION[:2] < (1, 11):
-            self.client = None
-            self.creation = DatabaseCreation(self)
-            self.features = DatabaseFeatures(self)
-            self.introspection = DatabaseIntrospection(self)
-            self.ops = DatabaseOperations(self)
-            self.validation = DatabaseValidation(self)
-
         self.settings_dict['SUPPORTS_TRANSACTIONS'] = True
         self.autocommit = True
         # Default page size of 1000 items, ActiveDirectory's default

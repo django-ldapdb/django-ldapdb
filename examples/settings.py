@@ -4,7 +4,6 @@
 
 from __future__ import unicode_literals
 
-import django
 import ldap
 
 DEBUG = True
@@ -76,9 +75,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 ]
-
-if django.VERSION[:2] <= (1, 9):
-    MIDDLEWARE_CLASSES = MIDDLEWARE
 
 ROOT_URLCONF = 'examples.urls'
 
