@@ -270,9 +270,9 @@ class SQLCompiler(compiler.SQLCompiler):
         iterator = self.results_iter()
         if inspect.isgenerator(iterator):
             try:
-                iterator.next()
+                next(iterator)
                 return True
-            except:
+            except StopIteration:
                 return False
         else:
             return False
