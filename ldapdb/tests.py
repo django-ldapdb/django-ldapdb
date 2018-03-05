@@ -6,16 +6,15 @@
 from __future__ import unicode_literals
 
 from django.db import connections
-from django.db.models.sql.where import AND, OR, WhereNode
-from django.db.models.sql import query as django_query
 from django.db.models import expressions
+from django.db.models.sql import query as django_query
+from django.db.models.sql.where import AND, OR, WhereNode
 from django.test import TestCase
 
-from ldapdb import escape_ldap_filter
-from ldapdb import models
+from ldapdb import escape_ldap_filter, models
 from ldapdb.backends.ldap import compiler as ldapdb_compiler
-from ldapdb.models.fields import (CharField, IntegerField, FloatField,
-                                  ListField, DateField)
+from ldapdb.models.fields import (CharField, DateField, FloatField,
+                                  IntegerField, ListField)
 
 
 class FakeModel(models.Model):

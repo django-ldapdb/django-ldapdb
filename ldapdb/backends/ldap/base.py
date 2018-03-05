@@ -6,16 +6,14 @@ from __future__ import unicode_literals
 
 import ldap
 import ldap.controls
-
-import django
+from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.client import BaseDatabaseClient
+from django.db.backends.base.creation import BaseDatabaseCreation
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.base.operations import BaseDatabaseOperations
-from django.db.backends.base.base import BaseDatabaseWrapper
-from django.db.backends.base.creation import BaseDatabaseCreation
-from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.backends.base.validation import BaseDatabaseValidation
 
 
 class DatabaseCreation(BaseDatabaseCreation):
