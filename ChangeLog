@@ -1,6 +1,17 @@
 ChangeLog
 =========
 
+1.0.0 (master)
+--------------
+
+*New:*
+
+    * Add support for Django 2.0
+
+*Deprecation:*
+
+    * Drop support for Django <1.11 (we only support the latest Django version,
+      and the Django LTS preceding that version).
 
 0.9.0 (2017-06-14)
 ------------------
