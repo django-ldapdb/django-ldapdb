@@ -428,9 +428,9 @@ class GroupTestCase(BaseTestCase):
     def test_values_list(self):
         qs = sorted(LdapGroup.objects.values_list('name'))
         self.assertEqual(len(qs), 3)
-        self.assertEqual(qs[0], ('bargroup',))
-        self.assertEqual(qs[1], ('foogroup',))
-        self.assertEqual(qs[2], ('wizgroup',))
+        self.assertEqual(list(qs[0]), ['bargroup'])
+        self.assertEqual(list(qs[1]), ['foogroup'])
+        self.assertEqual(list(qs[2]), ['wizgroup'])
 
     def test_delete(self):
         g = LdapGroup.objects.get(name='foogroup')
