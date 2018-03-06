@@ -3,3 +3,4 @@
 
 tox
 wheel
+zest.releaser[recommended]

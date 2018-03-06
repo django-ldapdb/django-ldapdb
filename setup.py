@@ -15,7 +15,7 @@ root_dir = os.path.abspath(os.path.dirname(__file__))
 
 
 def get_version(package_name):
-    version_re = re.compile(r"^VERSION = [\"']([\w_.-]+)[\"']$")
+    version_re = re.compile(r"^__version__ = [\"']([\w_.-]+)[\"']$")
     package_components = package_name.split('.')
     init_path = os.path.join(root_dir, *(package_components + ['version.py']))
     with codecs.open(init_path, 'r', 'utf-8') as f:
@@ -40,6 +40,7 @@ setup(
     maintainer="Raphaël Barrois",
     maintainer_email="raphael.barrois+%s@polytechnique.org" % PACKAGE,
     license="BSD",
+    zip_safe=True,
     keywords=['django', 'ldap', 'database'],
     url="https://github.com/{pn}/{pn}".format(pn=PACKAGE),
     packages=find_packages(exclude=['tests*', 'examples*']),
@@ -62,9 +63,10 @@ setup(
         "Framework :: Django :: 2.0",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
+        "License :: OSI Approved :: BSD License",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    test_suite = 'manage_dev.run_tests'
+    test_suite = 'manage_dev.run_tests',
 )

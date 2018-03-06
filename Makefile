@@ -23,7 +23,11 @@ update:
 	pip install -r requirements_dev.txt
 	pip freeze
 
-.PHONY: default install clean update
+release:
+	fullrelease
+
+
+.PHONY: default install clean update release
 
 testall:
 	tox
