@@ -246,9 +246,10 @@ class DateField(fields.DateField):
 
 DateField.register_lookup(ExactLookup)
 
+
 # Taken from https://github.com/g1itch/django-ldapdb/blob/password-field/ldapdb/models/fields.py
 class PasswordField(CharField):
-    """ 
+    """
     Field which encodes password like slappasswd
     """
     def __init__(self, *args, **kwargs):
