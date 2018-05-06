@@ -263,6 +263,6 @@ class PasswordField(CharField):
         h = hashlib.sha1(str(value).encode(connection.charset))
         h.update(salt)
         return super(PasswordField, self).get_db_prep_save(
-            b'{SSHA}' + base64.b64encode(h.digest() + salt).strip(),
+            '{SSHA}' + base64.b64encode(h.digest() + salt).strip().decode(connection.charset),
             connection
         )
