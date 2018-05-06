@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import datetime
 import hashlib
 import os
+import base64
 
 from django.db.models import fields, lookups
 
@@ -262,6 +263,6 @@ class PasswordField(CharField):
         h = hashlib.sha1(str(value).encode(connection.charset))
         h.update(salt)
         return super(PasswordField, self).get_db_prep_save(
-            '{SSHA}' + (h.digest() + salt).encode('base64').strip(),
+            b'{SSHA}' + base64.b64encode(h.digest() + salt).strip(),
             connection
         )
