@@ -4,10 +4,11 @@
 
 from __future__ import unicode_literals
 
+import base64
 import datetime
 import hashlib
 import os
-import base64
+
 
 from django.db.models import fields, lookups
 
