@@ -2,8 +2,8 @@ include AUTHORS ChangeLog LICENSE README.rst
 include requirements*.txt
 
 graft ldapdb
-
-prune examples
+graft tests
+graft examples
 
 global-exclude *.py[cod] __pycache__ .*swp
 
