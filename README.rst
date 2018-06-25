@@ -132,6 +132,27 @@ and add this to your ``admin.py``:
     will have the DN ``cn=foo,ou=groups,dc=nodomain,dc=org``.
 
 
+Supported fields
+----------------
+
+djanglo-ldapdb provides the following fields, all imported from ``ldapdb.models.fields``:
+
+Similar to Django:
+
+    * ``IntegerField``
+    * ``FloatField``
+    * ``CharField``
+    * ``ImageField``
+    * ``DateTimeField``
+
+Specific to a LDAP server:
+    * ``ListField`` (holds a list of text values)
+    * ``TimestampField`` (Stores a datetime as a posix timestamp, typically for posixAccount)
+
+Legacy:
+    * ``DateField`` (Stores a date in an arbitrary format. A LDAP server has no notion of ``Date``).
+
+
 Tuning django-ldapdb
 --------------------
 

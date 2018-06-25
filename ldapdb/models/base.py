@@ -114,7 +114,7 @@ class Model(django.db.models.base.Model):
             new_values = hidden_values + [
                 (colname, change[1])
                 for colname, change in sorted(changes.items())
-                if change[1] is not None
+                if change[1] != []
             ]
             new_dn = self.build_dn()
             logger.debug("Creating new LDAP entry %s", new_dn)
@@ -128,7 +128,7 @@ class Model(django.db.models.base.Model):
                 if old_value == new_value:
                     continue
                 modlist.append((
-                    ldap.MOD_DELETE if new_value is None else ldap.MOD_REPLACE,
+                    ldap.MOD_DELETE if new_value == [] else ldap.MOD_REPLACE,
                     colname,
                     new_value,
                 ))

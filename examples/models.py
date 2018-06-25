@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 
 import ldapdb.models
-from ldapdb.models.fields import CharField, ImageField, IntegerField, ListField
+from ldapdb.models.fields import CharField, ImageField, IntegerField, ListField, DateTimeField
 
 
 class LdapUser(ldapdb.models.Model):
@@ -15,6 +15,7 @@ class LdapUser(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = "ou=people,dc=example,dc=org"
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
+    last_modified = DateTimeField(db_column='modifyTimestamp')
 
     # inetOrgPerson
     first_name = CharField(db_column='givenName', verbose_name="Prime name")
@@ -33,6 +34,9 @@ class LdapUser(ldapdb.models.Model):
     login_shell = CharField(db_column='loginShell', default='/bin/bash')
     username = CharField(db_column='uid', primary_key=True)
     password = CharField(db_column='userPassword')
+
+    # shadowAccount
+    last_password_change = fields.TimestampField(db_column='shadowLastChange')
 
     def __str__(self):
         return self.username

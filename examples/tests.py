@@ -4,6 +4,8 @@
 
 from __future__ import unicode_literals
 
+import time
+
 import factory
 import factory.django
 import factory.fuzzy
@@ -15,6 +17,7 @@ from django.core import management
 from django.db import connections
 from django.db.models import Count, Q
 from django.test import TestCase
+from django.utils import timezone
 
 from examples.models import LdapGroup, LdapUser
 from ldapdb.backends.ldap.compiler import SQLCompiler, query_as_ldap
@@ -513,14 +516,43 @@ class UserTestCase(BaseTestCase):
                           username='does_not_exist')
 
     def test_update(self):
+        # slapd removes microsecond details.
+        before = timezone.now().replace(microsecond=0)
+
         u = LdapUser.objects.get(username='foouser')
         u.first_name = u'Fôo2'
         u.save()
+
+        after = timezone.now().replace(microsecond=0)
+
+        self.assertLessEqual(before, u.last_modified)
+        self.assertLessEqual(u.last_modified, after)
 
         # make sure DN gets updated if we change the pk
         u.username = 'foouser2'
         u.save()
         self.assertEqual(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
+
+    def test_datetime_lookup(self):
+
+        # Due to slapd ignoring microsecond in last_modified,
+        # wait for one second to ensure that all timestamps are on the proper
+        # side of the 'before' boundary.
+        time.sleep(1)
+        before = timezone.now().replace(microsecond=0)
+
+        qs = LdapUser.objects.filter(last_modified__gte=before)
+        self.assertEqual([], list(qs))
+
+        u = LdapUser.objects.get(username='foouser')
+        u.first_name = u"Foo2"
+        u.save()
+
+        u = LdapUser.objects.get(username='foouser')
+        self.assertLessEqual(before, u.last_modified)
+
+        qs = LdapUser.objects.filter(last_modified__gte=before)
+        self.assertEqual([u], list(qs))
 
 
 class ScopedTestCase(BaseTestCase):
