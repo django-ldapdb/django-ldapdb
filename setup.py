@@ -45,8 +45,8 @@ setup(
     url="https://github.com/{pn}/{pn}".format(pn=PACKAGE),
     packages=find_packages(exclude=['tests*', 'examples*']),
     install_requires=[
-        'Django>=1.8',
-        'pyldap>=2.4.25',
+        'Django>=1.11',
+        'python-ldap>=3.0',
     ],
     setup_requires=[
         'setuptools>=0.8',

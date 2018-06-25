@@ -48,10 +48,10 @@ You might also need the usual ``LDAP`` packages from your distribution, usually 
 Windows
 ~~~~~~~
 
-``django-ldapdb`` depends on the `pyldap <https://pypi.python.org/pypi/pyldap>` project.
+``django-ldapdb`` depends on the `python-ldap <https://pypi.python.org/pypi/python-ldap>` project.
 Either follow `its Windows installation guide <https://www.python-ldap.org/en/latest/installing.html>`_,
-or install a pre-built version from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyldap
-(choose the ``.whl`` file matching your Python/Windows combination, and install it with ``pip install pyldap-2.4...whl``).
+or install a pre-built version from https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-ldap
+(choose the ``.whl`` file matching your Python/Windows combination, and install it with ``pip install python-ldap-3...whl``).
 
 and then you can also install ``django-ldapdb`` with
 

@@ -128,7 +128,7 @@ class LdapDatabase(object):
             ldap.USER_CANCELLED,
             Error,
     ):
-        """Exceptions related to the pyldap interface."""
+        """Exceptions related to the python-ldap interface."""
 
     class InternalError(
             DatabaseError,

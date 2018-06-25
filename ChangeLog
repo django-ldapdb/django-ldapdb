@@ -1,10 +1,18 @@
 ChangeLog
 =========
 
-1.0.1 (unreleased)
+1.1.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+*New:*
+
+    * Switch back to ``python-ldap`` instead of ``pyldap``. Users updating a virtualenv must
+      uninstall ``pyldap`` **before** installing ``python-ldap``:
+
+      .. code-block:: sh
+
+          pip uninstall pyldap
+          pip install python-ldap
 
 
 1.0.0 (2018-03-06)
