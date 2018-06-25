@@ -242,3 +242,5 @@ class DateField(fields.DateField):
 
 
 DateField.register_lookup(ExactLookup)
+DateField.register_lookup(GteLookup)
+DateField.register_lookup(LteLookup)

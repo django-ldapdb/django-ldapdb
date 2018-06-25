@@ -144,6 +144,14 @@ class WhereTestCase(TestCase):
         where.add(self._build_lookup("birthday", 'exact', '2013-09-03', field=DateField), AND)
         self.assertEqual(self._where_as_ldap(where), "(birthday=2013-09-03)")
 
+        where = WhereNode()
+        where.add(self._build_lookup("birthday", 'gte', '2013-09-03', field=DateField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(birthday>=2013-09-03)")
+
+        where = WhereNode()
+        where.add(self._build_lookup("birthday", 'lte', '2013-09-03', field=DateField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(birthday<=2013-09-03)")
+
     def test_and(self):
         where = WhereNode()
         where.add(self._build_lookup("cn", 'exact', "foo", field=CharField), AND)
