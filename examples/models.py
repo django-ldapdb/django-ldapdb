@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 
 import ldapdb.models
-from ldapdb.models.fields import CharField, ImageField, IntegerField, ListField, DateTimeField
+from ldapdb.models import fields
 
 
 class LdapUser(ldapdb.models.Model):
@@ -15,25 +15,25 @@ class LdapUser(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = "ou=people,dc=example,dc=org"
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
-    last_modified = DateTimeField(db_column='modifyTimestamp')
+    last_modified = fields.DateTimeField(db_column='modifyTimestamp')
 
     # inetOrgPerson
-    first_name = CharField(db_column='givenName', verbose_name="Prime name")
-    last_name = CharField("Final name", db_column='sn')
-    full_name = CharField(db_column='cn')
-    email = CharField(db_column='mail')
-    phone = CharField(db_column='telephoneNumber', blank=True)
-    mobile_phone = CharField(db_column='mobile', blank=True)
-    photo = ImageField(db_column='jpegPhoto')
+    first_name = fields.CharField(db_column='givenName', verbose_name="Prime name")
+    last_name = fields.CharField("Final name", db_column='sn')
+    full_name = fields.CharField(db_column='cn')
+    email = fields.CharField(db_column='mail')
+    phone = fields.CharField(db_column='telephoneNumber', blank=True)
+    mobile_phone = fields.CharField(db_column='mobile', blank=True)
+    photo = fields.ImageField(db_column='jpegPhoto')
 
     # posixAccount
-    uid = IntegerField(db_column='uidNumber', unique=True)
-    group = IntegerField(db_column='gidNumber')
-    gecos = CharField(db_column='gecos')
-    home_directory = CharField(db_column='homeDirectory')
-    login_shell = CharField(db_column='loginShell', default='/bin/bash')
-    username = CharField(db_column='uid', primary_key=True)
-    password = CharField(db_column='userPassword')
+    uid = fields.IntegerField(db_column='uidNumber', unique=True)
+    group = fields.IntegerField(db_column='gidNumber')
+    gecos = fields.CharField(db_column='gecos')
+    home_directory = fields.CharField(db_column='homeDirectory')
+    login_shell = fields.CharField(db_column='loginShell', default='/bin/bash')
+    username = fields.CharField(db_column='uid', primary_key=True)
+    password = fields.CharField(db_column='userPassword')
 
     # shadowAccount
     last_password_change = fields.TimestampField(db_column='shadowLastChange')
@@ -54,9 +54,9 @@ class LdapGroup(ldapdb.models.Model):
     object_classes = ['posixGroup']
 
     # posixGroup attributes
-    gid = IntegerField(db_column='gidNumber', unique=True)
-    name = CharField(db_column='cn', max_length=200, primary_key=True)
-    usernames = ListField(db_column='memberUid')
+    gid = fields.IntegerField(db_column='gidNumber', unique=True)
+    name = fields.CharField(db_column='cn', max_length=200, primary_key=True)
+    usernames = fields.ListField(db_column='memberUid')
 
     def __str__(self):
         return self.name
