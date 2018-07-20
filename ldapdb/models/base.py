@@ -27,10 +27,6 @@ class Model(django.db.models.base.Model):
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
 
-    def __init__(self, *args, **kwargs):
-        super(Model, self).__init__(*args, **kwargs)
-        self.saved_pk = self.pk
-
     def build_rdn(self):
         """
         Build the Relative Distinguished Name for this entry.
@@ -90,7 +86,7 @@ class Model(django.db.models.base.Model):
         if create:
             old = None
         else:
-            old = cls.objects.using(using).get(pk=self.saved_pk)
+            old = cls.objects.using(using).get(dn=self.dn)
         changes = {
             field.db_column: (
                 None if old is None else get_field_value(field, old),
@@ -144,7 +140,6 @@ class Model(django.db.models.base.Model):
         self.dn = new_dn
 
         # Finishing
-        self.saved_pk = self.pk
         return updated
 
     @classmethod
