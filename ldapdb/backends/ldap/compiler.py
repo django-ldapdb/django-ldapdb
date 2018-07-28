@@ -209,15 +209,18 @@ class SQLCompiler(compiler.SQLCompiler):
                 sort_field = self.query.model._meta.pk.name
             field = self.query.model._meta.get_field(sort_field)
 
-            def get_key(obj):
-                attr = field.from_ldap(
-                    obj[1].get(field.db_column, []),
-                    connection=self.connection,
-                )
-                if hasattr(attr, 'lower'):
-                    attr = attr.lower()
-                return attr
-            vals = sorted(vals, key=get_key, reverse=reverse)
+            if sort_field == 'dn':
+                vals = sorted(vals, key=lambda pair: pair[0], reverse=reverse)
+            else:
+                def get_key(obj):
+                    attr = field.from_ldap(
+                        obj[1].get(field.db_column, []),
+                        connection=self.connection,
+                    )
+                    if hasattr(attr, 'lower'):
+                        attr = attr.lower()
+                    return attr
+                vals = sorted(vals, key=get_key, reverse=reverse)
 
         # process results
         pos = 0

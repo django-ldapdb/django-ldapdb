@@ -8,6 +8,7 @@ ChangeLog
 
     * *[#153]* Don't send empty updates to the LDAP Server.
     * *[#159]* Fix saving composite PK objects.
+    * *[#140]* Fix ordering by distinguished name.
 
 *New:*
 

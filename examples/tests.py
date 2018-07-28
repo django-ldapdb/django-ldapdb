@@ -343,6 +343,20 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(qs[1].name, 'foogroup')
         self.assertEqual(qs[2].name, 'bargroup')
 
+        # ascending dn
+        qs = LdapGroup.objects.order_by('dn')
+        self.assertEqual(len(qs), 3)
+        self.assertEqual(qs[0].name, 'bargroup')
+        self.assertEqual(qs[1].name, 'foogroup')
+        self.assertEqual(qs[2].name, 'wizgroup')
+
+        # descending dn
+        qs = LdapGroup.objects.order_by('-dn')
+        self.assertEqual(len(qs), 3)
+        self.assertEqual(qs[0].name, 'wizgroup')
+        self.assertEqual(qs[1].name, 'foogroup')
+        self.assertEqual(qs[2].name, 'bargroup')
+
     def test_bulk_delete(self):
         LdapGroup.objects.all().delete()
 
