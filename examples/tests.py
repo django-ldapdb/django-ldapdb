@@ -260,6 +260,13 @@ class GroupTestCase(BaseTestCase):
         self.assertRaises(LdapGroup.DoesNotExist, LdapGroup.objects.get,
                           name='does_not_exist')
 
+    def test_exists(self):
+        qs = LdapGroup.objects.filter(name='foogroup')
+        self.assertTrue(qs.exists())
+
+        qs2 = LdapGroup.objects.filter(name='missing')
+        self.assertFalse(qs2.exists())
+
     def test_get_by_dn(self):
         g = LdapGroup.objects.get(dn='cn=foogroup,%s' % LdapGroup.base_dn)
         self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
