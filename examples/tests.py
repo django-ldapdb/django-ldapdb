@@ -240,7 +240,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
         self.assertEqual(g.name, 'foogroup')
         self.assertEqual(g.gid, 1000)
-        self.assertEqual(g.usernames, ['foouser', 'baruser'])
+        self.assertCountEqual(g.usernames, ['foouser', 'baruser'])
 
         # try to filter non-existent entries
         qs = LdapGroup.objects.filter(name='does_not_exist')
@@ -254,7 +254,7 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
         self.assertEqual(g.name, 'foogroup')
         self.assertEqual(g.gid, 1000)
-        self.assertEqual(g.usernames, ['foouser', 'baruser'])
+        self.assertCountEqual(g.usernames, ['foouser', 'baruser'])
 
         # try to get a non-existent entry
         self.assertRaises(LdapGroup.DoesNotExist, LdapGroup.objects.get,
@@ -272,14 +272,14 @@ class GroupTestCase(BaseTestCase):
         self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
         self.assertEqual(g.name, 'foogroup')
         self.assertEqual(g.gid, 1000)
-        self.assertEqual(g.usernames, ['foouser', 'baruser'])
+        self.assertCountEqual(g.usernames, ['foouser', 'baruser'])
 
     def test_gid_lookup(self):
         g = LdapGroup.objects.get(gid__in=[1000, 2000, 3000])
         self.assertEqual(g.dn, 'cn=foogroup,%s' % LdapGroup.base_dn)
         self.assertEqual(g.name, 'foogroup')
         self.assertEqual(g.gid, 1000)
-        self.assertEqual(g.usernames, ['foouser', 'baruser'])
+        self.assertCountEqual(g.usernames, ['foouser', 'baruser'])
 
     def test_insert(self):
         g = LdapGroup()
@@ -292,7 +292,7 @@ class GroupTestCase(BaseTestCase):
         new = LdapGroup.objects.get(name='newgroup')
         self.assertEqual(new.name, 'newgroup')
         self.assertEqual(new.gid, 1010)
-        self.assertEqual(new.usernames, ['someuser', 'foouser'])
+        self.assertCountEqual(new.usernames, ['someuser', 'foouser'])
 
     def test_create(self):
         LdapGroup.objects.create(
@@ -305,7 +305,7 @@ class GroupTestCase(BaseTestCase):
         new = LdapGroup.objects.get(name='newgroup')
         self.assertEqual(new.name, 'newgroup')
         self.assertEqual(new.gid, 1010)
-        self.assertEqual(new.usernames, ['someuser', 'foouser'])
+        self.assertCountEqual(new.usernames, ['someuser', 'foouser'])
 
     def test_order_by(self):
         # ascending name
@@ -423,7 +423,7 @@ class GroupTestCase(BaseTestCase):
         new = LdapGroup.objects.get(name='foogroup')
         self.assertEqual(new.name, 'foogroup')
         self.assertEqual(new.gid, 1002)
-        self.assertEqual(new.usernames, ['foouser2', u'baruseeer2'])
+        self.assertCountEqual(new.usernames, ['foouser2', u'baruseeer2'])
 
     def test_update_change_dn(self):
         g = LdapGroup.objects.get(name='foogroup')
@@ -435,7 +435,7 @@ class GroupTestCase(BaseTestCase):
         new = LdapGroup.objects.get(name='foogroup2')
         self.assertEqual(new.name, 'foogroup2')
         self.assertEqual(new.gid, 1000)
-        self.assertEqual(new.usernames, ['foouser', 'baruser'])
+        self.assertCountEqual(new.usernames, ['foouser', 'baruser'])
 
     def test_values(self):
         qs = sorted(LdapGroup.objects.values_list('name', flat=True))
@@ -487,6 +487,22 @@ class GroupTestCase(BaseTestCase):
 
         # Restore previous configuration
         del settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size']
+
+    def test_listfield_manipulation(self):
+        g = LdapGroup.objects.get(name='foogroup')
+        self.assertCountEqual(['foouser', 'baruser'], g.usernames)
+
+        # Replace values, with duplicated.
+        g.usernames = ['john', 'jane', 'john']
+        g.save()
+        g = LdapGroup.objects.get(name='foogroup')
+        self.assertCountEqual(['john', 'jane'], g.usernames)
+
+        # Clear values
+        g.usernames = []
+        g.save()
+        g = LdapGroup.objects.get(name='foogroup')
+        self.assertEqual([], g.usernames)
 
 
 class UserTestCase(BaseTestCase):

@@ -125,7 +125,13 @@ class LdapFieldMixin(object):
 
         values = value if self.multi_valued_field else [value]
         prepared_values = [self.get_prep_value(v) for v in values]
-        return [v for v in prepared_values if v]
+
+        # Remove duplicates.
+        # https://tools.ietf.org/html/rfc4511#section-4.1.7 :
+        # "The set of attribute values is unordered."
+        # We keep those values sorted in natural order to avoid useless
+        # updates to the LDAP server.
+        return list(sorted(set(v for v in prepared_values if v)))
 
     def get_db_prep_save(self, value, connection):
         values = self.get_db_prep_value(value, connection, prepared=False)
