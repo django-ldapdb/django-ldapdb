@@ -14,6 +14,10 @@ ChangeLog
     * Normalize value of nullable empty attributes: return ``0`` / ``0.0`` if the field is not nullable,
       ``None`` otherwise.
 
+*Packaging:*
+
+    * Include required test files in the 'sdist' tarball; these can be required by projects.
+
 
 1.1.0 (2018-07-14)
 ------------------

@@ -7,4 +7,4 @@ graft examples
 
 global-exclude *.py[cod] __pycache__ .*swp
 
-exclude Makefile manage_dev.py tox.ini .flake8
+include Makefile manage_dev.py tox.ini .flake8
