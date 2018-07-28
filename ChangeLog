@@ -1,10 +1,13 @@
 ChangeLog
 =========
 
-1.1.1 (unreleased)
+1.2.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+*New:*
+
+    * Normalize value of nullable empty attributes: return ``0`` / ``0.0`` if the field is not nullable,
+      ``None`` otherwise.
 
 
 1.1.0 (2018-07-14)

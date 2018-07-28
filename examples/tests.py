@@ -533,6 +533,29 @@ class UserTestCase(BaseTestCase):
         u.save()
         self.assertEqual(u.dn, 'uid=foouser2,%s' % LdapUser.base_dn)
 
+    def test_charfield_empty_values(self):
+        """CharField should accept empty values."""
+        u = LdapUser.objects.get(username='foouser')
+        # Both '' and None are accepted
+        u.phone = ''
+        u.mobile_phone = None
+        u.save()
+
+        # '' and None are normalized to ''.
+        u2 = LdapUser.objects.get(dn=u.dn)
+        self.assertEqual('', u2.phone)
+        self.assertEqual('', u2.mobile_phone)
+
+    def test_intfield_empty_value(self):
+        u = LdapUser.objects.get(username='foouser')
+        # Set to 0
+        u.uid = 0
+        u.save()
+
+        # Ensure we still fetch a '0', not an empty ID.
+        u2 = LdapUser.objects.get(dn=u.dn)
+        self.assertEqual(0, u2.uid)
+
     def test_datetime_lookup(self):
 
         # Due to slapd ignoring microsecond in last_modified,

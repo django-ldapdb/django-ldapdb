@@ -124,7 +124,8 @@ class LdapFieldMixin(object):
             return []
 
         values = value if self.multi_valued_field else [value]
-        return [self.get_prep_value(v) for v in values]
+        prepared_values = [self.get_prep_value(v) for v in values]
+        return [v for v in prepared_values if v]
 
     def get_db_prep_save(self, value, connection):
         values = self.get_db_prep_value(value, connection, prepared=False)
@@ -172,7 +173,7 @@ ImageField.register_lookup(ExactLookup)
 class IntegerField(LdapFieldMixin, fields.IntegerField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
-            return 0
+            return None if self.null else 0
         else:
             return int(value[0])
 
@@ -190,7 +191,7 @@ IntegerField.register_lookup(InLookup)
 class FloatField(LdapFieldMixin, fields.FloatField):
     def from_ldap(self, value, connection):
         if len(value) == 0:
-            return 0.0
+            return None if self.null else 0.0
         else:
             return float(value[0])
 
