@@ -29,7 +29,7 @@ class Model(django.db.models.base.Model):
 
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(*args, **kwargs)
-        self.saved_pk = self.pk
+        self._saved_dn = self.dn
 
     def build_rdn(self):
         """
@@ -49,7 +49,6 @@ class Model(django.db.models.base.Model):
         Build the Distinguished Name for this entry.
         """
         return "%s,%s" % (self.build_rdn(), self.base_dn)
-        raise Exception("Could not build Distinguished Name")
 
     def delete(self, using=None):
         """
@@ -90,7 +89,7 @@ class Model(django.db.models.base.Model):
         if create:
             old = None
         else:
-            old = cls.objects.using(using).get(pk=self.saved_pk)
+            old = cls.objects.using(using).get(dn=self._saved_dn)
         changes = {
             field.db_column: (
                 None if old is None else get_field_value(field, old),
@@ -145,7 +144,7 @@ class Model(django.db.models.base.Model):
         self.dn = new_dn
 
         # Finishing
-        self.saved_pk = self.pk
+        self._saved_dn = self.dn
         return updated
 
     @classmethod

@@ -19,7 +19,7 @@ from django.db.models import Count, Q
 from django.test import TestCase
 from django.utils import timezone
 
-from examples.models import LdapGroup, LdapUser
+from examples.models import LdapGroup, LdapMultiPKRoom, LdapUser
 from ldapdb.backends.ldap.compiler import SQLCompiler, query_as_ldap
 
 groups = ('ou=groups,dc=example,dc=org', {
@@ -28,6 +28,8 @@ people = ('ou=people,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
 contacts = ('ou=contacts,ou=groups,dc=example,dc=org', {
     'objectClass': ['top', 'organizationalUnit'], 'ou': ['groups']})
+rooms = ('ou=rooms,dc=example,dc=org', {
+    'objectClass': ['top', 'organizationalUnit'], 'ou': ['rooms']})
 foogroup = ('cn=foogroup,ou=groups,dc=example,dc=org', {
     'objectClass': ['posixGroup'], 'memberUid': ['foouser', 'baruser'],
     'gidNumber': ['1000'], 'cn': ['foogroup']})
@@ -610,6 +612,90 @@ class ScopedTestCase(BaseTestCase):
         g2 = ScopedGroup.objects.get(name="scopedgroup")
         self.assertEqual(g2.name, u'scopedgroup')
         self.assertEqual(g2.gid, 5000)
+
+
+class CompositePKTests(BaseTestCase):
+    directory = dict([rooms])
+
+    def test_create(self):
+        room = LdapMultiPKRoom(
+            name="Director office",
+            number="42.01",
+        )
+        room.save()
+        room = LdapMultiPKRoom.objects.get()
+        self.assertEqual("cn=Director office+roomNumber=42.01,ou=rooms,dc=example,dc=org", room.dn)
+
+    def test_fetch(self):
+        room = LdapMultiPKRoom(
+            name="Director office",
+            number="42.01",
+        )
+        room.save()
+
+        room2 = LdapMultiPKRoom.objects.get(number="42.01")
+        self.assertEqual("Director office", room2.name)
+        self.assertEqual("42.01", room2.number)
+
+    def test_move(self):
+        room = LdapMultiPKRoom.objects.create(
+            name="Director office",
+            number="42.01",
+        )
+
+        room.number = "42.02"
+        room.save()
+
+        qs = LdapMultiPKRoom.objects.all()
+        self.assertEqual(1, len(qs))
+        new_room = qs.get()
+        self.assertEqual(room, new_room)
+        self.assertEqual("42.02", new_room.number)
+        self.assertEqual("cn=Director office+roomNumber=42.02,ou=rooms,dc=example,dc=org", new_room.dn)
+
+    def test_update(self):
+        room = LdapMultiPKRoom.objects.create(
+            name="Director office",
+            number="42.01",
+            phone='+001234',
+        )
+
+        room.phone = '+004444'
+        room.save()
+
+        qs = LdapMultiPKRoom.objects.all()
+        self.assertEqual(1, len(qs))
+        new_room = qs.get()
+        self.assertEqual(room, new_room)
+        self.assertEqual("42.01", new_room.number)
+        self.assertEqual('+004444', new_room.phone)
+        self.assertEqual("cn=Director office+roomNumber=42.01,ou=rooms,dc=example,dc=org", new_room.dn)
+
+    def test_update_ambiguous_pk(self):
+        """Updating an object where two entries with close pks exist shouldn't fail.
+
+        See #159.
+        """
+        room1 = LdapMultiPKRoom.objects.create(
+            name="Director office",
+            number="42.01",
+            phone='+001234',
+        )
+        LdapMultiPKRoom.objects.create(
+            name="Director office",
+            number="42.01b",
+            phone='+001111',
+        )
+
+        room1.phone = '+004444'
+        room1.save()
+
+        qs = LdapMultiPKRoom.objects.all()
+        self.assertEqual(2, len(qs))
+        new_room = qs.get(number="42.01")
+        self.assertEqual("42.01", new_room.number)
+        self.assertEqual('+004444', new_room.phone)
+        self.assertEqual("cn=Director office+roomNumber=42.01,ou=rooms,dc=example,dc=org", new_room.dn)
 
 
 class AdminTestCase(BaseTestCase):

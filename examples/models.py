@@ -63,3 +63,20 @@ class LdapGroup(ldapdb.models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+class LdapMultiPKRoom(ldapdb.models.Model):
+    """
+    Class for representing a room, using a composite primary key.
+    """
+    # LDAP meta-data
+    base_dn = "ou=rooms,dc=example,dc=org"
+    object_classes = ['room']
+
+    # room attributes
+    name = fields.CharField(db_column='cn', max_length=200, primary_key=True)
+    number = fields.CharField(db_column='roomNumber', max_length=10, primary_key=True)
+    phone = fields.CharField(db_column='telephoneNumber', max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return "%s (%s)" % (self.name, self.number)
