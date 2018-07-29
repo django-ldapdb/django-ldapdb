@@ -498,16 +498,22 @@ class GroupTestCase(BaseTestCase):
         g = LdapGroup.objects.get(name='foogroup')
         self.assertCountEqual(['foouser', 'baruser'], g.usernames)
 
-        # Try to filter on the list field
+        # Try to filter on the list field, with and without contains
         qs = LdapGroup.objects.filter(usernames='foouser')
         self.assertEqual(qs.count(), 1)
+        qs = LdapGroup.objects.filter(usernames__contains='foouser')
+        self.assertEqual(qs.count(), 1)
 
-        # Try to filter negatively on the list field
+        # Try to filter negatively on the list field, with and without contains
         qs = LdapGroup.objects.filter(~Q(usernames='foouser'))
         self.assertEqual(qs.count(), 2)
+        qs = LdapGroup.objects.filter(~Q(usernames__contains='foouser'))
+        self.assertEqual(qs.count(), 2)
 
-        # Try to exclude on the list field
+        # Try to exclude on the list field, with and without contains
         qs = LdapGroup.objects.exclude(usernames='foouser')
+        self.assertEqual(qs.count(), 2)
+        qs = LdapGroup.objects.exclude(usernames__contains='foouser')
         self.assertEqual(qs.count(), 2)
 
     def test_listfield_manipulation(self):

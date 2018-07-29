@@ -233,6 +233,7 @@ class ListField(LdapFieldMixin, fields.Field):
 
 
 ListField.register_lookup(ListContainsLookup)
+ListField.register_lookup(ExactLookup)
 
 
 class DateField(LdapFieldMixin, fields.DateField):
