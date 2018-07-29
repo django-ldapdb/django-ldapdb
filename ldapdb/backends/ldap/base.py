@@ -235,6 +235,19 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             },
         }
 
+    def ensure_connection(self):
+        super(DatabaseWrapper, self).ensure_connection()
+
+        # Do a test bind, which will revive the connection if interrupted, or reconnect
+        conn_params = self.get_connection_params()
+        try:
+            self.connection.simple_bind_s(
+                conn_params['bind_dn'],
+                conn_params['bind_pw'],
+            )
+        except ldap.SERVER_DOWN:
+            self.connect()
+
     def get_new_connection(self, conn_params):
         """Build a connection from its parameters."""
         connection = ldap.ldapobject.ReconnectLDAPObject(
