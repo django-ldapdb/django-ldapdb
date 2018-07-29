@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 
 import datetime
+import os
 import re
 
 from django.db.models import fields, lookups
@@ -210,6 +211,35 @@ FloatField.register_lookup(ExactLookup)
 FloatField.register_lookup(GteLookup)
 FloatField.register_lookup(LteLookup)
 FloatField.register_lookup(InLookup)
+
+
+class MultiValueField(fields.TextField):
+
+    def from_ldap(self, value, connection):
+        a = [x.decode(connection.charset) for x in value]
+        return os.linesep.join(a)
+
+    def get_db_prep_save(self, value, connection):
+        if not value:
+            return None
+        v = value.split(os.linesep)
+        return [x.encode(connection.charset).strip() for x in v]
+
+    def from_db_value(self, value, expression, connection, context):
+        """Convert from the database format.
+
+        This should be the inverse of self.get_prep_value()
+        """
+        return self.to_python(value)
+
+    def to_python(self, value):
+        if not value:
+            return []
+        return value
+
+
+MultiValueField.register_lookup(ListContainsLookup)
+MultiValueField.register_lookup(IContainsLookup)
 
 
 class ListField(LdapFieldMixin, fields.Field):

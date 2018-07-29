@@ -8,3 +8,5 @@ graft examples
 global-exclude *.py[cod] __pycache__ .*swp
 
 include Makefile manage_dev.py tox.ini .flake8
+
+recursive-include static *.js

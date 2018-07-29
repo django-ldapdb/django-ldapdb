@@ -193,6 +193,15 @@ class WhereTestCase(TestCase):
         where.add(self._build_lookup("memberUid", 'contains', '(foouser)', field=fields.ListField), AND)
         self.assertEqual(self._where_as_ldap(where), "(memberUid=\\28foouser\\29)")
 
+    def test_multivalue_field_contains(self):
+        where = WhereNode()
+        where.add(self._build_lookup("memberUid", 'contains', 'foouser', field=fields.MultiValueField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(memberUid=foouser)")
+
+        where = WhereNode()
+        where.add(self._build_lookup("memberUid", 'contains', '(foouser)', field=fields.MultiValueField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(memberUid=\\28foouser\\29)")
+
     def test_date_field(self):
         where = WhereNode()
         where.add(self._build_lookup("birthday", 'exact', '2013-09-03', field=fields.DateField), AND)
