@@ -347,6 +347,7 @@ class DateTimeField(LdapFieldMixin, fields.DateTimeField):
 DateTimeField.register_lookup(ExactLookup)
 DateTimeField.register_lookup(LteLookup)
 DateTimeField.register_lookup(GteLookup)
+DateTimeField.register_lookup(InLookup)
 
 
 EPOCH = timezone.utc.localize(datetime.datetime.utcfromtimestamp(0))
@@ -379,3 +380,4 @@ class TimestampField(LdapFieldMixin, fields.DateTimeField):
 TimestampField.register_lookup(ExactLookup)
 TimestampField.register_lookup(LteLookup)
 TimestampField.register_lookup(GteLookup)
+TimestampField.register_lookup(InLookup)
