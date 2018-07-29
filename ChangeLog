@@ -4,7 +4,11 @@ ChangeLog
 1.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+*New:*
+
+    * *[#80]* Use ReconnectLDAPObject to survive flaky LDAP servers.
+    * *[#164]* Register __in lookup for DateTimeField and TimestampField.
+    * *[#166]* Support and test on Python 3.7.
 
 
 1.2.0 (2018-07-28)
