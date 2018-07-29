@@ -494,6 +494,22 @@ class GroupTestCase(BaseTestCase):
         # Restore previous configuration
         del settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size']
 
+    def test_listfield(self):
+        g = LdapGroup.objects.get(name='foogroup')
+        self.assertCountEqual(['foouser', 'baruser'], g.usernames)
+
+        # Try to filter on the list field
+        qs = LdapGroup.objects.filter(usernames='foouser')
+        self.assertEqual(qs.count(), 1)
+
+        # Try to filter negatively on the list field
+        qs = LdapGroup.objects.filter(~Q(usernames='foouser'))
+        self.assertEqual(qs.count(), 2)
+
+        # Try to exclude on the list field
+        qs = LdapGroup.objects.exclude(usernames='foouser')
+        self.assertEqual(qs.count(), 2)
+
     def test_listfield_manipulation(self):
         g = LdapGroup.objects.get(name='foogroup')
         self.assertCountEqual(['foouser', 'baruser'], g.usernames)
