@@ -12,6 +12,7 @@ class LdapUser(ldapdb.models.Model):
     """
     Class for representing an LDAP user entry.
     """
+
     # LDAP meta-data
     base_dn = "ou=people,dc=example,dc=org"
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
@@ -49,6 +50,7 @@ class LdapGroup(ldapdb.models.Model):
     """
     Class for representing an LDAP group entry.
     """
+
     # LDAP meta-data
     base_dn = "ou=groups,dc=example,dc=org"
     object_classes = ['posixGroup']
@@ -69,6 +71,7 @@ class LdapMultiPKRoom(ldapdb.models.Model):
     """
     Class for representing a room, using a composite primary key.
     """
+
     # LDAP meta-data
     base_dn = "ou=rooms,dc=example,dc=org"
     object_classes = ['room']
@@ -76,7 +79,9 @@ class LdapMultiPKRoom(ldapdb.models.Model):
     # room attributes
     name = fields.CharField(db_column='cn', max_length=200, primary_key=True)
     number = fields.CharField(db_column='roomNumber', max_length=10, primary_key=True)
-    phone = fields.CharField(db_column='telephoneNumber', max_length=20, blank=True, null=True)
+    phone = fields.CharField(
+        db_column='telephoneNumber', max_length=20, blank=True, null=True
+    )
 
     def __str__(self):
         return "%s (%s)" % (self.name, self.number)

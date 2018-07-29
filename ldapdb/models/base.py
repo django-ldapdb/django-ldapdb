@@ -20,6 +20,7 @@ class Model(django.db.models.base.Model):
     """
     Base class for all LDAP models.
     """
+
     dn = ldapdb_fields.CharField(max_length=200, primary_key=True)
 
     # meta-data
@@ -38,8 +39,7 @@ class Model(django.db.models.base.Model):
         bits = []
         for field in self._meta.fields:
             if field.db_column and field.primary_key:
-                bits.append("%s=%s" % (field.db_column,
-                                       getattr(self, field.name)))
+                bits.append("%s=%s" % (field.db_column, getattr(self, field.name)))
         if not len(bits):
             raise Exception("Could not build Distinguished Name")
         return '+'.join(bits)
@@ -60,7 +60,15 @@ class Model(django.db.models.base.Model):
         connection.delete_s(self.dn)
         signals.post_delete.send(sender=self.__class__, instance=self)
 
-    def _save_table(self, raw=False, cls=None, force_insert=None, force_update=None, using=None, update_fields=None):
+    def _save_table(
+        self,
+        raw=False,
+        cls=None,
+        force_insert=None,
+        force_update=None,
+        using=None,
+        update_fields=None,
+    ):
         """
         Saves the current instance.
         """
@@ -71,10 +79,7 @@ class Model(django.db.models.base.Model):
 
         # Prepare fields
         if update_fields:
-            target_fields = [
-                self._meta.get_field(name)
-                for name in update_fields
-            ]
+            target_fields = [self._meta.get_field(name) for name in update_fields]
         else:
             target_fields = [
                 field
@@ -108,7 +113,10 @@ class Model(django.db.models.base.Model):
         if create:
             # FIXME(rbarrois): This should be handled through a hidden field.
             hidden_values = [
-                ('objectClass', [obj_class.encode('utf-8') for obj_class in self.object_classes])
+                (
+                    'objectClass',
+                    [obj_class.encode('utf-8') for obj_class in self.object_classes],
+                )
             ]
             new_values = hidden_values + [
                 (colname, change[1])
@@ -126,11 +134,13 @@ class Model(django.db.models.base.Model):
                 old_value, new_value = change
                 if old_value == new_value:
                     continue
-                modlist.append((
-                    ldap.MOD_DELETE if new_value == [] else ldap.MOD_REPLACE,
-                    colname,
-                    new_value,
-                ))
+                modlist.append(
+                    (
+                        ldap.MOD_DELETE if new_value == [] else ldap.MOD_REPLACE,
+                        colname,
+                        new_value,
+                    )
+                )
 
             if new_dn != old_dn:
                 logger.debug("renaming ldap entry %s to %s", old_dn, new_dn)
@@ -152,16 +162,21 @@ class Model(django.db.models.base.Model):
         """
         Returns a copy of the current class with a different base_dn.
         """
+
         class Meta:
             proxy = True
             verbose_name = base_class._meta.verbose_name
             verbose_name_plural = base_class._meta.verbose_name_plural
+
         import re
+
         suffix = re.sub('[=,]', '_', base_dn)
         name = "%s_%s" % (base_class.__name__, str(suffix))
-        new_class = type(str(name), (base_class,), {
-            'base_dn': base_dn, '__module__': base_class.__module__,
-            'Meta': Meta})
+        new_class = type(
+            str(name),
+            (base_class,),
+            {'base_dn': base_dn, '__module__': base_class.__module__, 'Meta': Meta},
+        )
         return new_class
 
     class Meta:

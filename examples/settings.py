@@ -23,10 +23,8 @@ DATABASES = {
         'USER': 'cn=admin,dc=nodomain',
         'PASSWORD': 'test',
         # 'TLS': True,
-        'CONNECTION_OPTIONS': {
-            ldap.OPT_X_TLS_DEMAND: True,
-        }
-    }
+        'CONNECTION_OPTIONS': {ldap.OPT_X_TLS_DEMAND: True},
+    },
 }
 DATABASE_ROUTERS = ['ldapdb.router.Router']
 
@@ -96,9 +94,9 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
-            ],
+            ]
         },
-    },
+    }
 ]
 
 INSTALLED_APPS = (

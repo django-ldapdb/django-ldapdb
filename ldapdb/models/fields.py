@@ -29,7 +29,10 @@ class LdapLookup(lookups.Lookup):
         params = lhs_params + rhs_params
         if self.rhs_is_iterable:
             # Convert (x__in=[a, b, c]) to |(x=a)(x=b)(x=c)
-            return '|' + ''.join(['({})'.format(self._as_ldap(lhs))] * len(rhs_params)), params
+            return (
+                '|' + ''.join(['({})'.format(self._as_ldap(lhs))] * len(rhs_params)),
+                params,
+            )
         else:
             return self._as_ldap(lhs), params
 
@@ -258,15 +261,20 @@ class DateField(LdapFieldMixin, fields.DateField):
         if len(value) == 0:
             return None
         else:
-            return datetime.datetime.strptime(value[0].decode(connection.charset),
-                                              self._date_format).date()
+            return datetime.datetime.strptime(
+                value[0].decode(connection.charset), self._date_format
+            ).date()
 
     def get_prep_value(self, value):
         value = super(DateField, self).get_prep_value(value)
-        if not isinstance(value, datetime.date) \
-                and not isinstance(value, datetime.datetime):
+        if not isinstance(value, datetime.date) and not isinstance(
+            value, datetime.datetime
+        ):
             raise ValueError(
-                'DateField can be only set to a datetime.date instance; got {}'.format(repr(value)))
+                'DateField can be only set to a datetime.date instance; got {}'.format(
+                    repr(value)
+                )
+            )
 
         return value.strftime(self._date_format)
 
@@ -313,7 +321,7 @@ def datetime_from_ldap(value):
         offset_mins = int(tzinfo[-2:]) if len(tzinfo) == 5 else 0
         offset = 60 * int(tzinfo[1:3]) + offset_mins
         if tzinfo[0] == '-':
-            offset = - offset
+            offset = -offset
         tzinfo = timezone.get_fixed_timezone(offset)
     kwargs = {k: int(v) for k, v in groups.items() if v is not None}
     kwargs['tzinfo'] = tzinfo
@@ -336,10 +344,14 @@ class DateTimeField(LdapFieldMixin, fields.DateTimeField):
 
     def get_prep_value(self, value):
         value = super(DateTimeField, self).get_prep_value(value)
-        if not isinstance(value, datetime.date) \
-                and not isinstance(value, datetime.datetime):
+        if not isinstance(value, datetime.date) and not isinstance(
+            value, datetime.datetime
+        ):
             raise ValueError(
-                'DateTimeField can be only set to a datetime.datetime instance; got {}'.format(repr(value)))
+                'DateTimeField can be only set to a datetime.datetime instance; got {}'.format(
+                    repr(value)
+                )
+            )
 
         value = timezone.utc.normalize(value)
         return value.strftime(LDAP_DATE_FORMAT)

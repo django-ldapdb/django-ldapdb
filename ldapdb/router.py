@@ -20,6 +20,7 @@ class Router(object):
     def __init__(self):
         "Find the name of the LDAP database"
         from django.conf import settings
+
         self.ldap_alias = None
         for alias, settings_dict in settings.DATABASES.items():
             if settings_dict['ENGINE'] == 'ldapdb.backends.ldap':

@@ -35,9 +35,13 @@ class FakeModel(models.Model):
 class DateTimeTests(TestCase):
     CONVERSIONS = {
         '': None,
-        '20180102030405.067874Z': datetime.datetime(2018, 1, 2, 3, 4, 5, 67874, tzinfo=UTC),
+        '20180102030405.067874Z': datetime.datetime(
+            2018, 1, 2, 3, 4, 5, 67874, tzinfo=UTC
+        ),
         # Sub-microsecond is ignored by Python
-        '20180102030405.067874846Z': datetime.datetime(2018, 1, 2, 3, 4, 5, 67874, tzinfo=UTC),
+        '20180102030405.067874846Z': datetime.datetime(
+            2018, 1, 2, 3, 4, 5, 67874, tzinfo=UTC
+        ),
         # Sub-hour precision is optional
         '2018010203Z': datetime.datetime(2018, 1, 2, 3, tzinfo=UTC),
         # Support UTC offsets
@@ -45,7 +49,9 @@ class DateTimeTests(TestCase):
         # Minutes are optional for UTC offsets
         '201801020304+01': datetime.datetime(2018, 1, 2, 3, 4, tzinfo=UTC_PLUS_ONE),
         # Check negative offsets
-        '201801020304-0230': datetime.datetime(2018, 1, 2, 3, 4, tzinfo=UTC_MINUS_2_HALF),
+        '201801020304-0230': datetime.datetime(
+            2018, 1, 2, 3, 4, tzinfo=UTC_MINUS_2_HALF
+        ),
     }
 
     def test_conversions(self):
@@ -91,9 +97,7 @@ class WhereTestCase(TestCase):
     def _where_as_ldap(self, where):
         query = django_query.Query(model=FakeModel)
         compiler = ldapdb_compiler.SQLCompiler(
-            query=query,
-            connection=connections['ldap'],
-            using=None,
+            query=query, connection=connections['ldap'], using=None
         )
         pattern, params = compiler.compile(where)
         return '(%s)' % (pattern % tuple(escape_ldap_filter(param) for param in params))
@@ -125,7 +129,9 @@ class WhereTestCase(TestCase):
 
         where = WhereNode()
         where.add(self._build_lookup("cn", 'in', ["(foo)", "(bar)"]), AND)
-        self.assertEqual(self._where_as_ldap(where), "(|(cn=\\28foo\\29)(cn=\\28bar\\29))")
+        self.assertEqual(
+            self._where_as_ldap(where), "(|(cn=\\28foo\\29)(cn=\\28bar\\29))"
+        )
 
     def test_char_field_startswith(self):
         where = WhereNode()
@@ -168,7 +174,9 @@ class WhereTestCase(TestCase):
         self.assertEqual(self._where_as_ldap(where), "(uid<=1)")
 
         where = WhereNode()
-        where.add(self._build_lookup("uid", 'in', [1, 2], field=fields.IntegerField), AND)
+        where.add(
+            self._build_lookup("uid", 'in', [1, 2], field=fields.IntegerField), AND
+        )
         self.assertEqual(self._where_as_ldap(where), "(|(uid=1)(uid=2))")
 
     def test_float_field(self):
@@ -186,47 +194,92 @@ class WhereTestCase(TestCase):
 
     def test_list_field_contains(self):
         where = WhereNode()
-        where.add(self._build_lookup("memberUid", 'contains', 'foouser', field=fields.ListField), AND)
+        where.add(
+            self._build_lookup(
+                "memberUid", 'contains', 'foouser', field=fields.ListField
+            ),
+            AND,
+        )
         self.assertEqual(self._where_as_ldap(where), "(memberUid=foouser)")
 
         where = WhereNode()
-        where.add(self._build_lookup("memberUid", 'contains', '(foouser)', field=fields.ListField), AND)
+        where.add(
+            self._build_lookup(
+                "memberUid", 'contains', '(foouser)', field=fields.ListField
+            ),
+            AND,
+        )
         self.assertEqual(self._where_as_ldap(where), "(memberUid=\\28foouser\\29)")
 
     def test_date_field(self):
         where = WhereNode()
-        where.add(self._build_lookup("birthday", 'exact', '2013-09-03', field=fields.DateField), AND)
+        where.add(
+            self._build_lookup(
+                "birthday", 'exact', '2013-09-03', field=fields.DateField
+            ),
+            AND,
+        )
         self.assertEqual(self._where_as_ldap(where), "(birthday=2013-09-03)")
 
     def test_datetime_field(self):
         dt = datetime.datetime(2018, 6, 25, 20, 21, 22, tzinfo=UTC)
 
         where = WhereNode()
-        where.add(self._build_lookup("modifyTimestamp", 'exact', dt, field=fields.DateTimeField,), AND)
-        self.assertEqual(self._where_as_ldap(where), "(modifyTimestamp=20180625202122.000000Z)")
+        where.add(
+            self._build_lookup(
+                "modifyTimestamp", 'exact', dt, field=fields.DateTimeField
+            ),
+            AND,
+        )
+        self.assertEqual(
+            self._where_as_ldap(where), "(modifyTimestamp=20180625202122.000000Z)"
+        )
 
         where = WhereNode()
-        where.add(self._build_lookup("modifyTimestamp", 'lte', dt, field=fields.DateTimeField,), AND)
-        self.assertEqual(self._where_as_ldap(where), "(modifyTimestamp<=20180625202122.000000Z)")
+        where.add(
+            self._build_lookup(
+                "modifyTimestamp", 'lte', dt, field=fields.DateTimeField
+            ),
+            AND,
+        )
+        self.assertEqual(
+            self._where_as_ldap(where), "(modifyTimestamp<=20180625202122.000000Z)"
+        )
 
         where = WhereNode()
-        where.add(self._build_lookup("modifyTimestamp", 'gte', dt, field=fields.DateTimeField,), AND)
-        self.assertEqual(self._where_as_ldap(where), "(modifyTimestamp>=20180625202122.000000Z)")
+        where.add(
+            self._build_lookup(
+                "modifyTimestamp", 'gte', dt, field=fields.DateTimeField
+            ),
+            AND,
+        )
+        self.assertEqual(
+            self._where_as_ldap(where), "(modifyTimestamp>=20180625202122.000000Z)"
+        )
 
     def test_timestamp_field(self):
         dt = datetime.datetime(2018, 6, 25, 20, 21, 22, tzinfo=UTC)
         where = WhereNode()
-        where.add(self._build_lookup("shadowLastChange", 'exact', dt, field=fields.TimestampField), AND)
+        where.add(
+            self._build_lookup(
+                "shadowLastChange", 'exact', dt, field=fields.TimestampField
+            ),
+            AND,
+        )
         self.assertEqual(self._where_as_ldap(where), "(shadowLastChange=1529958082)")
 
     def test_and(self):
         where = WhereNode()
         where.add(self._build_lookup("cn", 'exact', "foo", field=fields.CharField), AND)
-        where.add(self._build_lookup("givenName", 'exact', "bar", field=fields.CharField), AND)
+        where.add(
+            self._build_lookup("givenName", 'exact', "bar", field=fields.CharField), AND
+        )
         self.assertEqual(self._where_as_ldap(where), "(&(cn=foo)(givenName=bar))")
 
     def test_or(self):
         where = WhereNode()
         where.add(self._build_lookup("cn", 'exact', "foo", field=fields.CharField), AND)
-        where.add(self._build_lookup("givenName", 'exact', "bar", field=fields.CharField), OR)
+        where.add(
+            self._build_lookup("givenName", 'exact', "bar", field=fields.CharField), OR
+        )
         self.assertEqual(self._where_as_ldap(where), "(|(cn=foo)(givenName=bar))")

@@ -72,87 +72,80 @@ class LdapDatabase(object):
         """Database-side errors."""
 
     class OperationalError(
-            DatabaseError,
-            ldap.ADMINLIMIT_EXCEEDED,
-            ldap.AUTH_METHOD_NOT_SUPPORTED,
-            ldap.AUTH_UNKNOWN,
-            ldap.BUSY,
-            ldap.CONFIDENTIALITY_REQUIRED,
-            ldap.CONNECT_ERROR,
-            ldap.INAPPROPRIATE_AUTH,
-            ldap.INVALID_CREDENTIALS,
-            ldap.OPERATIONS_ERROR,
-            ldap.RESULTS_TOO_LARGE,
-            ldap.SASL_BIND_IN_PROGRESS,
-            ldap.SERVER_DOWN,
-            ldap.SIZELIMIT_EXCEEDED,
-            ldap.STRONG_AUTH_NOT_SUPPORTED,
-            ldap.STRONG_AUTH_REQUIRED,
-            ldap.TIMELIMIT_EXCEEDED,
-            ldap.TIMEOUT,
-            ldap.UNAVAILABLE,
-            ldap.UNAVAILABLE_CRITICAL_EXTENSION,
-            ldap.UNWILLING_TO_PERFORM,
+        DatabaseError,
+        ldap.ADMINLIMIT_EXCEEDED,
+        ldap.AUTH_METHOD_NOT_SUPPORTED,
+        ldap.AUTH_UNKNOWN,
+        ldap.BUSY,
+        ldap.CONFIDENTIALITY_REQUIRED,
+        ldap.CONNECT_ERROR,
+        ldap.INAPPROPRIATE_AUTH,
+        ldap.INVALID_CREDENTIALS,
+        ldap.OPERATIONS_ERROR,
+        ldap.RESULTS_TOO_LARGE,
+        ldap.SASL_BIND_IN_PROGRESS,
+        ldap.SERVER_DOWN,
+        ldap.SIZELIMIT_EXCEEDED,
+        ldap.STRONG_AUTH_NOT_SUPPORTED,
+        ldap.STRONG_AUTH_REQUIRED,
+        ldap.TIMELIMIT_EXCEEDED,
+        ldap.TIMEOUT,
+        ldap.UNAVAILABLE,
+        ldap.UNAVAILABLE_CRITICAL_EXTENSION,
+        ldap.UNWILLING_TO_PERFORM,
     ):
         """Exceptions related to the database operations, out of the programmer control."""
 
     class IntegrityError(
-            DatabaseError,
-            ldap.AFFECTS_MULTIPLE_DSAS,
-            ldap.ALREADY_EXISTS,
-            ldap.CONSTRAINT_VIOLATION,
-            ldap.TYPE_OR_VALUE_EXISTS,
+        DatabaseError,
+        ldap.AFFECTS_MULTIPLE_DSAS,
+        ldap.ALREADY_EXISTS,
+        ldap.CONSTRAINT_VIOLATION,
+        ldap.TYPE_OR_VALUE_EXISTS,
     ):
         """Exceptions related to database Integrity."""
 
     class DataError(
-            DatabaseError,
-            ldap.INVALID_DN_SYNTAX,
-            ldap.INVALID_SYNTAX,
-            ldap.NOT_ALLOWED_ON_NONLEAF,
-            ldap.NOT_ALLOWED_ON_RDN,
-            ldap.OBJECT_CLASS_VIOLATION,
-            ldap.UNDEFINED_TYPE,
+        DatabaseError,
+        ldap.INVALID_DN_SYNTAX,
+        ldap.INVALID_SYNTAX,
+        ldap.NOT_ALLOWED_ON_NONLEAF,
+        ldap.NOT_ALLOWED_ON_RDN,
+        ldap.OBJECT_CLASS_VIOLATION,
+        ldap.UNDEFINED_TYPE,
     ):
         """Exceptions related to invalid data"""
 
     class InterfaceError(
-            ldap.CLIENT_LOOP,
-            ldap.DECODING_ERROR,
-            ldap.ENCODING_ERROR,
-            ldap.LOCAL_ERROR,
-            ldap.LOOP_DETECT,
-            ldap.NO_MEMORY,
-            ldap.PROTOCOL_ERROR,
-            ldap.REFERRAL_LIMIT_EXCEEDED,
-            ldap.USER_CANCELLED,
-            Error,
+        ldap.CLIENT_LOOP,
+        ldap.DECODING_ERROR,
+        ldap.ENCODING_ERROR,
+        ldap.LOCAL_ERROR,
+        ldap.LOOP_DETECT,
+        ldap.NO_MEMORY,
+        ldap.PROTOCOL_ERROR,
+        ldap.REFERRAL_LIMIT_EXCEEDED,
+        ldap.USER_CANCELLED,
+        Error,
     ):
         """Exceptions related to the python-ldap interface."""
 
-    class InternalError(
-            DatabaseError,
-            ldap.ALIAS_DEREF_PROBLEM,
-            ldap.ALIAS_PROBLEM,
-    ):
+    class InternalError(DatabaseError, ldap.ALIAS_DEREF_PROBLEM, ldap.ALIAS_PROBLEM):
         """Exceptions encountered within the database."""
 
     class ProgrammingError(
-            DatabaseError,
-            ldap.CONTROL_NOT_FOUND,
-            ldap.FILTER_ERROR,
-            ldap.INAPPROPRIATE_MATCHING,
-            ldap.NAMING_VIOLATION,
-            ldap.NO_SUCH_ATTRIBUTE,
-            ldap.NO_SUCH_OBJECT,
-            ldap.PARAM_ERROR,
+        DatabaseError,
+        ldap.CONTROL_NOT_FOUND,
+        ldap.FILTER_ERROR,
+        ldap.INAPPROPRIATE_MATCHING,
+        ldap.NAMING_VIOLATION,
+        ldap.NO_SUCH_ATTRIBUTE,
+        ldap.NO_SUCH_OBJECT,
+        ldap.PARAM_ERROR,
     ):
         """Invalid data send by the programmer."""
 
-    class NotSupportedError(
-            DatabaseError,
-            ldap.NOT_SUPPORTED,
-    ):
+    class NotSupportedError(DatabaseError, ldap.NOT_SUPPORTED):
         """Exception for unsupported actions."""
 
 
@@ -242,8 +235,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         conn_params = self.get_connection_params()
         try:
             self.connection.simple_bind_s(
-                conn_params['bind_dn'],
-                conn_params['bind_pw'],
+                conn_params['bind_dn'], conn_params['bind_pw']
             )
         except ldap.SERVER_DOWN:
             self.connect()
@@ -254,7 +246,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             uri=conn_params['uri'],
             retry_max=conn_params['retry_max'],
             retry_delay=conn_params['retry_delay'],
-            bytes_mode=False)
+            bytes_mode=False,
+        )
 
         options = conn_params['options']
         for opt, value in options.items():
@@ -268,10 +261,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if conn_params['tls']:
             connection.start_tls_s()
 
-        connection.simple_bind_s(
-            conn_params['bind_dn'],
-            conn_params['bind_pw'],
-        )
+        connection.simple_bind_s(conn_params['bind_dn'], conn_params['bind_pw'])
         return connection
 
     def init_connection_state(self):
@@ -313,9 +303,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         # Request pagination; don't fail if the server doesn't support it.
         ldap_control = ldap.controls.SimplePagedResultsControl(
-            criticality=False,
-            size=self.page_size,
-            cookie='',
+            criticality=False, size=self.page_size, cookie=''
         )
 
         # Fetch results
@@ -331,8 +319,14 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 timeout=query_timeout,
             )
 
-            _res_type, results, _res_msgid, server_controls = cursor.connection.result3(msgid, timeout=query_timeout)
-            page_controls = [ctrl for ctrl in server_controls if ctrl.controlType == ldap.CONTROL_PAGEDRESULTS]
+            _res_type, results, _res_msgid, server_controls = cursor.connection.result3(
+                msgid, timeout=query_timeout
+            )
+            page_controls = [
+                ctrl
+                for ctrl in server_controls
+                if ctrl.controlType == ldap.CONTROL_PAGEDRESULTS
+            ]
 
             for dn, attrs in results:
                 # skip referrals

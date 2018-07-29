@@ -24,7 +24,8 @@ else:
 
 
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(
-    r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
+    r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$'
+)
 
 
 class LdapDBError(Exception):
@@ -39,32 +40,37 @@ def query_as_ldap(query, compiler, connection):
     if query.is_empty():
         return
 
-    if query.model._meta.model_name == 'migration' and not hasattr(query.model, 'object_classes'):
+    if query.model._meta.model_name == 'migration' and not hasattr(
+        query.model, 'object_classes'
+    ):
         # FIXME(rbarrois): Support migrations
         return
 
     # FIXME(rbarrois): this could be an extra Where clause
-    filterstr = ''.join(['(objectClass=%s)' % cls for cls in
-                         query.model.object_classes])
+    filterstr = ''.join(
+        ['(objectClass=%s)' % cls for cls in query.model.object_classes]
+    )
 
     # FIXME(rbarrois): Remove this code as part of #101
-    if (len(query.where.children) == 1
-            and not isinstance(query.where.children[0], WhereNode)
-            and query.where.children[0].lhs.target.column == 'dn'):
+    if (
+        len(query.where.children) == 1
+        and not isinstance(query.where.children[0], WhereNode)
+        and query.where.children[0].lhs.target.column == 'dn'
+    ):
 
         lookup = query.where.children[0]
         if lookup.lookup_name != 'exact':
             raise LdapDBError("Unsupported dn lookup: %s" % lookup.lookup_name)
 
         return LdapLookup(
-            base=lookup.rhs,
-            scope=ldap.SCOPE_BASE,
-            filterstr='(&%s)' % filterstr,
+            base=lookup.rhs, scope=ldap.SCOPE_BASE, filterstr='(&%s)' % filterstr
         )
 
     sql, params = compiler.compile(query.where)
     if sql:
-        filterstr += '(%s)' % (sql % tuple(escape_ldap_filter(param) for param in params))
+        filterstr += '(%s)' % (
+            sql % tuple(escape_ldap_filter(param) for param in params)
+        )
     return LdapLookup(
         base=query.model.base_dn,
         scope=query.model.search_scope,
@@ -102,7 +108,7 @@ def where_node_as_ldap(where, compiler, connection):
         raise LdapDBError("Unhandled WHERE connector: %s" % where.connector)
 
     if where.negated:
-        clause = ('!(%s)' % clause)
+        clause = '!(%s)' % clause
 
     return clause, params
 
@@ -116,8 +122,12 @@ class SQLCompiler(compiler.SQLCompiler):
             return where_node_as_ldap(node, self, self.connection)
         return super(SQLCompiler, self).compile(node, *args, **kwargs)
 
-    def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False,
-                    chunk_size=GET_ITERATOR_CHUNK_SIZE):
+    def execute_sql(
+        self,
+        result_type=compiler.SINGLE,
+        chunked_fetch=False,
+        chunk_size=GET_ITERATOR_CHUNK_SIZE,
+    ):
         if result_type != compiler.SINGLE:
             raise Exception("LDAP does not support MULTI queries")
 
@@ -167,7 +177,13 @@ class SQLCompiler(compiler.SQLCompiler):
                 output.append(e[0])
         return output
 
-    def results_iter(self, results=None, tuple_expected=False, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE):
+    def results_iter(
+        self,
+        results=None,
+        tuple_expected=False,
+        chunked_fetch=False,
+        chunk_size=GET_ITERATOR_CHUNK_SIZE,
+    ):
         lookup = query_as_ldap(self.query, compiler=self, connection=self.connection)
         if lookup is None:
             return
@@ -212,14 +228,15 @@ class SQLCompiler(compiler.SQLCompiler):
             if sort_field == 'dn':
                 vals = sorted(vals, key=lambda pair: pair[0], reverse=reverse)
             else:
+
                 def get_key(obj):
                     attr = field.from_ldap(
-                        obj[1].get(field.db_column, []),
-                        connection=self.connection,
+                        obj[1].get(field.db_column, []), connection=self.connection
                     )
                     if hasattr(attr, 'lower'):
                         attr = attr.lower()
                     return attr
+
                 vals = sorted(vals, key=get_key, reverse=reverse)
 
         # process results
@@ -229,9 +246,9 @@ class SQLCompiler(compiler.SQLCompiler):
             # FIXME : This is not optimal, we retrieve more results than we
             # need but there is probably no other options as we can't perform
             # ordering server side.
-            if (self.query.low_mark and pos < self.query.low_mark) or \
-               (self.query.high_mark is not None and
-                    pos >= self.query.high_mark):
+            if (self.query.low_mark and pos < self.query.low_mark) or (
+                self.query.high_mark is not None and pos >= self.query.high_mark
+            ):
                 pos += 1
                 continue
             row = []
@@ -245,7 +262,8 @@ class SQLCompiler(compiler.SQLCompiler):
                     elif hasattr(input_field, 'from_ldap'):
                         result = input_field.from_ldap(
                             attrs.get(input_field.db_column, []),
-                            connection=self.connection)
+                            connection=self.connection,
+                        )
                         if result:
                             value = 1
                             if isinstance(input_field, ListField):
@@ -255,9 +273,12 @@ class SQLCompiler(compiler.SQLCompiler):
                     if e[0].field.attname == 'dn':
                         row.append(dn)
                     elif hasattr(e[0].field, 'from_ldap'):
-                        row.append(e[0].field.from_ldap(
-                            attrs.get(e[0].field.db_column, []),
-                            connection=self.connection))
+                        row.append(
+                            e[0].field.from_ldap(
+                                attrs.get(e[0].field.db_column, []),
+                                connection=self.connection,
+                            )
+                        )
                     else:
                         row.append(None)
             if self.query.distinct:
@@ -270,6 +291,7 @@ class SQLCompiler(compiler.SQLCompiler):
 
     def has_results(self):
         import inspect
+
         iterator = self.results_iter()
         if inspect.isgenerator(iterator):
             try:
