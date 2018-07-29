@@ -227,6 +227,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             'tls': self.settings_dict.get('TLS', False),
             'bind_dn': self.settings_dict['USER'],
             'bind_pw': self.settings_dict['PASSWORD'],
+            'retry_max': self.settings_dict.get('RETRY_MAX', 1),
+            'retry_delay': self.settings_dict.get('RETRY_DELAY', 60.0),
             'options': {
                 k if isinstance(k, int) else k.lower(): v
                 for k, v in self.settings_dict.get('CONNECTION_OPTIONS', {}).items()
@@ -235,7 +237,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def get_new_connection(self, conn_params):
         """Build a connection from its parameters."""
-        connection = ldap.initialize(conn_params['uri'], bytes_mode=False)
+        connection = ldap.ldapobject.ReconnectLDAPObject(
+            uri=conn_params['uri'],
+            retry_max=conn_params['retry_max'],
+            retry_delay=conn_params['retry_delay'],
+            bytes_mode=False)
 
         options = conn_params['options']
         for opt, value in options.items():
