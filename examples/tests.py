@@ -129,6 +129,12 @@ class ConnectionTestCase(BaseTestCase):
         LdapUser.objects.get(username='foouser')
         # self.assertEqual(self.ldapobj.bound_as, admin[0])
 
+    def test_reconect(self):
+        LdapUser.objects.get(username='foouser')
+        self.ldap_server.stop()
+        self.ldap_server.start()
+        LdapUser.objects.get(username='foouser')
+
 
 class GroupTestCase(BaseTestCase):
     directory = dict([groups, foogroup, bargroup, wizgroup, people, foouser])
