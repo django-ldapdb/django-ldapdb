@@ -47,6 +47,21 @@ If you're new to the project and want to help, a great first step would be:
 * Or any other way you'd like to help.
 
 
+Code contributions
+------------------
+
+In order to merge some code, you'll need to open a `pull request`_.
+
+There are a few rules to keep in mind regarding pull requests:
+
+* A pull request should only solve a single issue / add a single feature;
+* If the code change is significant, please also create an issue_ for easier discussion;
+* We have automated testing; please make sure that the updated code passes automated checks;
+* We're striving to improve the quality of the library, with higher test and docs coverage.
+  If you don't know how/where to add docs or tests, we'll be very happy to point you in the right
+  direction!
+
+
 Questions
 ---------
 
