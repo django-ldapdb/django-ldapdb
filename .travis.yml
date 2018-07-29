@@ -28,9 +28,11 @@ matrix:
       env: TOXENV=py35-django20
     - python: "3.6"
       env: TOXENV=py36-django20
+    - python: "3.7"
+      env: TOXENV=py37-django20
 
     # Linting
-    - python: "3.6"
+    - python: "3.7"
       env: TOXENV=lint
 
 notifications:
