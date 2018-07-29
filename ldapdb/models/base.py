@@ -138,6 +138,7 @@ class Model(django.db.models.base.Model):
 
             if modlist:
                 logger.debug("Modifying existing LDAP entry %s", new_dn)
+
                 connection.modify_s(new_dn, modlist)
             updated = True
 
