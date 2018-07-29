@@ -616,6 +616,11 @@ class UserTestCase(BaseTestCase):
         qs = LdapUser.objects.filter(last_modified__gte=before)
         self.assertEqual([u], list(qs))
 
+        # Test __in lookup
+        lm = u.last_modified
+        u = LdapUser.objects.get(last_modified__in=[before, lm])
+        self.assertEqual(u.username, 'foouser')
+
 
 class ScopedTestCase(BaseTestCase):
     directory = dict([groups, people, foogroup, contacts])
