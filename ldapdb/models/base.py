@@ -164,5 +164,13 @@ class Model(django.db.models.base.Model):
             'Meta': Meta})
         return new_class
 
+    @classmethod
+    def _check_single_primary_key(cls):
+        """
+        Always return an empty list to circumvent the models.E026 system check.
+        ldapdb allows multiple primary keys.
+        """
+        return []
+
     class Meta:
         abstract = True
