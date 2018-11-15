@@ -265,6 +265,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             else:
                 connection.set_option(opt, value)
 
+        # By default, connections uses only the global TLS context.
+        # Force ldap to create a new SSL context to use new TLS options
+        # which may be present in `conn_params['options']`
+        connection.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
+
         if conn_params['tls']:
             connection.start_tls_s()
 
