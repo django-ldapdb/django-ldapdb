@@ -2,7 +2,8 @@ language: python
 
 cache: pip
 
-dist: xenial  # Needed for Python 3.7
+# Required for Python 3.7
+dist: xenial
 
 script:
   - tox
