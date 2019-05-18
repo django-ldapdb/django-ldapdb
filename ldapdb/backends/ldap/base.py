@@ -36,10 +36,24 @@ class DatabaseCursor(object):
     def __init__(self, ldap_connection):
         self.connection = ldap_connection
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self):
+        pass
+
+    def close(self):
+        pass
+
 
 class DatabaseFeatures(BaseDatabaseFeatures):
     can_use_chunked_reads = False
     supports_transactions = False
+    supports_column_check_constraints = False
+    supports_table_check_constraints = False
+    supports_ignore_conflicts = False
+    uses_savepoints = False
+    supports_partial_indexes = False
 
     def __init__(self, connection):
         self.connection = connection
@@ -58,6 +72,9 @@ class DatabaseOperations(BaseDatabaseOperations):
 
     def no_limit_value(self):
         return -1
+
+    def sql_flush(self, style, tables, sequences, allow_cascade=False):
+        return []
 
 
 class DatabaseValidation(BaseDatabaseValidation):
@@ -282,8 +299,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def _commit(self):
         pass
 
-    def _cursor(self):
-        self.ensure_connection()
+    def create_cursor(self, name=None):
         return DatabaseCursor(self.connection)
 
     def _rollback(self):
@@ -293,57 +309,62 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         pass
 
     def add_s(self, dn, modlist):
-        cursor = self._cursor()
-        return cursor.connection.add_s(dn, modlist)
+        with self.cursor() as cursor:
+            return cursor.connection.add_s(dn, modlist)
 
     def delete_s(self, dn):
         cursor = self._cursor()
-        return cursor.connection.delete_s(dn)
+        with self.cursor() as cursor:
+            return cursor.connection.delete_s(dn)
 
     def modify_s(self, dn, modlist):
-        cursor = self._cursor()
-        return cursor.connection.modify_s(dn, modlist)
+        with self.cursor() as cursor:
+            return cursor.connection.modify_s(dn, modlist)
 
     def rename_s(self, dn, newrdn):
         cursor = self._cursor()
-        return cursor.connection.rename_s(dn, newrdn)
+        with self.cursor() as cursor:
+            return cursor.connection.rename_s(dn, newrdn)
 
     def search_s(self, base, scope, filterstr='(objectClass=*)', attrlist=None):
-        cursor = self._cursor()
-        query_timeout = cursor.connection.timeout
+        with self.cursor() as cursor:
+            query_timeout = cursor.connection.timeout
 
-        # Request pagination; don't fail if the server doesn't support it.
-        ldap_control = ldap.controls.SimplePagedResultsControl(
-            criticality=False,
-            size=self.page_size,
-            cookie='',
-        )
-
-        # Fetch results
-        page = 0
-
-        while True:
-            msgid = cursor.connection.search_ext(
-                base=base,
-                scope=scope,
-                filterstr=filterstr,
-                attrlist=attrlist,
-                serverctrls=[ldap_control],
-                timeout=query_timeout,
+            # Request pagination; don't fail if the server doesn't support it.
+            ldap_control = ldap.controls.SimplePagedResultsControl(
+                criticality=False,
+                size=self.page_size,
+                cookie='',
             )
 
-            _res_type, results, _res_msgid, server_controls = cursor.connection.result3(msgid, timeout=query_timeout)
-            page_controls = [ctrl for ctrl in server_controls if ctrl.controlType == ldap.CONTROL_PAGEDRESULTS]
+            # Fetch results
+            page = 0
 
-            for dn, attrs in results:
-                # skip referrals
-                if dn is not None:
-                    yield dn, attrs
+            while True:
+                msgid = cursor.connection.search_ext(
+                    base=base,
+                    scope=scope,
+                    filterstr=filterstr,
+                    attrlist=attrlist,
+                    serverctrls=[ldap_control],
+                    timeout=query_timeout,
+                )
 
-            page_control = page_controls[0]
-            page += 1
-            if page_control.cookie:
-                ldap_control.cookie = page_control.cookie
-            else:
-                # End of pages
-                break
+                _res_type, results, _res_msgid, server_controls = cursor.connection.result3(
+                    msgid,
+                    timeout=query_timeout,
+                )
+                page_controls = [ctrl for ctrl in server_controls if ctrl.controlType == ldap.CONTROL_PAGEDRESULTS]
+
+                for dn, attrs in results:
+                    # skip referrals
+                    if dn is not None:
+                        yield dn, attrs
+
+                page_control = page_controls[0]
+                page += 1
+                if page_control.cookie:
+                    ldap_control.cookie = page_control.cookie
+                else:
+                    # End of pages
+                    break

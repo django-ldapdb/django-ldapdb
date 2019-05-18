@@ -31,7 +31,7 @@ It supports most of the same APIs as a Django model:
 * Full admin support and browsing
 
 
-``django-ldapdb`` supports Django versions 1.11 / 2.0 / 2.1, and Python 2.7 / 3.4 / 3.5 / 3.6 / 3.7,
+``django-ldapdb`` supports Django versions 1.11 / 2.1 / 2.2, and Python 2.7 / 3.4 / 3.5 / 3.6 / 3.7,
 as far as the Django and Python versions are compatible.
 
 
