@@ -212,6 +212,21 @@ FloatField.register_lookup(LteLookup)
 FloatField.register_lookup(InLookup)
 
 
+class BooleanField(LdapFieldMixin, fields.BooleanField):
+    def from_ldap(self, value, connection):
+        if len(value) == 0:
+            return None if self.null else False
+        else:
+            return value[0].upper() == b'TRUE'
+
+    def get_prep_value(self, value):
+        value = super(BooleanField, self).get_prep_value(value)
+        return 'TRUE' if value else 'FALSE'
+
+
+BooleanField.register_lookup(ExactLookup)
+
+
 class ListField(LdapFieldMixin, fields.Field):
 
     multi_valued_field = True
