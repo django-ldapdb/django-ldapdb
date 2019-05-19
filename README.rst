@@ -142,6 +142,7 @@ Similar to Django:
 
     * ``IntegerField``
     * ``FloatField``
+    * ``BooleanField``
     * ``CharField``
     * ``ImageField``
     * ``DateTimeField``
