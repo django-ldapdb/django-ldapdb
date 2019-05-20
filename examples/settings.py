@@ -24,7 +24,7 @@ DATABASES = {
         'PASSWORD': 'test',
         # 'TLS': True,
         'CONNECTION_OPTIONS': {
-            ldap.OPT_X_TLS_DEMAND: True,
+            #ldap.OPT_X_TLS_DEMAND: True,
         }
     }
 }

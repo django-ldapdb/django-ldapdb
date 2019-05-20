@@ -270,7 +270,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # which may be present in `conn_params['options']`
         connection.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
-        if conn_params['tls']:
+        if not conn_params['tls'] and conn_params['uri'].lower().startswith('ldaps://'):
             connection.start_tls_s()
 
         connection.simple_bind_s(
