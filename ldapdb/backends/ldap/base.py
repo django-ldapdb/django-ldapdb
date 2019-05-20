@@ -214,7 +214,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             # django >= 1.4
             self.validate_thread_sharing()
         if self.connection is not None:
-            self.connection.unbind_s()
+            # AttributeError: ReconnectLDAPObject has no attribute '_l'
+            try:
+                self.connection.unbind_s()
+            except Exception as e:
+                # print(e)
+                pass
             self.connection = None
 
     def get_connection_params(self):
