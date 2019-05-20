@@ -184,6 +184,23 @@ class WhereTestCase(TestCase):
         where.add(self._build_lookup("uid", 'lte', 1.2, field=fields.FloatField), AND)
         self.assertEqual(self._where_as_ldap(where), "(uid<=1.2)")
 
+    def test_boolean_field(self):
+        where = WhereNode()
+        where.add(self._build_lookup("isSuperuser", 'exact', True, field=fields.BooleanField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(isSuperuser=TRUE)")
+
+        where = WhereNode()
+        where.add(self._build_lookup("isSuperuser", 'exact', False, field=fields.BooleanField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(isSuperuser=FALSE)")
+
+        where = WhereNode()
+        where.add(self._build_lookup("isSuperuser", 'exact', 1, field=fields.BooleanField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(isSuperuser=TRUE)")
+
+        where = WhereNode()
+        where.add(self._build_lookup("isSuperuser", 'exact', 0, field=fields.BooleanField), AND)
+        self.assertEqual(self._where_as_ldap(where), "(isSuperuser=FALSE)")
+
     def test_list_field_contains(self):
         where = WhereNode()
         where.add(self._build_lookup("memberUid", 'contains', 'foouser', field=fields.ListField), AND)

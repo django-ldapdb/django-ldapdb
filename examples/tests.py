@@ -129,6 +129,12 @@ class ConnectionTestCase(BaseTestCase):
         LdapUser.objects.get(username='foouser')
         # self.assertEqual(self.ldapobj.bound_as, admin[0])
 
+    def test_reconect(self):
+        LdapUser.objects.get(username='foouser')
+        self.ldap_server.stop()
+        self.ldap_server.start()
+        LdapUser.objects.get(username='foouser')
+
 
 class GroupTestCase(BaseTestCase):
     directory = dict([groups, foogroup, bargroup, wizgroup, people, foouser])
@@ -487,6 +493,28 @@ class GroupTestCase(BaseTestCase):
 
         # Restore previous configuration
         del settings.DATABASES['ldap']['CONNECTION_OPTIONS']['page_size']
+
+    def test_listfield(self):
+        g = LdapGroup.objects.get(name='foogroup')
+        self.assertCountEqual(['foouser', 'baruser'], g.usernames)
+
+        # Try to filter on the list field, with and without contains
+        qs = LdapGroup.objects.filter(usernames='foouser')
+        self.assertEqual(qs.count(), 1)
+        qs = LdapGroup.objects.filter(usernames__contains='foouser')
+        self.assertEqual(qs.count(), 1)
+
+        # Try to filter negatively on the list field, with and without contains
+        qs = LdapGroup.objects.filter(~Q(usernames='foouser'))
+        self.assertEqual(qs.count(), 2)
+        qs = LdapGroup.objects.filter(~Q(usernames__contains='foouser'))
+        self.assertEqual(qs.count(), 2)
+
+        # Try to exclude on the list field, with and without contains
+        qs = LdapGroup.objects.exclude(usernames='foouser')
+        self.assertEqual(qs.count(), 2)
+        qs = LdapGroup.objects.exclude(usernames__contains='foouser')
+        self.assertEqual(qs.count(), 2)
 
     def test_listfield_manipulation(self):
         g = LdapGroup.objects.get(name='foogroup')

@@ -230,8 +230,8 @@ class SQLCompiler(compiler.SQLCompiler):
             # need but there is probably no other options as we can't perform
             # ordering server side.
             if (self.query.low_mark and pos < self.query.low_mark) or \
-               (self.query.high_mark is not None and
-                    pos >= self.query.high_mark):
+               (self.query.high_mark is not None
+                    and pos >= self.query.high_mark):
                 pos += 1
                 continue
             row = []

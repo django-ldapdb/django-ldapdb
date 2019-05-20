@@ -6,7 +6,6 @@
 import sys
 
 import ldap.filter
-
 from django.conf import settings
 
 

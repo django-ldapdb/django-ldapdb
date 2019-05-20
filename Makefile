@@ -5,6 +5,8 @@ TESTS_DIR := examples
 PYWARNINGS = -Wdefault -Werror \
 	     -Wignore::DeprecationWarning:site:165 \
 	     -Wignore::PendingDeprecationWarning:imp \
+	     -Wignore::DeprecationWarning:imp \
+	     -Wignore::PendingDeprecationWarning:distutils \
 	     -Wignore::DeprecationWarning:distutils
 
 default:
