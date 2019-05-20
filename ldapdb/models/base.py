@@ -90,13 +90,12 @@ class Model(django.db.models.base.Model):
             old = None
         else:
             old = cls.objects.using(using).get(dn=self._saved_dn)
-        changes = {
-            field.db_column: (
-                None if old is None else get_field_value(field, old),
-                get_field_value(field, self),
-            )
-            for field in target_fields
-        }
+        changes = {}
+        for field in target_fields:
+            if field.editable:
+                s = (None if old is None else get_field_value(field, old),
+                     get_field_value(field, self))
+                changes[field.db_column] = s
 
         # Actual saving
 
