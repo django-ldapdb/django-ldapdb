@@ -214,7 +214,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             # django >= 1.4
             self.validate_thread_sharing()
         if self.connection is not None:
-            self.connection.unbind_s()
+            if hasattr(self.connection, '_l'):
+                self.connection.unbind_s()
             self.connection = None
 
     def get_connection_params(self):
