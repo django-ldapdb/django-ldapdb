@@ -104,8 +104,7 @@ class BaseTestCase(TestCase):
         )
 
         # Settings are not supposed to be overriden in setUpClass,
-        # may use override_settings instead.
-        cls.initial_ldap_settings = copy.deepcopy(settings.DATABASES['ldap'])
+        # may use override_settings instead? How?
         settings.DATABASES['ldap']['USER'] = cls.ldap_server.rootdn
         settings.DATABASES['ldap']['PASSWORD'] = cls.ldap_server.rootpw
         settings.DATABASES['ldap']['NAME'] = cls.ldap_server.uri
@@ -125,13 +124,11 @@ class BaseTestCase(TestCase):
         cls.ldap_server.stop()
         if cls.use_tls:
             os.remove(cls.cacert_filename)
-        # restore initial LDAP settings
-        settings.DATABASES['ldap'] = cls.initial_ldap_settings
         super(BaseTestCase, cls).tearDownClass()
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-        self.ldap_server.start()
+        self.ldap_server.start()  # setup and start server on first test, only clear on others
 
 
 class ConnectionTestCase(BaseTestCase):
@@ -160,6 +157,18 @@ class ConnectionTestCase(BaseTestCase):
         self.ldap_server.stop()
         self.ldap_server.start()
         LdapUser.objects.get(username='foouser')
+
+
+class NoTlsConnectionTestCase(ConnectionTestCase):
+    use_tls = False
+
+    @classmethod
+    def setUpClass(cls):
+        super(ConnectionTestCase, cls).setUpClass()
+        # XXX: fix BaseTestCase to remove following lines!
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS_CACERTFILE]
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS_DEMAND]
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS]
 
 
 class GroupTestCase(BaseTestCase):
