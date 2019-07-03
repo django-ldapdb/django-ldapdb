@@ -108,4 +108,5 @@ INSTALLED_APPS = (
     'ldapdb',
     'examples',
     'django.contrib.admin',
+    'django.contrib.messages',  # Needed by django.contrib.admin in Django 2.2
 )

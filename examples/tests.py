@@ -116,6 +116,19 @@ class BaseTestCase(TestCase):
         super(BaseTestCase, self).setUp()
         self.ldap_server.start()
 
+    # Django 2.2: the tests of this test case will certainly use "ldap" database
+    # which will conflict with _add/_remove_databases_failures.
+    # The alternative would be to declare "databases = {'default', 'ldap'}"
+    # on the TestCase but Django would then try to perform SQL flush on tearDown.
+    # This seems like the lightweight solution.
+    @classmethod
+    def _add_databases_failures(cls):
+        pass
+
+    @classmethod
+    def _remove_databases_failures(cls):
+        pass
+
 
 class ConnectionTestCase(BaseTestCase):
     directory = dict([people, foouser])
