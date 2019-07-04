@@ -7,6 +7,7 @@ ChangeLog
 *New:*
 
     * *[#177]* Add BooleanField.
+    * Add support for Django 2.2 and python 3.7
 
 *Bugfix:*
 
