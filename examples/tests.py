@@ -20,7 +20,7 @@ from django.db.models import Count, Q
 from django.test import TestCase
 from django.utils import timezone
 
-from examples.models import LdapGroup, LdapMultiPKRoom, LdapUser
+from examples.models import ConcreteGroup, LdapGroup, LdapMultiPKRoom, LdapUser
 from ldapdb.backends.ldap.compiler import SQLCompiler, query_as_ldap
 
 groups = ('ou=groups,dc=example,dc=org', {
@@ -542,6 +542,20 @@ class GroupTestCase(BaseTestCase):
         g.save()
         g = LdapGroup.objects.get(name='foogroup')
         self.assertEqual([], g.usernames)
+
+
+class GroupSubclassingTestCase(BaseTestCase):
+    directory = dict([groups, foogroup, bargroup, wizgroup, people, foouser])
+
+    def test_concrete_group(self):
+        g = ConcreteGroup.objects.get(name='foogroup')
+        self.assertCountEqual(['foouser', 'baruser'], g.usernames)
+
+        g.name = 'modified'
+        g.save()
+
+        g = ConcreteGroup.objects.get(name='modified')
+        self.assertCountEqual(['foouser', 'baruser'], g.usernames)
 
 
 class UserTestCase(BaseTestCase):

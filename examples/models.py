@@ -80,3 +80,23 @@ class LdapMultiPKRoom(ldapdb.models.Model):
 
     def __str__(self):
         return "%s (%s)" % (self.name, self.number)
+
+
+class AbstractGroup(ldapdb.models.Model):
+    class Meta:
+        abstract = True
+
+    object_classes = ['posixGroup']
+    gid = fields.IntegerField(db_column='gidNumber', unique=True)
+    name = fields.CharField(db_column='cn', max_length=200, primary_key=True)
+    usernames = fields.ListField(db_column='memberUid')
+
+    def __str__(self):
+        return self.name
+
+    def __unicode__(self):
+        return self.name
+
+
+class ConcreteGroup(AbstractGroup):
+    base_dn = "ou=groups,dc=example,dc=org"
