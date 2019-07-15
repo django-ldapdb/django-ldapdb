@@ -15,6 +15,8 @@ class LdapUser(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = "ou=people,dc=example,dc=org"
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
+
+    dn = fields.CharField(max_length=200, primary_key=True)
     last_modified = fields.DateTimeField(db_column='modifyTimestamp')
 
     # inetOrgPerson
@@ -52,6 +54,7 @@ class LdapGroup(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = "ou=groups,dc=example,dc=org"
     object_classes = ['posixGroup']
+    dn = fields.CharField(max_length=200, primary_key=True)
 
     # posixGroup attributes
     gid = fields.IntegerField(db_column='gidNumber', unique=True)
@@ -74,6 +77,7 @@ class LdapMultiPKRoom(ldapdb.models.Model):
     object_classes = ['room']
 
     # room attributes
+    dn = fields.CharField(max_length=200, primary_key=True)
     name = fields.CharField(db_column='cn', max_length=200, primary_key=True)
     number = fields.CharField(db_column='roomNumber', max_length=10, primary_key=True)
     phone = fields.CharField(db_column='telephoneNumber', max_length=20, blank=True, null=True)
@@ -100,3 +104,4 @@ class AbstractGroup(ldapdb.models.Model):
 
 class ConcreteGroup(AbstractGroup):
     base_dn = "ou=groups,dc=example,dc=org"
+    dn = fields.CharField(max_length=200, primary_key=True)
