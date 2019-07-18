@@ -89,7 +89,7 @@ class Model(django.db.models.base.Model):
         if create:
             old = None
         else:
-            old = cls.objects.using(using).get(dn=self._saved_dn)
+            old = cls._base_manager.using(using).get(dn=self._saved_dn)
         changes = {
             field.db_column: (
                 None if old is None else get_field_value(field, old),

@@ -18,7 +18,8 @@ from django.db.models import Count, Q
 from django.test import TestCase
 from django.utils import timezone
 
-from examples.models import ConcreteGroup, LdapGroup, LdapMultiPKRoom, LdapUser
+from examples.models import (ConcreteGroup, FooGroup, LdapGroup,
+                             LdapMultiPKRoom, LdapUser)
 from ldapdb.backends.ldap.compiler import SQLCompiler, query_as_ldap
 
 groups = ('ou=groups,dc=example,dc=org', {
@@ -890,3 +891,43 @@ class AdminTestCase(BaseTestCase):
         response = self.client.post('/admin/examples/ldapuser/foouser/delete/',
                                     {'yes': 'post'})
         self.assertRedirects(response, '/admin/examples/ldapuser/')
+
+
+class FooGroupTestCase(BaseTestCase):
+    directory = dict([groups, foogroup, bargroup, wizgroup, people, foouser])
+
+    def as_ldap_query(self, qs):
+        connection = connections['ldap']
+        compiler = SQLCompiler(
+            query=qs.query,
+            connection=connection,
+            using=None,
+        )
+        return query_as_ldap(qs.query, compiler, connection)
+
+    def test_count_all(self):
+        qs = FooGroup.objects.all()
+        lq = self.as_ldap_query(qs)
+        self.assertEqual(lq.base, groups[0])
+        self.assertEqual(lq.filterstr, '(&(objectClass=posixGroup)(cn=foo*))')
+        self.assertEqual(qs.count(), 1)
+
+    def test_base_manager_dn(self):
+        dn = foogroup[0]
+        qs = FooGroup._base_manager.using(None).filter(dn=dn)
+        lq = self.as_ldap_query(qs)
+        self.assertEqual(lq.base, dn)
+        self.assertEqual(lq.filterstr, '(&(objectClass=posixGroup))')
+        self.assertEqual(qs.count(), 1)
+
+    def test_update_group(self):
+        g = FooGroup.objects.get(name='foogroup')
+        g.gid = 1002
+        g.usernames = ['foouser2', u'baruseeer2']
+        g.save()
+
+        # check group was updated
+        new = FooGroup.objects.get(name='foogroup')
+        self.assertEqual(new.name, 'foogroup')
+        self.assertEqual(new.gid, 1002)
+        self.assertCountEqual(new.usernames, ['foouser2', u'baruseeer2'])
