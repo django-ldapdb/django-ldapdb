@@ -2,6 +2,8 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
+from django.db.models import Manager
+
 import ldapdb.models
 from ldapdb.models import fields
 
@@ -98,3 +100,14 @@ class AbstractGroup(ldapdb.models.Model):
 
 class ConcreteGroup(AbstractGroup):
     base_dn = "ou=groups,dc=example,dc=org"
+
+
+class FooNamePrefixManager(Manager):
+    def get_queryset(self):
+        return super(FooNamePrefixManager, self).get_queryset().filter(
+            name__startswith='foo')
+
+
+class FooGroup(AbstractGroup):
+    base_dn = "ou=groups,dc=example,dc=org"
+    objects = FooNamePrefixManager()
