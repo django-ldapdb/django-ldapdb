@@ -4,13 +4,17 @@
 
 from __future__ import unicode_literals
 
+import copy
+import tempfile
 import time
+import os
 
 import factory
 import factory.django
 import factory.fuzzy
 import ldap
 import volatildap
+
 from django.conf import settings
 from django.contrib.auth import hashers as auth_hashers
 from django.contrib.auth import models as auth_models
@@ -95,6 +99,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
 class BaseTestCase(TestCase):
     directory = {}
+    use_tls = True
 
     databases = ['default', 'ldap']
 
@@ -104,19 +109,36 @@ class BaseTestCase(TestCase):
         cls.ldap_server = volatildap.LdapServer(
             initial_data=cls.directory,
             schemas=['core.schema', 'cosine.schema', 'inetorgperson.schema', 'nis.schema'],
+            tls_config=volatildap.LOCALHOST_TLS_CONFIG if cls.use_tls else None,
+            max_server_startup_delay=30,
         )
+
+        # Settings are not supposed to be overriden in setUpClass,
+        # may use override_settings instead? How?
         settings.DATABASES['ldap']['USER'] = cls.ldap_server.rootdn
         settings.DATABASES['ldap']['PASSWORD'] = cls.ldap_server.rootpw
         settings.DATABASES['ldap']['NAME'] = cls.ldap_server.uri
+        settings.DATABASES['ldap']['TLS'] = cls.use_tls
+
+        cls.cacert_filename = None
+        if cls.use_tls:
+            with tempfile.NamedTemporaryFile(mode='x', delete=False) as cacert_file:
+                cacert_file.write(volatildap.LOCALHOST_TLS_CONFIG.chain[0])
+                cls.cacert_filename = cacert_file.name
+            settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS_CACERTFILE] = cls.cacert_filename
+            settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS_DEMAND] = True
+            settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS] = ldap.OPT_X_TLS_DEMAND
 
     @classmethod
     def tearDownClass(cls):
         cls.ldap_server.stop()
+        if cls.use_tls:
+            os.remove(cls.cacert_filename)
         super(BaseTestCase, cls).tearDownClass()
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-        self.ldap_server.start()
+        self.ldap_server.start()  # setup and start server on first test, only clear on others
 
 
 class ConnectionTestCase(BaseTestCase):
@@ -145,6 +167,18 @@ class ConnectionTestCase(BaseTestCase):
         self.ldap_server.stop()
         self.ldap_server.start()
         LdapUser.objects.get(username='foouser')
+
+
+class NoTlsConnectionTestCase(ConnectionTestCase):
+    use_tls = False
+
+    @classmethod
+    def setUpClass(cls):
+        super(ConnectionTestCase, cls).setUpClass()
+        # XXX: fix BaseTestCase to remove following lines!
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS_CACERTFILE]
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS_DEMAND]
+        del settings.DATABASES['ldap']['CONNECTION_OPTIONS'][ldap.OPT_X_TLS]
 
 
 class GroupTestCase(BaseTestCase):
