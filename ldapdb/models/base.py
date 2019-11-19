@@ -128,11 +128,15 @@ class Model(django.db.models.base.Model):
                 old_value, new_value = change
                 if old_value == new_value:
                     continue
-                modlist.append((
-                    ldap.MOD_DELETE if new_value == [] else ldap.MOD_REPLACE,
-                    colname,
-                    new_value,
-                ))
+                elif len(old_value) == len(new_value):
+                    operation = ldap.MOD_REPLACE
+                elif len(old_value) > len(new_value):
+                    operation = ldap.MOD_DELETE
+                    new_value = list(set(old_value) - set(new_value))
+                else:
+                    operation = ldap.MOD_ADD
+                    new_value = list(set(new_value) - set(old_value))
+                modlist.append((operation, colname, new_value))
 
             if new_dn != old_dn:
                 logger.debug("renaming ldap entry %s to %s", old_dn, new_dn)
