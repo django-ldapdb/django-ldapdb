@@ -6,6 +6,9 @@ from __future__ import unicode_literals
 
 import ldap
 import ldap.controls
+
+import django
+
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.base.creation import BaseDatabaseCreation
@@ -73,8 +76,12 @@ class DatabaseOperations(BaseDatabaseOperations):
     def no_limit_value(self):
         return -1
 
-    def sql_flush(self, style, tables, sequences, allow_cascade=False):
-        return []
+    if django.VERSION[0] <= 2:
+        def sql_flush(self, style, tables, sequences, allow_cascade=False):
+            return []
+    else:
+        def sql_flush(self, style, tables, *, reset_sequences=False, allow_cascade=False):
+            return []
 
 
 class DatabaseValidation(BaseDatabaseValidation):
