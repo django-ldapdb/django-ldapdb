@@ -20,16 +20,16 @@ clean:
 	find . -type f -path '*/__pycache__/*' -delete
 	find . -type d -empty -delete
 
-update:
+upgrade:
 	pip install --upgrade pip setuptools
-	pip install -r requirements_dev.txt
+	pip install --upgrade -r requirements_dev.txt
 	pip freeze
 
 release:
 	fullrelease
 
 
-.PHONY: default install clean update release
+.PHONY: default install clean upgrade release
 
 testall:
 	tox
