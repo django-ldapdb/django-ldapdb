@@ -60,7 +60,7 @@ Either follow `its Windows installation guide <https://www.python-ldap.org/en/la
 or install a pre-built version from https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-ldap
 (choose the ``.whl`` file matching your Python/Windows combination, and install it with ``pip install python-ldap-3...whl``).
 
-and then you can also install ``django-ldapdb`` with
+You may then install ``django-ldapdb`` with
 
 ``pip install django-ldapdb``
 
@@ -176,3 +176,59 @@ It is possible to adjust django-ldapdb's behavior by defining a few parameters i
               queries (for instance a paginated search yielding thousands of entries),
               the timeout will be used on each individual request;
               the overall processing time might be much higher.
+
+
+Developing with a LDAP server
+-----------------------------
+
+When developing against a LDAP server, having access to a development LDAP server often proves
+useful.
+
+django-ldapdb uses the `volatildap project <https://pypi.org/project/volatildap>`_ for this purpose:
+
+- A LDAP server is instantiated for each TestClass;
+- Its content is reset at the start of each test function;
+- It can be customized to embark any schemas required by the application;
+- Starting with volatildap 1.4.0, the volatildap server can be controlled remotely, avoiding the need
+  to install a LDAP server on the host.
+
+Applications using django-ldapdb may use the following code snippet when setting up their tests:
+
+.. code-block:: python
+
+    # This snippet is released in the Public Domain
+
+    from django.conf import settings
+    from django.test import TestCase
+
+    import volatildap
+
+    class LdapEnabledTestCase(TestCase):
+        @classmethod
+        def setUpClass(cls):
+            super().setUpClass()
+            cls.ldap = volatildap.LdapServer(
+                # Load some initial data
+                initial={'ou=people': {
+                    'ou': ['people'],
+                    'objectClass': ['organizationalUnit'],
+                }},
+                # Enable more LDAP schemas
+                schemas=['core.schema', 'cosine.schema', 'inetorgperson.schema', 'nis.schema'],
+            )
+            # The volatildap server uses specific defaults, and listens on an arbitrary port.
+            # Copy the server-side values to Django settings
+            settings.DATABASES['ldap']['USER'] = cls.ldap.rootdn
+            settings.DATABASES['ldap']['PASSWORD'] = cls.ldap.rootpw
+            settings.DATABASES['ldap']['NAME'] = cls.ldap.uri
+
+        def setUp(self):
+            super().setUp()
+            # Starting an already-started volatildap server performs a data reset
+            self.ldap.start()
+
+        @classmethod
+        def tearDownClass(cls):
+            # Free up resources on teardown.
+            cls.ldap.stop()
+            super().tearDownClass()
