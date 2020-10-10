@@ -20,6 +20,7 @@ def escape_ldap_filter(value):
 # Legacy single database support
 if hasattr(settings, 'LDAPDB_SERVER_URI'):
     from django import db
+
     from ldapdb.router import Router
 
     # Add the LDAP backend
