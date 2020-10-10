@@ -15,7 +15,7 @@ class LdapUser(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = "ou=people,dc=example,dc=org"
     object_classes = ['posixAccount', 'shadowAccount', 'inetOrgPerson']
-    last_modified = fields.DateTimeField(db_column='modifyTimestamp')
+    last_modified = fields.DateTimeField(db_column='modifyTimestamp', editable=False)
 
     # inetOrgPerson
     first_name = fields.CharField(db_column='givenName', verbose_name="Prime name")
