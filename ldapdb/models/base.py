@@ -2,8 +2,6 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import logging
 
 import django.db.models
@@ -28,7 +26,7 @@ class Model(django.db.models.base.Model):
     object_classes = ['top']
 
     def __init__(self, *args, **kwargs):
-        super(Model, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._saved_dn = self.dn
         if self.dn:
             self.base_dn = self.dn.split(',', 1)[1]

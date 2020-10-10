@@ -2,8 +2,6 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import datetime
 import re
 
@@ -146,7 +144,7 @@ class CharField(LdapFieldMixin, fields.CharField):
     def __init__(self, *args, **kwargs):
         defaults = {'max_length': 200}
         defaults.update(kwargs)
-        super(CharField, self).__init__(*args, **defaults)
+        super().__init__(*args, **defaults)
 
     def from_ldap(self, value, connection):
         if len(value) == 0:
@@ -184,7 +182,7 @@ class IntegerField(LdapFieldMixin, fields.IntegerField):
             return int(value[0])
 
     def get_prep_value(self, value):
-        value = super(IntegerField, self).get_prep_value(value)
+        value = super().get_prep_value(value)
         return str(value)
 
 
@@ -202,7 +200,7 @@ class FloatField(LdapFieldMixin, fields.FloatField):
             return float(value[0])
 
     def get_prep_value(self, value):
-        value = super(FloatField, self).get_prep_value(value)
+        value = super().get_prep_value(value)
         return str(value)
 
 
@@ -220,7 +218,7 @@ class BooleanField(LdapFieldMixin, fields.BooleanField):
             return value[0].upper() == b'TRUE'
 
     def get_prep_value(self, value):
-        value = super(BooleanField, self).get_prep_value(value)
+        value = super().get_prep_value(value)
         return 'TRUE' if value else 'FALSE'
 
 
@@ -267,7 +265,7 @@ class DateField(LdapFieldMixin, fields.DateField):
             self._date_format = kwargs.pop('format')
         else:
             self._date_format = '%Y-%m-%d'
-        super(DateField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def from_ldap(self, value, connection):
         if len(value) == 0:
@@ -277,7 +275,7 @@ class DateField(LdapFieldMixin, fields.DateField):
                                               self._date_format).date()
 
     def get_prep_value(self, value):
-        value = super(DateField, self).get_prep_value(value)
+        value = super().get_prep_value(value)
         if not isinstance(value, datetime.date) \
                 and not isinstance(value, datetime.datetime):
             raise ValueError(
@@ -350,7 +348,7 @@ class DateTimeField(LdapFieldMixin, fields.DateTimeField):
         return datetime_from_ldap(value[0].decode(connection.charset))
 
     def get_prep_value(self, value):
-        value = super(DateTimeField, self).get_prep_value(value)
+        value = super().get_prep_value(value)
         if not isinstance(value, datetime.date) \
                 and not isinstance(value, datetime.datetime):
             raise ValueError(

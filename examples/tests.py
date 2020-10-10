@@ -2,8 +2,6 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import time
 
 import factory
@@ -100,7 +98,7 @@ class BaseTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(BaseTestCase, cls).setUpClass()
+        super().setUpClass()
         cls.ldap_server = volatildap.LdapServer(
             initial_data=cls.directory,
             schemas=['core.schema', 'cosine.schema', 'inetorgperson.schema', 'nis.schema'],
@@ -112,10 +110,10 @@ class BaseTestCase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.ldap_server.stop()
-        super(BaseTestCase, cls).tearDownClass()
+        super().tearDownClass()
 
     def setUp(self):
-        super(BaseTestCase, self).setUp()
+        super().setUp()
         self.ldap_server.start()
 
 
@@ -691,7 +689,7 @@ class ScopedTestCase(BaseTestCase):
     directory = dict([groups, people, foogroup, contacts])
 
     def setUp(self):
-        super(ScopedTestCase, self).setUp()
+        super().setUp()
         self.scoped_model = LdapGroup.scoped("ou=contacts,%s" %
                                              LdapGroup.base_dn)
 
@@ -809,7 +807,7 @@ class AdminTestCase(BaseTestCase):
     directory = dict([groups, people, foouser, foogroup, bargroup])
 
     def setUp(self):
-        super(AdminTestCase, self).setUp()
+        super().setUp()
         self._user = UserFactory(
             username='test_user',
             cleartext_password='password',

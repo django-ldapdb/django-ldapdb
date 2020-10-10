@@ -3,8 +3,6 @@
 # Copyright (c) The django-ldapdb project
 
 
-from __future__ import unicode_literals
-
 import datetime
 
 from django.db import connections

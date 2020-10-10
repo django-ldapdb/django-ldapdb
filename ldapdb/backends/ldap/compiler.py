@@ -2,11 +2,8 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import collections
 import re
-import sys
 
 import ldap
 from django.db.models import aggregates
@@ -16,12 +13,6 @@ from django.db.models.sql.where import AND, OR, WhereNode
 
 from ldapdb import escape_ldap_filter
 from ldapdb.models.fields import ListField
-
-if sys.version_info[0] < 3:
-    integer_types = (int, long)  # noqa: F821
-else:
-    integer_types = (int,)
-
 
 _ORDER_BY_LIMIT_OFFSET_RE = re.compile(
     r'(?:\bORDER BY\b\s+(.+?))?\s*(?:\bLIMIT\b\s+(-?\d+))?\s*(?:\bOFFSET\b\s+(\d+))?$')
@@ -114,7 +105,7 @@ class SQLCompiler(compiler.SQLCompiler):
         """Parse a WhereNode to a LDAP filter string."""
         if isinstance(node, WhereNode):
             return where_node_as_ldap(node, self, self.connection)
-        return super(SQLCompiler, self).compile(node, *args, **kwargs)
+        return super().compile(node, *args, **kwargs)
 
     def execute_sql(self, result_type=compiler.SINGLE, chunked_fetch=False,
                     chunk_size=GET_ITERATOR_CHUNK_SIZE):
@@ -313,7 +304,5 @@ class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler):
     def execute_sql(self, result_type=compiler.SINGLE):
         # Return only number values through the aggregate compiler
-        output = super(SQLAggregateCompiler, self).execute_sql(result_type)
-        if sys.version_info < (3,):
-            return filter(lambda a: isinstance(a, int), output)
-        return filter(lambda a: isinstance(a, integer_types), output)
+        output = super().execute_sql(result_type)
+        return filter(lambda a: isinstance(a, int), output)

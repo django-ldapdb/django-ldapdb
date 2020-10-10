@@ -2,8 +2,6 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
-from __future__ import unicode_literals
-
 import django
 import ldap
 import ldap.controls
@@ -221,7 +219,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     }
 
     def __init__(self, *args, **kwargs):
-        super(DatabaseWrapper, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Charset used for LDAP text *values*
         self.charset = "utf-8"
@@ -260,7 +258,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         }
 
     def ensure_connection(self):
-        super(DatabaseWrapper, self).ensure_connection()
+        super().ensure_connection()
 
         # Do a test bind, which will revive the connection if interrupted, or reconnect
         conn_params = self.get_connection_params()
