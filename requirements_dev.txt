@@ -1,6 +1,0 @@
--e .
--r requirements_test.txt
-
-tox
-wheel
-zest.releaser[recommended]

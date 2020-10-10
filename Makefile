@@ -12,7 +12,6 @@ PYWARNINGS = -Wdefault -Werror \
 default:
 
 install:
-
 	python setup.py install
 
 clean:
@@ -22,7 +21,7 @@ clean:
 
 upgrade:
 	pip install --upgrade pip setuptools
-	pip install --upgrade -r requirements_dev.txt
+	pip install --upgrade -e .[dev]
 	pip freeze
 
 release:
@@ -42,7 +41,7 @@ test:
 lint: flake8 isort check-manifest
 
 flake8:
-	flake8 --config .flake8 $(PACKAGE) $(TESTS_DIR)
+	flake8 $(PACKAGE) $(TESTS_DIR)
 
 isort:
 	isort $(PACKAGE) $(TESTS_DIR) --check-only --diff --project $(PACKAGE) --project $(TESTS_DIR)

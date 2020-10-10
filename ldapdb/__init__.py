@@ -6,6 +6,8 @@
 import ldap.filter
 from django.conf import settings
 
+from .version import __version__  # noqa
+
 
 def escape_ldap_filter(value):
     return ldap.filter.escape_filter_chars(str(value))
