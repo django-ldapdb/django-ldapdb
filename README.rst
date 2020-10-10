@@ -31,8 +31,14 @@ It supports most of the same APIs as a Django model:
 * Full admin support and browsing
 
 
-``django-ldapdb`` supports Django versions 1.11 / 2.1 / 2.2, and Python 2.7 / 3.4 / 3.5 / 3.6 / 3.7,
-as far as the Django and Python versions are compatible.
+``django-ldapdb`` supports every upstream-supported Django version, based on
+the `Django support policy <https://www.djangoproject.com/download/#supported-versions>`_.
+
+For the current version, the following versions are supported:
+
+- Django 2.2 (LTS), under Python 3.6 - 3.8 (Python 3.5 has reached its end of life);
+- Django 3.0, under Python 3.6 - 3.8;
+- Django 3.1, under Python 3.6 - 3.8.
 
 
 Installing django-ldapdb
