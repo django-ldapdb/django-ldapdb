@@ -7,7 +7,8 @@ PYWARNINGS = -Wdefault -Werror \
 	     -Wignore::PendingDeprecationWarning:imp \
 	     -Wignore::DeprecationWarning:imp \
 	     -Wignore::PendingDeprecationWarning:distutils \
-	     -Wignore::DeprecationWarning:distutils
+	     -Wignore::DeprecationWarning:distutils \
+	     -Wignore::ImportWarning:
 
 default:
 
