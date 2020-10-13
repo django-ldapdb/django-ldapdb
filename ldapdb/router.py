@@ -2,6 +2,10 @@
 # This software is distributed under the two-clause BSD license.
 # Copyright (c) The django-ldapdb project
 
+from django.apps import apps
+
+from ldapdb.models import Model
+
 
 def is_ldap_model(model):
     # FIXME: there is probably a better check than testing 'base_dn'
@@ -27,8 +31,15 @@ class Router(object):
                 break
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        if 'model' in hints and is_ldap_model(hints['model']):
+        # disallow any migration operation on ldap engine
+        if db == self.ldap_alias:
             return False
+
+        # avoid any migration operation on ldap models
+        if model_name:
+            model = apps.get_model(app_label, model_name)
+            if issubclass(model, Model):
+                return False
         return None
 
     def db_for_read(self, model, **hints):
