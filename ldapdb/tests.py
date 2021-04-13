@@ -82,6 +82,7 @@ class WhereTestCase(TestCase):
     def _build_lookup(self, field_name, lookup, value, field=fields.CharField):
         fake_field = field()
         fake_field.set_attributes_from_name(field_name)
+        fake_field.contribute_to_class(FakeModel, "fake")
         lhs = expressions.Col('faketable', fake_field, fake_field)
         lookup = lhs.get_lookup(lookup)
         return lookup(lhs, value)
