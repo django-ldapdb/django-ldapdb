@@ -83,7 +83,7 @@ class Model(django.db.models.base.Model):
             ]
 
         def get_field_value(field, instance):
-            python_value = getattr(instance, field.attname)
+            python_value = getattr(instance, field.get_attname())
             return field.get_db_prep_save(python_value, connection=connection)
 
         if create:

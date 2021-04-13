@@ -231,7 +231,7 @@ class SQLCompiler(compiler.SQLCompiler):
                 if isinstance(e[0], aggregates.Count):
                     value = 0
                     input_field = e[0].get_source_expressions()[0].field
-                    if input_field.attname == 'dn':
+                    if input_field.get_attname() == 'dn':
                         value = 1
                     elif hasattr(input_field, 'from_ldap'):
                         result = input_field.from_ldap(
@@ -243,7 +243,7 @@ class SQLCompiler(compiler.SQLCompiler):
                                 value = len(result)
                     row.append(value)
                 else:
-                    if e[0].field.attname == 'dn':
+                    if e[0].field.get_attname() == 'dn':
                         row.append(dn)
                     elif hasattr(e[0].field, 'from_ldap'):
                         row.append(e[0].field.from_ldap(
