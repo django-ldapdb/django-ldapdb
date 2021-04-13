@@ -246,3 +246,32 @@ class WhereTestCase(TestCase):
         where.add(self._build_lookup("cn", 'exact', "foo", field=fields.CharField), AND)
         where.add(self._build_lookup("givenName", 'exact', "bar", field=fields.CharField), OR)
         self.assertEqual(self._where_as_ldap(where), "(|(cn=foo)(givenName=bar))")
+
+
+class CompilerRegexTestCase(TestCase):
+
+    def _run_regex(self, sql):
+        match = ldapdb_compiler._ORDER_BY_LIMIT_OFFSET_RE.search(sql)
+        self.assertIsNotNone(match)
+        return match
+
+    def test_regex(self):
+        sql = "SELECT examples_ldapgroup.cn AS Col1 FROM examples_ldapgroup ORDER BY examples_ldapgroup.gidNumber ASC LIMIT 2"  # noqa: E501
+        match = self._run_regex(sql)
+        self.assertEqual(match.group('limit'), '2')
+        self.assertEqual(match.group('offset'), None)
+
+        sql = "SELECT COUNT(*) FROM (SELECT examples_ldapgroup.cn AS Col1 FROM examples_ldapgroup ORDER BY examples_ldapgroup.gidNumber ASC LIMIT 2) subquery"  # noqa: E501
+        match = self._run_regex(sql)
+        self.assertEqual(match.group('limit'), '2')
+
+        sql = "SELECT COUNT(*) FROM (SELECT examples_ldapgroup.cn AS Col1 FROM examples_ldapgroup ORDER BY examples_ldapgroup.gidNumber ASC LIMIT -1 OFFSET 1) subquery"  # noqa: E501
+        match = self._run_regex(sql)
+        self.assertEqual(match.group('limit'), '-1')
+        self.assertEqual(match.group('offset'), '1')
+
+    def test_regex_django22(self):
+        sql = "SELECT examples_ldapgroup.cn AS Col1 FROM examples_ldapgroup ORDER BY examples_ldapgroup.gidNumber ASC  LIMIT 2"  # noqa: E501
+        match = self._run_regex(sql)
+        self.assertEqual(match.group('limit'), '2')
+        self.assertEqual(match.group('offset'), None)
