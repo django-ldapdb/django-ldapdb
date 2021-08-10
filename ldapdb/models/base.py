@@ -38,7 +38,7 @@ class Model(django.db.models.base.Model):
         """
         bits = []
         for field in self._meta.fields:
-            if field.db_column and field.name in self.rdn_fields:
+            if field.db_column and (field.primary_key or field.name in self.rdn_fields):
                 bits.append("%s=%s" % (field.db_column,
                                        getattr(self, field.name)))
         if not len(bits):
