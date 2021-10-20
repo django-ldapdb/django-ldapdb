@@ -24,6 +24,7 @@ class Model(django.db.models.base.Model):
     base_dn = None
     search_scope = ldap.SCOPE_SUBTREE
     object_classes = ['top']
+    rdn_fields = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,7 +38,7 @@ class Model(django.db.models.base.Model):
         """
         bits = []
         for field in self._meta.fields:
-            if field.db_column and field.primary_key:
+            if field.db_column and (field.primary_key or field.name in self.rdn_fields):
                 bits.append("%s=%s" % (field.db_column,
                                        getattr(self, field.name)))
         if not len(bits):
