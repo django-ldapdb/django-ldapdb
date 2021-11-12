@@ -365,10 +365,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                     if dn is not None:
                         yield dn, attrs
 
-                page_control = page_controls[0]
                 page += 1
-                if page_control.cookie:
-                    ldap_control.cookie = page_control.cookie
-                else:
-                    # End of pages
-                    break
+                # page_controls will empty if the server doesn't support it, early break
+                if page_controls:
+                    page_control = page_controls[0]
+                    if page_control.cookie:
+                        ldap_control.cookie = page_control.cookie
+                        continue
+
+                # End of pages
+                break
