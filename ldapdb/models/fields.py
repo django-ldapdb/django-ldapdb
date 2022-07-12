@@ -354,7 +354,7 @@ class DateTimeField(LdapFieldMixin, fields.DateTimeField):
             raise ValueError(
                 'DateTimeField can be only set to a datetime.datetime instance; got {}'.format(repr(value)))
 
-        value = timezone.utc.normalize(value)
+        value = value.replace(tzinfo=timezone.utc)
         return value.strftime(LDAP_DATE_FORMAT)
 
 
@@ -364,15 +364,15 @@ DateTimeField.register_lookup(GteLookup)
 DateTimeField.register_lookup(InLookup)
 
 
-EPOCH = timezone.utc.localize(datetime.datetime.utcfromtimestamp(0))
+EPOCH = datetime.datetime.fromtimestamp(0, timezone.utc)
 
 
 def datetime_from_timestamp(ts):
-    return timezone.utc.localize(datetime.datetime.utcfromtimestamp(ts))
+    return datetime.datetime.fromtimestamp(ts, timezone.utc)
 
 
 def timestamp_from_datetime(dt):
-    return int((timezone.utc.normalize(dt) - EPOCH).total_seconds())
+    return int((dt.replace(tzinfo=timezone.utc) - EPOCH).total_seconds())
 
 
 class TimestampField(LdapFieldMixin, fields.DateTimeField):
