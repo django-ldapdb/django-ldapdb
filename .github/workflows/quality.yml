@@ -1,0 +1,22 @@
+name: Quality
+
+on: push
+
+jobs:
+  build:
+    name: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - name: Install dependencies
+        run: |
+          sudo apt install libsasl2-dev libldap2-dev libssl-dev
+          python -m pip install --upgrade pip setuptools wheel
+          make upgrade
+      - name: Run checks
+        run: make lint

@@ -1,0 +1,49 @@
+name: Tests
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    name: Python ${{ matrix.python-version }} / ${{ matrix.django }}
+    strategy:
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        django:
+          - django32
+          - django42
+          - django50
+        exclude:
+          - django: django50
+            python-version: "3.8"
+          - django: django50
+            python-version: "3.9"
+          - django: django32
+            python-version: "3.11"
+          - django: django32
+            python-version: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install slapd
+        run: sudo apt install slapd ldap-utils apparmor-utils
+      - name: App armor configuration for slapd
+        run: sudo aa-complain /usr/sbin/slapd
+      - name: Install dependencies
+        run: |
+          sudo apt install libsasl2-dev libldap2-dev libssl-dev
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade tox
+          make upgrade
+      - name: Run tests
+        run: |
+          tox -v -e py-${{ matrix.django }}
