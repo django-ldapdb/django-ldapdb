@@ -321,7 +321,7 @@ def datetime_from_ldap(value):
         groups['microsecond'] = groups['microsecond'].ljust(6, '0')[:6]
     tzinfo = groups.pop('tzinfo')
     if tzinfo == 'Z':
-        tzinfo = timezone.utc
+        tzinfo = datetime.timezone.utc
     else:
         offset_mins = int(tzinfo[-2:]) if len(tzinfo) == 5 else 0
         offset = 60 * int(tzinfo[1:3]) + offset_mins
@@ -354,7 +354,7 @@ class DateTimeField(LdapFieldMixin, fields.DateTimeField):
             raise ValueError(
                 'DateTimeField can be only set to a datetime.datetime instance; got {}'.format(repr(value)))
 
-        value = timezone.utc.normalize(value)
+        value = value.astimezone(datetime.timezone.utc)
         return value.strftime(LDAP_DATE_FORMAT)
 
 
@@ -364,15 +364,15 @@ DateTimeField.register_lookup(GteLookup)
 DateTimeField.register_lookup(InLookup)
 
 
-EPOCH = timezone.utc.localize(datetime.datetime.utcfromtimestamp(0))
+EPOCH = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
 
 
 def datetime_from_timestamp(ts):
-    return timezone.utc.localize(datetime.datetime.utcfromtimestamp(ts))
+    return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
 
 
 def timestamp_from_datetime(dt):
-    return int((timezone.utc.normalize(dt) - EPOCH).total_seconds())
+    return int((dt.astimezone(datetime.timezone.utc) - EPOCH).total_seconds())
 
 
 class TimestampField(LdapFieldMixin, fields.DateTimeField):

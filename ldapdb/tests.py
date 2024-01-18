@@ -16,7 +16,7 @@ from ldapdb import escape_ldap_filter, models
 from ldapdb.backends.ldap import compiler as ldapdb_compiler
 from ldapdb.models import fields
 
-UTC = timezone.utc
+UTC = datetime.timezone.utc
 UTC_PLUS_ONE = timezone.get_fixed_timezone(60)
 UTC_MINUS_2_HALF = timezone.get_fixed_timezone(-150)
 
