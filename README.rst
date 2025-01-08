@@ -36,9 +36,8 @@ the `Django support policy <https://www.djangoproject.com/download/#supported-ve
 
 For the current version, the following versions are supported:
 
-- Django 2.2 (LTS), under Python 3.6 - 3.8 (Python 3.5 has reached its end of life);
-- Django 3.0, under Python 3.6 - 3.8;
-- Django 3.1, under Python 3.6 - 3.8.
+- Django 4.2 (LTS), under Python 3.8 - 3.12;
+- Django 5.0 or 5.1, under Python 3.10 - 3.13
 
 
 Installing django-ldapdb
