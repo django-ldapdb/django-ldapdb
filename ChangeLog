@@ -1,10 +1,16 @@
 ChangeLog
 =========
 
-1.5.2 (unreleased)
+2.0.0 (2025-01-12)
 ------------------
 
-- Nothing changed yet.
+*New:*
+
+- Support Django 4 and Django 5
+
+*Breaking:*
+
+- Removed support for Django 3
 
 
 1.5.1 (2020-10-12)
